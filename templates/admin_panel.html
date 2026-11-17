@@ -1,0 +1,1022 @@
+{% extends "base.html" %}
+
+{% block title %}Админ-панель — unanum{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <h1>Панель администратора</h1>
+
+    <!-- Навигация -->
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+        <button class="admin-nav-btn active" data-section="main">Главная</button>
+        <button class="admin-nav-btn" data-section="prompts">Промты</button>
+        <button class="admin-nav-btn" data-section="users">Пользователи</button>
+        <button class="admin-nav-btn" data-section="editor">Редактор картинок</button>
+    </div>
+
+    <!-- Главная (логи + кэш) -->
+    <div id="section-main" class="admin-section-content active">
+        <div class="admin-section">
+            <h2>Логи</h2>
+            <div id="logsList">Загрузка...</div>
+        </div>
+        <div class="admin-section">
+            <h2>Кэш ИИ</h2>
+            <form onsubmit="clearCache(event)">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-outline">Очистить кэш</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Промты -->
+    <div id="section-prompts" class="admin-section-content hidden">
+        <div class="admin-section">
+            <h2>Промты ИИ</h2>
+            <div id="promptsList">Загрузка...</div>
+        </div>
+    </div>
+
+    <!-- Пользователи -->
+    <div id="section-users" class="admin-section-content hidden">
+        <div class="admin-section">
+            <h2>Пользователи</h2>
+            <div id="usersList">Загрузка...</div>
+        </div>
+    </div>
+
+    <!-- Редактор картинок (весь шеринг + редактор) -->
+    <div id="section-editor" class="admin-section-content hidden">
+        <div class="admin-section" id="shareSection">
+            <h2>🖼 Управление шарингом</h2>
+
+            <!-- Загрузка фона -->
+            <div style="margin-bottom:20px;">
+                <h3 style="font-size:14px;color:var(--color-text-light);margin-bottom:8px;">Загрузить новый фон</h3>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <input type="text" id="shareBgName" placeholder="Название фона" style="flex:1;min-width:150px;padding:8px 12px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);">
+                    <select id="shareBgTariff" style="padding:8px 12px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);">
+                        <option value="Искра">Искра</option>
+                        <option value="Пламя">Пламя</option>
+                    </select>
+                    <input type="file" id="shareBgFile" accept="image/*" style="padding:8px;">
+                    <button class="btn btn-primary btn-sm" onclick="uploadShareBackground()">Загрузить</button>
+                </div>
+            </div>
+            <div id="shareBackgroundsList" style="margin-bottom:20px;"><p style="color:var(--color-text-lighter);">Загрузка...</p></div>
+
+            <!-- Стили текста -->
+            <div style="margin-bottom:20px;">
+                <h3 style="font-size:14px;color:var(--color-text-light);margin-bottom:8px;">Стили текста</h3>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+                    <input type="text" id="styleName" placeholder="Название" style="flex:1;min-width:120px;padding:8px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);">
+                    <input type="color" id="styleColor" value="#ffd54f" style="width:40px;height:40px;padding:2px;border:1px solid var(--color-border);border-radius:8px;">
+                    <select id="styleAlign" style="padding:8px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);">
+                        <option value="center">По центру</option>
+                        <option value="left">Слева</option>
+                        <option value="right">Справа</option>
+                    </select>
+                    <select id="styleShape" style="padding:8px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);">
+                        <option value="rectangle">Прямоугольник</option>
+                        <option value="trapezoid_top">Трапеция (вверх)</option>
+                        <option value="trapezoid_bottom">Трапеция (вниз)</option>
+                        <option value="pyramid_up">Пирамида (вверх)</option>
+                        <option value="pyramid_down">Пирамида (вниз)</option>
+                    </select>
+                    <select id="styleTariff" style="padding:8px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);">
+                        <option value="Искра">Искра</option>
+                        <option value="Пламя">Пламя</option>
+                    </select>
+                    <button class="btn btn-primary btn-sm" onclick="createTextStyle()">Добавить стиль</button>
+                </div>
+                <div id="textStylesList"></div>
+            </div>
+
+            <!-- Водяные знаки -->
+            <div style="margin-bottom:20px;">
+                <h3 style="font-size:14px;color:var(--color-text-light);margin-bottom:8px;">Водяные знаки</h3>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+                    <input type="text" id="wmName" placeholder="Название" style="flex:1;min-width:120px;padding:8px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);">
+                    <select id="wmPosition" style="padding:8px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);">
+                        <option value="bottom-right">Правый нижний</option>
+                        <option value="bottom-left">Левый нижний</option>
+                        <option value="bottom-center">По центру внизу</option>
+                    </select>
+                    <input type="number" id="wmPosX" placeholder="X" value="40" style="width:60px;padding:8px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);" title="Отступ слева (px)">
+                    <input type="number" id="wmPosY" placeholder="Y" value="1660" style="width:60px;padding:8px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);" title="Отступ сверху (px)">
+                    <input type="number" id="wmSize" placeholder="Размер %" value="20" style="width:70px;padding:8px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);" title="Размер в % от ширины">
+                    <select id="wmTariff" style="padding:8px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);">
+                        <option value="Искра">Искра</option>
+                        <option value="Пламя">Пламя</option>
+                    </select>
+                    <input type="file" id="wmFile" accept="image/*" style="padding:8px;">
+                    <button class="btn btn-primary btn-sm" onclick="uploadWatermark()">Загрузить</button>
+                </div>
+                <div id="watermarksList"></div>
+            </div>
+
+            <!-- Визуальный редактор (Canva-style) -->
+            <div style="margin-bottom:20px;" id="canvaEditorSection">
+                <h3 style="font-size:14px;color:var(--color-text-light);margin-bottom:8px;">🎨 Редактор карточек</h3>
+                
+                <div style="display:flex;gap:16px;flex-wrap:wrap;">
+                    <!-- Холст -->
+                    <div style="flex:1;min-width:300px;max-width:400px;">
+                        <div style="position:relative;border:1px solid var(--color-gold);border-radius:12px;overflow:hidden;background:#0a1a0a;">
+                            <canvas id="canvaCanvas" width="360" height="640" style="width:100%;height:auto;display:block;"></canvas>
+                        </div>
+                        <div style="display:flex;gap:8px;margin-top:8px;">
+                            <button class="btn btn-primary btn-sm" onclick="canvaAddText()">+ Текст</button>
+                            <div style="display:flex;gap:4px;align-items:center;">
+                                <select id="canvaWatermarkSelect" style="padding:6px 8px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);font-size:12px;">
+                                    <option value="/static/images/share/numer_watermark.png">unanum (дефолтный)</option>
+                                </select>
+                                <button class="btn btn-outline btn-sm" onclick="canvaAddWatermark()">+ Знак</button>
+                            </div>
+                            <button class="btn btn-outline btn-sm" onclick="canvaSaveTemplate()">💾 Сохранить шаблон</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Панель инструментов -->
+                    <div style="flex:0 0 250px;display:flex;flex-direction:column;gap:12px;">
+                        <!-- Выбор фона -->
+                        <div>
+                            <label style="font-size:12px;color:var(--color-text-lighter);">Фон</label>
+                            <select id="canvaBgSelect" style="width:100%;padding:8px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);" onchange="canvaChangeBg()">
+                                <option value="">Тёмно-зелёный</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Свойства выделенного элемента -->
+                        <div id="canvaProps" style="display:none;flex-direction:column;gap:8px;">
+                            <label style="font-size:12px;color:var(--color-text-lighter);">Свойства</label>
+                            
+                            <!-- Тип элемента -->
+                            <select id="canvaPropType" style="width:100%;padding:8px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);" onchange="canvaUpdateProp()">
+                                <option value="text">Текст</option>
+                                <option value="watermark">Знак</option>
+                            </select>
+                            
+                            <!-- Текст элемента (только для текста) -->
+                            <div id="canvaTextRow">
+                                <input type="text" id="canvaPropText" placeholder="Текст элемента" style="width:100%;padding:8px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);" oninput="canvaUpdateProp()">
+                            </div>
+                            
+                            <!-- Цвет (только для текста) -->
+                            <div id="canvaColorRow">
+                                <input type="color" id="canvaPropColor" value="#ffd54f" style="width:100%;height:36px;padding:2px;border:1px solid var(--color-border);border-radius:8px;" onchange="canvaUpdateProp()">
+                            </div>
+                            
+                            <!-- Форма текста (только для текста) -->
+                            <select id="canvaPropShape" style="width:100%;padding:8px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);" onchange="canvaUpdateProp()">
+                                <option value="free">Свободная</option>
+                                <option value="rectangle">Прямоугольник</option>
+                                <option value="trapezoid_top">Трапеция ↑</option>
+                                <option value="trapezoid_bottom">Трапеция ↓</option>
+                                <option value="pyramid_up">Пирамида ▲</option>
+                                <option value="pyramid_down">Пирамида ▼</option>
+                            </select>
+                            
+                            <!-- Размер шрифта (только для текста) -->
+                            <div id="canvaFontSizeRow">
+                                <input type="range" id="canvaPropFontSize" min="12" max="60" value="24" style="width:100%;" oninput="canvaUpdateProp()">
+                                <span style="font-size:11px;color:var(--color-text-lighter);">Размер: <span id="canvaFontSizeVal">24</span>px</span>
+                            </div>
+                            
+                            <!-- Чекбокс «Заполняется пользователем» (только для текста) -->
+                            <div id="canvaPlaceholderRow">
+                                <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--color-text-light);cursor:pointer;">
+                                    <input type="checkbox" id="canvaPropPlaceholder" onchange="canvaUpdateProp()">
+                                    Заполняется пользователем
+                                </label>
+                            </div>
+                            
+                            <button class="btn btn-outline btn-sm" onclick="canvaDeleteSelected()" style="color:var(--color-error);">Удалить элемент</button>
+                        </div>
+                        
+                        <!-- Сохранённые шаблоны -->
+                        <div style="margin-top:8px;">
+                            <label style="font-size:12px;color:var(--color-text-lighter);">Сохранённые шаблоны</label>
+                            <div id="canvaTemplatesList" style="max-height:200px;overflow-y:auto;margin-top:4px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Шаблоны (сборка) -->
+            <div style="margin-bottom:20px;">
+                <h3 style="font-size:14px;color:var(--color-text-light);margin-bottom:8px;">Шаблоны (сборка)</h3>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+                    <input type="text" id="templateName" placeholder="Название шаблона" style="flex:1;min-width:150px;padding:8px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);">
+                    <select id="templateBg" style="padding:8px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);">
+                        <option value="">Без фона</option>
+                    </select>
+                    <select id="templateStyle" style="padding:8px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);">
+                        <option value="">Стиль по умолчанию</option>
+                    </select>
+                    <select id="templateWm" style="padding:8px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);">
+                        <option value="">Без знака</option>
+                    </select>
+                    <select id="templateTariff" style="padding:8px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);">
+                        <option value="Искра">Искра</option>
+                        <option value="Пламя">Пламя</option>
+                    </select>
+                    <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--color-text-light);">
+                        <input type="checkbox" id="templateIsDefault"> По умолчанию
+                    </label>
+                    <button class="btn btn-primary btn-sm" onclick="createTemplate()">Создать шаблон</button>
+                </div>
+                <div id="templatesList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.admin-nav-btn {
+    padding: 8px 18px;
+    border: 1.5px solid var(--color-gold);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--color-gold);
+    font-family: var(--font-main);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.admin-nav-btn.active {
+    background: var(--color-gold);
+    color: #0f1f0f;
+    font-weight: 600;
+}
+.admin-section-content {
+    display: none;
+}
+.admin-section-content.active {
+    display: block;
+}
+</style>
+
+<script>
+// ========== АДМИН-ПАНЕЛЬ ==========
+// X-Admin-Key больше не используется: админка защищена серверной сессией.
+// Все fetch идут через глобальную обёртку main.js, которая автоматически
+// добавляет X-CSRFToken для same-origin запросов.
+
+// ========== ПРОМТЫ ==========
+async function loadPrompts() {
+    const container = document.getElementById('promptsList');
+    try {
+        const res = await fetch('/api/admin/prompts');
+        const prompts = await res.json();
+        let html = '';
+        prompts.forEach(p => {
+            const safeName = sanitizeHTML(p.name);
+            // data-id — безопасный способ передать имя без inline-JS инъекции
+            const attrName = p.name.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            html += `
+                <div class="prompt-item">
+                    <h3>${safeName}</h3>
+                    <textarea class="prompt-content" data-prompt-name="${attrName}" rows="6">${sanitizeHTML(p.content)}</textarea>
+                    <button class="btn btn-outline btn-sm" onclick="savePromptFromButton(this)">Сохранить</button>
+                </div>`;
+        });
+        container.innerHTML = html || '<p>Нет промптов</p>';
+    } catch (e) {
+        container.innerHTML = '<p style="color:var(--color-error);">Ошибка загрузки</p>';
+    }
+}
+
+async function savePromptFromButton(btn) {
+    const textarea = btn.parentElement.querySelector('.prompt-content');
+    if (!textarea) return;
+    const name = textarea.dataset.promptName;
+    const content = textarea.value;
+    try {
+        const res = await fetch('/api/admin/prompts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name, content })
+        });
+        const data = await res.json();
+        if (data.success) alert('Промпт сохранён!');
+        else alert('Ошибка сохранения');
+    } catch (e) { alert('Ошибка соединения'); }
+}
+
+// ========== ПОЛЬЗОВАТЕЛИ ==========
+async function loadUsers() {
+    const container = document.getElementById('usersList');
+    try {
+        const res = await fetch('/api/admin/users');
+        const users = await res.json();
+        let html = '<table style="width:100%;font-size:12px;border-collapse:collapse;">';
+        html += '<tr><th>Email</th><th>Имя</th><th>Тариф</th><th>Действие</th></tr>';
+        users.forEach(u => {
+            const tariffColor = {'Искра':'#ffd54f','Пламя':'#d4879a'}[u.subscription] || '#000';
+            // data-email вместо inline onclick-строки — защита от XSS через кавычки
+            const attrEmail = u.email.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            html += `
+                <tr>
+                    <td style="padding:6px;">${sanitizeHTML(u.email)}</td>
+                    <td style="padding:6px;">${sanitizeHTML(u.name || '—')}</td>
+                    <td style="padding:6px;color:${tariffColor};font-weight:600;">${sanitizeHTML(u.subscription)}</td>
+                    <td style="padding:6px;">
+                        <select data-user-email="${attrEmail}" onchange="changeUserTariffFromSelect(this)" style="font-size:11px;">
+                            <option value="">Сменить...</option>
+                            <option value="Искра">Искра</option>
+                            <option value="Пламя">Пламя</option>
+                        </select>
+                    </td>
+                </tr>`;
+        });
+        html += '</table>';
+        container.innerHTML = html;
+    } catch (e) {
+        container.innerHTML = '<p style="color:var(--color-error);">Ошибка загрузки</p>';
+    }
+}
+
+async function changeUserTariffFromSelect(select) {
+    const email = select.dataset.userEmail;
+    const tariff = select.value;
+    if (!tariff) return;
+    if (!confirm(`Установить тариф «${tariff}» для ${email}?`)) return;
+    try {
+        const res = await fetch('/api/admin/user/subscription', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, tariff })
+        });
+        const data = await res.json();
+        if (data.success) { alert(data.message); loadUsers(); }
+        else alert('Ошибка: ' + data.error);
+    } catch (e) { alert('Ошибка соединения'); }
+}
+
+// ========== ЛОГИ ==========
+async function loadLogs() {
+    const container = document.getElementById('logsList');
+    try {
+        const res = await fetch('/api/admin/logs?limit=30');
+        const logs = await res.json();
+        let html = '<table style="width:100%;font-size:11px;border-collapse:collapse;">';
+        html += '<tr><th>Время</th><th>Уровень</th><th>Источник</th><th>Сообщение</th></tr>';
+        logs.forEach(log => {
+            const levelColor = {'ERROR':'#d4838a','WARNING':'#d4a843','INFO':'#7eb89e'}[log.level] || '#000';
+            html += `<tr>
+                <td style="padding:4px;">${sanitizeHTML(log.created_at)}</td>
+                <td style="padding:4px;color:${levelColor};">${sanitizeHTML(log.level)}</td>
+                <td style="padding:4px;">${sanitizeHTML(log.source)}</td>
+                <td style="padding:4px;">${sanitizeHTML(log.message)}</td></tr>`;
+        });
+        html += '</table>';
+        container.innerHTML = html || '<p>Логов нет</p>';
+    } catch (e) {
+        container.innerHTML = '<p style="color:var(--color-error);">Ошибка загрузки</p>';
+    }
+}
+
+async function clearCache(e) {
+    e.preventDefault();
+    if (!confirm('Очистить весь кэш ИИ?')) return;
+    try {
+        const res = await fetch('/api/admin/cache/clear', {
+            method: 'POST'
+        });
+        const data = await res.json();
+        if (data.success) alert('Кэш очищен!');
+    } catch (e) { alert('Ошибка'); }
+}
+
+// ========== ШЕРИНГ: ФОНЫ ==========
+async function loadShareBackgrounds() {
+    const container = document.getElementById('shareBackgroundsList');
+    if (!container) return;
+    try {
+        const res = await fetch('/api/admin/share/backgrounds');
+        const data = await res.json();
+        if (data.length === 0) {
+            container.innerHTML = '<p style="color:var(--color-text-lighter);">Нет загруженных фонов.</p>';
+            return;
+        }
+        let html = '<div style="display:flex;flex-wrap:wrap;gap:12px;">';
+        data.forEach(bg => {
+            const tariffColor = {'Искра':'#ffd54f','Пламя':'#d4879a'}[bg.tariff] || '#000';
+            html += `
+                <div style="background:rgba(30,58,30,0.9);border:1px solid var(--color-border);border-radius:12px;padding:12px;text-align:center;width:160px;">
+                    <img src="${sanitizeHTML(bg.image_path)}" alt="${sanitizeHTML(bg.name)}" loading="lazy" style="width:100%;height:200px;object-fit:cover;border-radius:8px;margin-bottom:8px;">
+                    <p style="font-size:11px;color:var(--color-text-light);margin-bottom:4px;">${sanitizeHTML(bg.name)}</p>
+                    <p style="font-size:10px;color:${tariffColor};margin-bottom:8px;">${sanitizeHTML(bg.tariff)}</p>
+                    <button class="btn btn-outline btn-sm" onclick="deleteShareBackground(${bg.id})" style="color:var(--color-error);width:100%;">Удалить</button>
+                </div>`;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    } catch(e) { container.innerHTML = '<p style="color:var(--color-error);">Ошибка загрузки</p>'; }
+}
+
+async function uploadShareBackground() {
+    const name = document.getElementById('shareBgName').value.trim() || 'Без названия';
+    const tariff = document.getElementById('shareBgTariff').value;
+    const file = document.getElementById('shareBgFile').files[0];
+    if (!file) { alert('Выберите файл'); return; }
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('name', name);
+    formData.append('tariff', tariff);
+    try {
+        const res = await fetch('/api/admin/share/backgrounds', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+        if (data.success) {
+            document.getElementById('shareBgFile').value = '';
+            document.getElementById('shareBgName').value = '';
+            loadShareBackgrounds();
+        } else alert('Ошибка: ' + data.error);
+    } catch(e) { alert('Ошибка соединения'); }
+}
+
+async function deleteShareBackground(id) {
+    if (!confirm('Удалить фон?')) return;
+    try {
+        const res = await fetch('/api/admin/share/backgrounds/' + id, {
+            method: 'DELETE'
+        });
+        if ((await res.json()).success) loadShareBackgrounds();
+    } catch(e) { alert('Ошибка соединения'); }
+}
+
+// ========== ШЕРИНГ: СТИЛИ ТЕКСТА ==========
+async function loadTextStyles() {
+    const container = document.getElementById('textStylesList');
+    if (!container) return;
+    try {
+        const res = await fetch('/api/admin/share/text-styles');
+        const styles = await res.json();
+        if (!styles.length) { container.innerHTML = '<p style="color:var(--color-text-lighter);">Нет стилей.</p>'; return; }
+        let html = '';
+        styles.forEach(s => {
+            // s.color — в style-атрибут, sanitizeHTML не защищает от CSS-инъекции,
+            // но это админский ввод, ограниченный <input type="color">.
+            html += `<div style="display:inline-block;margin:4px;padding:8px 12px;background:rgba(30,58,30,0.9);border:1px solid var(--color-border);border-radius:8px;font-size:12px;">
+                <span style="color:${s.color};">🎨 ${sanitizeHTML(s.name)}</span> (${sanitizeHTML(s.tariff)}) ${s.text_shape ? '· ' + sanitizeHTML(s.text_shape) : ''}
+                <button class="btn btn-outline btn-sm" onclick="deleteTextStyle(${s.id})" style="color:var(--color-error);margin-left:8px;">✕</button>
+            </div>`;
+        });
+        container.innerHTML = html;
+    } catch(e) { container.innerHTML = '<p style="color:var(--color-error);">Ошибка</p>'; }
+}
+
+async function createTextStyle() {
+    const name = document.getElementById('styleName').value.trim() || 'Новый стиль';
+    const color = document.getElementById('styleColor').value;
+    const align = document.getElementById('styleAlign').value;
+    const text_shape = document.getElementById('styleShape').value;
+    const tariff = document.getElementById('styleTariff').value;
+    try {
+        await fetch('/api/admin/share/text-styles', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, color, align, text_shape, tariff })
+        });
+        document.getElementById('styleName').value = '';
+        loadTextStyles();
+    } catch(e) { alert('Ошибка'); }
+}
+
+async function deleteTextStyle(id) {
+    if (!confirm('Удалить стиль?')) return;
+    await fetch('/api/admin/share/text-styles/' + id, {
+        method: 'DELETE'
+    });
+    loadTextStyles();
+}
+
+// ========== ШЕРИНГ: ВОДЯНЫЕ ЗНАКИ ==========
+async function loadWatermarks() {
+    const container = document.getElementById('watermarksList');
+    if (!container) return;
+    try {
+        const res = await fetch('/api/admin/share/watermarks');
+        const wms = await res.json();
+        if (!wms.length) { container.innerHTML = '<p style="color:var(--color-text-lighter);">Нет знаков.</p>'; return; }
+        let html = '';
+        wms.forEach(w => {
+            html += `<div style="display:inline-block;margin:4px;padding:8px 12px;background:rgba(30,58,30,0.9);border:1px solid var(--color-border);border-radius:8px;font-size:12px;">
+                ${w.image_path ? '<img src="' + sanitizeHTML(w.image_path) + '" alt="' + sanitizeHTML(w.name) + '" loading="lazy" style="height:30px;vertical-align:middle;margin-right:8px;">' : ''}
+                ${sanitizeHTML(w.name)} (${sanitizeHTML(w.tariff)})
+                <button class="btn btn-outline btn-sm" onclick="deleteWatermark(${w.id})" style="color:var(--color-error);margin-left:8px;">✕</button>
+            </div>`;
+        });
+        container.innerHTML = html;
+    } catch(e) { container.innerHTML = '<p style="color:var(--color-error);">Ошибка</p>'; }
+}
+
+async function uploadWatermark() {
+    const name = document.getElementById('wmName').value.trim() || 'Без названия';
+    const position = document.getElementById('wmPosition').value;
+    const pos_x = document.getElementById('wmPosX').value || 40;
+    const pos_y = document.getElementById('wmPosY').value || 1660;
+    const size_percent = document.getElementById('wmSize').value || 20;
+    const tariff = document.getElementById('wmTariff').value;
+    const file = document.getElementById('wmFile').files[0];
+    if (!file) { alert('Выберите файл'); return; }
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('name', name);
+    formData.append('position', position);
+    formData.append('pos_x', pos_x);
+    formData.append('pos_y', pos_y);
+    formData.append('size_percent', size_percent);
+    formData.append('tariff', tariff);
+    try {
+        await fetch('/api/admin/share/watermarks', { method: 'POST', body: formData });
+        document.getElementById('wmFile').value = '';
+        document.getElementById('wmName').value = '';
+        loadWatermarks();
+    } catch(e) { alert('Ошибка'); }
+}
+
+async function deleteWatermark(id) {
+    if (!confirm('Удалить знак?')) return;
+    await fetch('/api/admin/share/watermarks/' + id, {
+        method: 'DELETE'
+    });
+    loadWatermarks();
+}
+
+// ========== ШАБЛОНЫ ==========
+async function loadTemplates() {
+    const container = document.getElementById('templatesList');
+    if (!container) return;
+    try {
+        const res = await fetch('/api/admin/share/templates');
+        const templates = await res.json();
+        if (!templates.length) { container.innerHTML = '<p style="color:var(--color-text-lighter);">Нет шаблонов.</p>'; return; }
+        let html = '<table style="width:100%;font-size:12px;border-collapse:collapse;">';
+        html += '<tr><th>Название</th><th>Фон</th><th>Стиль</th><th>Знак</th><th>Тариф</th><th></th></tr>';
+        templates.forEach(t => {
+            html += `<tr>
+                <td style="padding:4px;">${sanitizeHTML(t.name)} ${t.is_default ? '⭐' : ''}</td>
+                <td style="padding:4px;">${sanitizeHTML(t.bg_name || '—')}</td>
+                <td style="padding:4px;">${sanitizeHTML(t.style_name || '—')}</td>
+                <td style="padding:4px;">${sanitizeHTML(t.wm_name || '—')}</td>
+                <td style="padding:4px;">${sanitizeHTML(t.tariff)}</td>
+                <td style="padding:4px;"><button class="btn btn-outline btn-sm" onclick="deleteTemplate(${t.id})" style="color:var(--color-error);">✕</button></td>
+            </tr>`;
+        });
+        html += '</table>';
+        container.innerHTML = html;
+    } catch(e) { container.innerHTML = '<p style="color:var(--color-error);">Ошибка</p>'; }
+}
+
+async function loadTemplateOptions() {
+    try {
+        const [bgs, styles, wms] = await Promise.all([
+            fetch('/api/admin/share/backgrounds').then(r => r.json()),
+            fetch('/api/admin/share/text-styles').then(r => r.json()),
+            fetch('/api/admin/share/watermarks').then(r => r.json())
+        ]);
+        const bgSelect = document.getElementById('templateBg');
+        const styleSelect = document.getElementById('templateStyle');
+        const wmSelect = document.getElementById('templateWm');
+        bgs.forEach(bg => { bgSelect.innerHTML += `<option value="${bg.id}">${sanitizeHTML(bg.name)}</option>`; });
+        styles.forEach(s => { styleSelect.innerHTML += `<option value="${s.id}">${sanitizeHTML(s.name)}</option>`; });
+        wms.forEach(w => { wmSelect.innerHTML += `<option value="${w.id}">${sanitizeHTML(w.name)}</option>`; });
+    } catch(e) {}
+}
+
+async function createTemplate() {
+    const name = document.getElementById('templateName').value.trim() || 'Новый шаблон';
+    const background_id = document.getElementById('templateBg').value || null;
+    const text_style_id = document.getElementById('templateStyle').value || null;
+    const watermark_id = document.getElementById('templateWm').value || null;
+    const is_default = document.getElementById('templateIsDefault').checked ? 1 : 0;
+    const tariff = document.getElementById('templateTariff').value;
+    try {
+        await fetch('/api/admin/share/templates', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, background_id, text_style_id, watermark_id, is_default, tariff })
+        });
+        document.getElementById('templateName').value = '';
+        loadTemplates();
+    } catch(e) { alert('Ошибка'); }
+}
+
+async function deleteTemplate(id) {
+    if (!confirm('Удалить шаблон?')) return;
+    await fetch('/api/admin/share/templates/' + id, {
+        method: 'DELETE'
+    });
+    loadTemplates();
+}
+
+// ========== CANVA EDITOR (свободная трансформация) ==========
+let canvaCanvas = null;
+let canvaCtx = null;
+let canvaBgImg = new Image();
+let canvaBgPath = '';
+let canvaElements = [];
+let canvaSelectedIdx = -1;
+let canvaDragging = false;
+let canvaDraggingCorner = -1; // 0=TL, 1=TR, 2=BR, 3=BL — угол, который тащим
+let canvaDragOffsetX = 0;
+let canvaDragOffsetY = 0;
+
+function initCanvaEditor() {
+    const canvas = document.getElementById('canvaCanvas');
+    if (!canvas) return;
+    canvaCanvas = canvas;
+    canvaCtx = canvas.getContext('2d');
+    canvaBgImg.src = '/static/images/share/default_bg.png';
+    canvaBgImg.onload = () => drawCanva();
+    canvaBgPath = '/static/images/share/default_bg.png';
+    loadCanvaBgList();
+    loadCanvaWatermarks();
+    loadCanvaTemplates();
+    canvas.addEventListener('mousedown', onCanvaMouseDown);
+    canvas.addEventListener('mousemove', onCanvaMouseMove);
+    canvas.addEventListener('mouseup', onCanvaMouseUp);
+    canvas.addEventListener('mouseleave', onCanvaMouseUp);
+    canvas.addEventListener('touchstart', onCanvaTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', onCanvaTouchMove, { passive: false });
+    canvas.addEventListener('touchend', onCanvaTouchEnd);
+}
+
+async function loadCanvaBgList() {
+    const select = document.getElementById('canvaBgSelect');
+    if (!select) return;
+    try {
+        const res = await fetch('/api/admin/share/backgrounds');
+        const bgs = await res.json();
+        select.innerHTML = '<option value="">Тёмно-зелёный</option>';
+        bgs.forEach(bg => { select.innerHTML += `<option value="${sanitizeHTML(bg.image_path)}">${sanitizeHTML(bg.name)}</option>`; });
+    } catch(e) {}
+}
+
+async function loadCanvaWatermarks() {
+    const select = document.getElementById('canvaWatermarkSelect');
+    if (!select) return;
+    try {
+        const res = await fetch('/api/admin/share/watermarks');
+        const wms = await res.json();
+        select.innerHTML = '<option value="/static/images/share/numer_watermark.png">unanum (дефолтный)</option>';
+        wms.forEach(w => {
+            select.innerHTML += `<option value="${sanitizeHTML(w.image_path)}">${sanitizeHTML(w.name)}</option>`;
+        });
+    } catch(e) {}
+}
+
+function canvaChangeBg() {
+    const path = document.getElementById('canvaBgSelect').value;
+    canvaBgPath = path || '/static/images/share/default_bg.png';
+    canvaBgImg.src = canvaBgPath;
+    canvaBgImg.onload = () => drawCanva();
+}
+
+// Создаёт 4 угла из центра и размеров
+function cornersFromRect(x, y, w, h) {
+    return { x1: x, y1: y, x2: x + w, y2: y, x3: x + w, y3: y + h, x4: x, y4: y + h };
+}
+
+// Возвращает 4 угла в порядке TL, TR, BR, BL
+function getCorners(el) {
+    if (el.x1 !== undefined) return { x1: el.x1, y1: el.y1, x2: el.x2, y2: el.y2, x3: el.x3, y3: el.y3, x4: el.x4, y4: el.y4 };
+    return cornersFromRect(el.x, el.y, el.w, el.h);
+}
+
+function canvaAddText() {
+    const c = cornersFromRect(100, 300, 160, 60);
+    canvaElements.push({
+        type: 'text', text: 'Новый текст', color: '#ffd54f', shape: 'free', fontSize: 24, placeholder: false,
+        ...c
+    });
+    canvaSelectedIdx = canvaElements.length - 1;
+    updatePropsPanel();
+    drawCanva();
+}
+
+function canvaAddWatermark() {
+    const src = document.getElementById('canvaWatermarkSelect')?.value || '/static/images/share/numer_watermark.png';
+    const img = new Image();
+    img.src = src;
+    img.onload = () => {
+        const c = cornersFromRect(50, 500, 100, 30);
+        canvaElements.push({ type: 'watermark', img: img, imagePath: src, ...c });
+        canvaSelectedIdx = canvaElements.length - 1;
+        updatePropsPanel();
+        drawCanva();
+    };
+}
+
+function updatePropsPanel() {
+    const props = document.getElementById('canvaProps');
+    if (canvaSelectedIdx >= 0 && canvaElements[canvaSelectedIdx]) {
+        const el = canvaElements[canvaSelectedIdx];
+        props.style.display = 'flex';
+        document.getElementById('canvaPropType').value = el.type;
+        document.getElementById('canvaTextRow').style.display = el.type === 'text' ? 'block' : 'none';
+        document.getElementById('canvaColorRow').style.display = el.type === 'text' ? 'block' : 'none';
+        document.getElementById('canvaPropShape').style.display = el.type === 'text' ? 'block' : 'none';
+        document.getElementById('canvaFontSizeRow').style.display = el.type === 'text' ? 'block' : 'none';
+        document.getElementById('canvaPlaceholderRow').style.display = el.type === 'text' ? 'block' : 'none';
+        if (el.type === 'text') {
+            document.getElementById('canvaPropText').value = el.text || '';
+            document.getElementById('canvaPropColor').value = el.color;
+            document.getElementById('canvaPropShape').value = el.shape || 'free';
+            document.getElementById('canvaPropFontSize').value = el.fontSize;
+            document.getElementById('canvaFontSizeVal').textContent = el.fontSize;
+            document.getElementById('canvaPropPlaceholder').checked = el.placeholder || false;
+        }
+    } else {
+        props.style.display = 'none';
+    }
+}
+
+function canvaUpdateProp() {
+    if (canvaSelectedIdx < 0) return;
+    const el = canvaElements[canvaSelectedIdx];
+    if (el.type === 'text') {
+        el.text = document.getElementById('canvaPropText').value;
+        el.color = document.getElementById('canvaPropColor').value;
+        el.shape = document.getElementById('canvaPropShape').value;
+        el.fontSize = parseInt(document.getElementById('canvaPropFontSize').value);
+        el.placeholder = document.getElementById('canvaPropPlaceholder').checked;
+        document.getElementById('canvaFontSizeVal').textContent = el.fontSize;
+    }
+    drawCanva();
+}
+
+function canvaDeleteSelected() {
+    if (canvaSelectedIdx < 0) return;
+    canvaElements.splice(canvaSelectedIdx, 1);
+    canvaSelectedIdx = -1;
+    updatePropsPanel();
+    drawCanva();
+}
+
+function drawCanva() {
+    if (!canvaCtx) return;
+    const cw = canvaCanvas.width;
+    const ch = canvaCanvas.height;
+    canvaCtx.clearRect(0, 0, cw, ch);
+    if (canvaBgImg.complete) canvaCtx.drawImage(canvaBgImg, 0, 0, cw, ch);
+    const scale = cw / 1080;
+
+    canvaElements.forEach((el, idx) => {
+        const c = getCorners(el);
+        const corners = [[c.x1, c.y1], [c.x2, c.y2], [c.x3, c.y3], [c.x4, c.y4]];
+        canvaCtx.save();
+
+        if (el.type === 'text') {
+            // Рисуем четырёхугольник
+            canvaCtx.strokeStyle = idx === canvaSelectedIdx ? 'rgba(255,213,79,0.9)' : 'rgba(255,213,79,0.3)';
+            canvaCtx.lineWidth = idx === canvaSelectedIdx ? 2 : 1;
+            canvaCtx.setLineDash([4, 4]);
+            canvaCtx.beginPath();
+            canvaCtx.moveTo(c.x1, c.y1);
+            canvaCtx.lineTo(c.x2, c.y2);
+            canvaCtx.lineTo(c.x3, c.y3);
+            canvaCtx.lineTo(c.x4, c.y4);
+            canvaCtx.closePath();
+            canvaCtx.stroke();
+            canvaCtx.setLineDash([]);
+
+            // Текст по центру bounding box
+            const cx = (c.x1 + c.x2 + c.x3 + c.x4) / 4;
+            const cy = (c.y1 + c.y2 + c.y3 + c.y4) / 4;
+            canvaCtx.font = `bold ${el.fontSize * scale}px Inter, sans-serif`;
+            canvaCtx.fillStyle = el.color;
+            canvaCtx.textAlign = 'center';
+            canvaCtx.textBaseline = 'middle';
+            canvaCtx.fillText(el.text, cx, cy);
+
+            // Уголки
+            if (idx === canvaSelectedIdx) {
+                corners.forEach(([px, py]) => {
+                    canvaCtx.beginPath();
+                    canvaCtx.arc(px, py, 5, 0, 2 * Math.PI);
+                    canvaCtx.fillStyle = '#ffd54f';
+                    canvaCtx.fill();
+                    canvaCtx.strokeStyle = '#0f1f0f';
+                    canvaCtx.lineWidth = 1.5;
+                    canvaCtx.stroke();
+                });
+            }
+        } else if (el.type === 'watermark' && el.img && el.img.complete) {
+            // Для знака — рисуем внутри bounding box
+            const minX = Math.min(c.x1, c.x2, c.x3, c.x4);
+            const minY = Math.min(c.y1, c.y2, c.y3, c.y4);
+            const maxX = Math.max(c.x1, c.x2, c.x3, c.x4);
+            const maxY = Math.max(c.y1, c.y2, c.y3, c.y4);
+            canvaCtx.drawImage(el.img, minX, minY, maxX - minX, maxY - minY);
+            if (idx === canvaSelectedIdx) {
+                canvaCtx.strokeStyle = 'rgba(255,213,79,0.9)';
+                canvaCtx.lineWidth = 2;
+                canvaCtx.strokeRect(minX, minY, maxX - minX, maxY - minY);
+            }
+        }
+        canvaCtx.restore();
+    });
+}
+
+function getCanvaPos(e) {
+    const rect = canvaCanvas.getBoundingClientRect();
+    const scaleX = canvaCanvas.width / rect.width;
+    const scaleY = canvaCanvas.height / rect.height;
+    return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+}
+
+// Ищет элемент и угол, ближайший к точке
+function findCornerAt(px, py) {
+    for (let i = canvaElements.length - 1; i >= 0; i--) {
+        const c = getCorners(canvaElements[i]);
+        const corners = [{x: c.x1, y: c.y1, idx: 0}, {x: c.x2, y: c.y2, idx: 1}, {x: c.x3, y: c.y3, idx: 2}, {x: c.x4, y: c.y4, idx: 3}];
+        for (const corner of corners) {
+            if (Math.abs(px - corner.x) < 10 && Math.abs(py - corner.y) < 10) {
+                return { elIdx: i, cornerIdx: corner.idx };
+            }
+        }
+    }
+    return null;
+}
+
+function onCanvaMouseDown(e) {
+    const pos = getCanvaPos(e);
+    const hit = findCornerAt(pos.x, pos.y);
+    if (hit) {
+        canvaSelectedIdx = hit.elIdx;
+        canvaDragging = true;
+        canvaDraggingCorner = hit.cornerIdx;
+    } else {
+        canvaSelectedIdx = -1;
+    }
+    updatePropsPanel();
+    drawCanva();
+}
+
+function setCorner(el, idx, x, y) {
+    const keys = ['x1','y1','x2','y2','x3','y3','x4','y4'];
+    el[keys[idx * 2]] = x;
+    el[keys[idx * 2 + 1]] = y;
+}
+
+function onCanvaMouseMove(e) {
+    const pos = getCanvaPos(e);
+    const hit = findCornerAt(pos.x, pos.y);
+    if (hit) {
+        canvaCanvas.style.cursor = 'pointer';
+        if (canvaDragging) {
+            const el = canvaElements[canvaSelectedIdx];
+            if (!el) return;
+            setCorner(el, canvaDraggingCorner, Math.round(pos.x), Math.round(pos.y));
+            drawCanva();
+        }
+    } else {
+        canvaCanvas.style.cursor = 'default';
+    }
+}
+
+function onCanvaMouseUp() { 
+    canvaDragging = false; 
+    canvaDraggingCorner = -1;
+    canvaCanvas.style.cursor = 'default'; 
+}
+
+function onCanvaTouchStart(e) { e.preventDefault(); if (e.touches.length === 1) onCanvaMouseDown(e.touches[0]); }
+function onCanvaTouchMove(e) { e.preventDefault(); if (e.touches.length === 1) onCanvaMouseMove(e.touches[0]); }
+function onCanvaTouchEnd() { onCanvaMouseUp(); }
+
+async function canvaSaveTemplate() {
+    const name = prompt('Название шаблона:', 'Мой шаблон');
+    if (!name) return;
+    const tariff = prompt('Тариф (Искра/Пламя):', 'Искра');
+    if (!tariff) return;
+    const template = {
+        name: name,
+        background: canvaBgPath,
+        elements: canvaElements.map(el => {
+            const c = getCorners(el);
+            const base = {
+                type: el.type,
+                x1: Math.round(c.x1), y1: Math.round(c.y1),
+                x2: Math.round(c.x2), y2: Math.round(c.y2),
+                x3: Math.round(c.x3), y3: Math.round(c.y3),
+                x4: Math.round(c.x4), y4: Math.round(c.y4)
+            };
+            if (el.type === 'text') {
+                base.text = el.text || '';
+                base.color = el.color || '#ffd54f';
+                base.shape = el.shape || 'free';
+                base.fontSize = el.fontSize || 24;
+                base.placeholder = el.placeholder || false;
+            } else if (el.type === 'watermark') {
+                base.imagePath = el.imagePath || '/static/images/share/numer_watermark.png';
+            }
+            return base;
+        }),
+        tariff: tariff,
+        is_default: confirm('Сделать шаблоном по умолчанию?') ? 1 : 0
+    };
+    try {
+        const res = await fetch('/api/admin/share/templates/save-full', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(template)
+        });
+        const data = await res.json();
+        if (data.success) { alert('Шаблон сохранён! ID: ' + data.template_id); loadTemplates(); loadCanvaTemplates(); }
+    } catch(e) { alert('Ошибка сохранения'); }
+}
+
+async function loadCanvaTemplates() {
+    const container = document.getElementById('canvaTemplatesList');
+    if (!container) return;
+    try {
+        const res = await fetch('/api/admin/share/templates');
+        const templates = await res.json();
+        if (!templates.length) { container.innerHTML = '<p style="font-size:11px;color:var(--color-text-lighter);">Пока нет сохранённых шаблонов</p>'; return; }
+        let html = '';
+        templates.forEach(t => { html += `<div style="padding:4px 0;font-size:11px;color:var(--color-text-light);cursor:pointer;" onclick="canvaLoadTemplate(${t.id})">📄 ${sanitizeHTML(t.name)} (${sanitizeHTML(t.tariff)})</div>`; });
+        container.innerHTML = html;
+    } catch(e) {}
+}
+
+async function canvaLoadTemplate(id) {
+    try {
+        const res = await fetch('/api/admin/share/templates');
+        const templates = await res.json();
+        const template = templates.find(t => t.id == id);
+        if (!template) return alert('Шаблон не найден');
+        const elRes = await fetch('/api/admin/share/template-elements/' + id);
+        const elements = await elRes.json();
+        if (template.bg_name) {
+            const bgRes = await fetch('/api/admin/share/backgrounds');
+            const bgs = await bgRes.json();
+            const bg = bgs.find(b => b.name === template.bg_name);
+            if (bg) { canvaBgPath = bg.image_path; canvaBgImg.src = bg.image_path; }
+        } else { canvaBgPath = '/static/images/share/default_bg.png'; canvaBgImg.src = '/static/images/share/default_bg.png'; }
+        canvaElements = [];
+        for (const el of elements) {
+            if (el.type === 'text') {
+                canvaElements.push({
+                    type: 'text', text: el.text || 'Текст', color: el.color || '#ffd54f', shape: el.shape || 'free', fontSize: el.font_size || 24,
+                    placeholder: el.placeholder || false,
+                    x1: el.x1 || el.x, y1: el.y1 || el.y, x2: el.x2 || el.x + el.w, y2: el.y2 || el.y,
+                    x3: el.x3 || el.x + el.w, y3: el.y3 || el.y + el.h, x4: el.x4 || el.x, y4: el.y4 || el.y + el.h
+                });
+            } else if (el.type === 'watermark') {
+                const img = new Image();
+                const src = el.imagePath || '/static/images/share/numer_watermark.png';
+                img.src = src;
+                img.onload = () => drawCanva();
+                canvaElements.push({
+                    type: 'watermark', img: img, imagePath: src,
+                    x1: el.x1 || el.x, y1: el.y1 || el.y, x2: el.x2 || el.x + el.w, y2: el.y2 || el.y,
+                    x3: el.x3 || el.x + el.w, y3: el.y3 || el.y + el.h, x4: el.x4 || el.x, y4: el.y4 || el.y + el.h
+                });
+            }
+        }
+        canvaSelectedIdx = -1;
+        updatePropsPanel();
+        drawCanva();
+        alert('Шаблон загружен!');
+    } catch(e) { alert('Ошибка загрузки'); }
+}
+
+// ========== ЗАГРУЗКА ПРИ ОТКРЫТИИ ==========
+loadLogs();
+
+// ========== НАВИГАЦИЯ ==========
+document.querySelectorAll('.admin-nav-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.admin-nav-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        const section = this.dataset.section;
+        document.querySelectorAll('.admin-section-content').forEach(s => s.classList.remove('active'));
+        const target = document.getElementById('section-' + section);
+        if (target) target.classList.add('active');
+
+        if (section === 'prompts' && !window._promptsLoaded) { loadPrompts(); window._promptsLoaded = true; }
+        if (section === 'users' && !window._usersLoaded) { loadUsers(); window._usersLoaded = true; }
+        if (section === 'editor' && !window._editorLoaded) {
+            loadShareBackgrounds();
+            loadTextStyles();
+            loadWatermarks();
+            loadTemplates();
+            loadTemplateOptions();
+            initCanvaEditor();
+            window._editorLoaded = true;
+        }
+    });
+});
+</script>
+{% endblock %}

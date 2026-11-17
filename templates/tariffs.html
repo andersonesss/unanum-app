@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Тарифы — unanum{% endblock %}
+
+{% block content %}
+<div class="page-section" data-numer-section="tariffs">
+    <div class="container">
+        <h1 class="page-title" style="font-size:clamp(2rem, 5vw, 2.5rem);font-weight:700;background:linear-gradient(135deg, #d4a843, #d4879a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;">Тарифы</h1>
+        <p class="page-subtitle">Выбери свой путь к себе</p>
+        
+        <div class="tariffs-grid">
+            <!-- Искра -->
+            <div class="tariff-card">
+                <div class="tariff-badge">✨</div>
+                <h2 class="tariff-name">Искра</h2>
+                <p class="tariff-price">Бесплатно</p>
+                <p class="tariff-desc">Для первого знакомства с собой</p>
+                <ul class="tariff-features">
+                    <li>✨ Карта дня с толкованием</li>
+                    <li>✨ Денежный код (4 цифры)</li>
+                    <li>✨ Гороскоп на сегодня</li>
+                    <li>✨ Лунный календарь (базовый)</li>
+                    <li>✨ Нумерология (число судьбы)</li>
+                    <li>✨ Совместимость (процент)</li>
+                    <li>✨ Психоматрица Пифагора</li>
+                    <li>✨ График жизни</li>
+                    <li>✨ Справочник чисел</li>
+                    <li>✨ Чат с unanum (3 вопроса/день)</li>
+                    <li style="color:var(--color-text-lighter);">— Полные AI-расшифровки</li>
+                    <li style="color:var(--color-text-lighter);">— Расклады Таро</li>
+                    <li style="color:var(--color-text-lighter);">— Натальная карта</li>
+                    <li style="color:var(--color-text-lighter);">— Персональные ритуалы</li>
+                </ul>
+                {% if current_user.is_authenticated and current_user.subscription == 'Искра' %}
+                    <button class="btn btn-outline" style="width:100%;" disabled>Текущий тариф</button>
+                {% else %}
+                    <button class="btn btn-outline" style="width:100%;" onclick="showPaywall()">Выбрать</button>
+                {% endif %}
+            </div>
+
+            <!-- Пламя -->
+            <div class="tariff-card tariff-recommended">
+                <div class="tariff-popular">⭐ Рекомендуем</div>
+                <div class="tariff-badge">🔥</div>
+                <h2 class="tariff-name">Пламя</h2>
+                <p class="tariff-price">{{ PAYWALL_PRICE_RUB }} ₽ / месяц</p>
+                <p class="tariff-desc">Для полного погружения в магию чисел и звёзд</p>
+                <ul class="tariff-features">
+                    <li>✨ Всё из тарифа Искра</li>
+                    <li>✨ Полные AI-расшифровки кода</li>
+                    <li>✨ Полный гороскоп (любовь, карьера, здоровье)</li>
+                    <li>✨ Полный анализ совместимости</li>
+                    <li>✨ Расклады Таро (3 карты)</li>
+                    <li>✨ Полный лунный календарь с ритуалами</li>
+                    <li>✨ Натальная карта с AI-разбором</li>
+                    <li>✨ Нумерологический портрет (все числа)</li>
+                    <li>✨ Безлимитные вопросы к гороскопу</li>
+                    <li>✨ Чат с unanum (безлимит)</li>
+                    <li>✨ История всех раскладов</li>
+                    <li>✨ Гороскоп на год</li>
+                    <li>✨ Прогноз финкода на 3 года</li>
+                    <li>✨ Сравнение финкодов с партнёром</li>
+                    <li>✨ Сохранение до 10 людей</li>
+                    <li>✨ Персональные ритуалы (полные)</li>
+                    <li>✨ Приоритетная поддержка</li>
+                    <li>✨ Эксклюзивные шаблоны для сториз</li>
+                </ul>
+                {% if current_user.is_authenticated and current_user.subscription == 'Пламя' %}
+                    <button class="btn btn-primary" style="width:100%;" disabled>Текущий тариф</button>
+                {% else %}
+                    <button class="btn btn-primary" style="width:100%;" onclick="showPaywall()">Оплатить {{ PAYWALL_PRICE_RUB }} ₽</button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Сравнительная таблица -->
+        <div style="margin-top: 40px; max-width: 700px; margin-left: auto; margin-right: auto; padding: 0 16px;">
+            <h2 style="font-size: 20px; font-weight: 600; color: var(--color-gold); text-align: center; margin-bottom: 20px;">Сравнение тарифов</h2>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; font-size: 12px; border-collapse: collapse; text-align: center;">
+                    <tr style="border-bottom: 1px solid var(--color-gold);">
+                        <th style="padding: 10px 8px; text-align: left; color: var(--color-text);">Функция</th>
+                        <th style="padding: 10px 8px; color: var(--color-text-lighter);">✨ Искра</th>
+                        <th style="padding: 10px 8px; color: var(--color-gold);">🔥 Пламя</th>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--color-border);">
+                        <td style="padding: 8px; text-align: left; color: var(--color-text-light);">Денежный код</td>
+                        <td style="padding: 8px; color: var(--color-text-lighter);">4 цифры</td>
+                        <td style="padding: 8px; color: #7eb89e;">Полный + прогноз</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--color-border);">
+                        <td style="padding: 8px; text-align: left; color: var(--color-text-light);">Гороскоп</td>
+                        <td style="padding: 8px; color: var(--color-text-lighter);">На сегодня</td>
+                        <td style="padding: 8px; color: #7eb89e;">Полный + на год</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--color-border);">
+                        <td style="padding: 8px; text-align: left; color: var(--color-text-light);">Совместимость</td>
+                        <td style="padding: 8px; color: var(--color-text-lighter);">Процент</td>
+                        <td style="padding: 8px; color: #7eb89e;">Полный + финкоды</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--color-border);">
+                        <td style="padding: 8px; text-align: left; color: var(--color-text-light);">Лунный календарь</td>
+                        <td style="padding: 8px; color: var(--color-text-lighter);">Базовый</td>
+                        <td style="padding: 8px; color: #7eb89e;">Полный</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--color-border);">
+                        <td style="padding: 8px; text-align: left; color: var(--color-text-light);">Таро</td>
+                        <td style="padding: 8px; color: var(--color-text-lighter);">Карта дня</td>
+                        <td style="padding: 8px; color: #7eb89e;">Расклад 3 карты</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--color-border);">
+                        <td style="padding: 8px; text-align: left; color: var(--color-text-light);">Натальная карта</td>
+                        <td style="padding: 8px; color: var(--color-text-lighter);">—</td>
+                        <td style="padding: 8px; color: #7eb89e;">✅</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--color-border);">
+                        <td style="padding: 8px; text-align: left; color: var(--color-text-light);">Нумерология</td>
+                        <td style="padding: 8px; color: var(--color-text-lighter);">Число судьбы</td>
+                        <td style="padding: 8px; color: #7eb89e;">Все числа</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--color-border);">
+                        <td style="padding: 8px; text-align: left; color: var(--color-text-light);">Вопросы к гороскопу</td>
+                        <td style="padding: 8px; color: var(--color-text-lighter);">—</td>
+                        <td style="padding: 8px; color: #7eb89e;">Безлимит</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--color-border);">
+                        <td style="padding: 8px; text-align: left; color: var(--color-text-light);">Чат с unanum</td>
+                        <td style="padding: 8px; color: var(--color-text-lighter);">3 / день</td>
+                        <td style="padding: 8px; color: #7eb89e;">Безлимит</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--color-border);">
+                        <td style="padding: 8px; text-align: left; color: var(--color-text-light);">Сохранение людей</td>
+                        <td style="padding: 8px; color: var(--color-text-lighter);">—</td>
+                        <td style="padding: 8px; color: #7eb89e;">До 10</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--color-border);">
+                        <td style="padding: 8px; text-align: left; color: var(--color-text-light);">Шаблоны для сториз</td>
+                        <td style="padding: 8px; color: var(--color-text-lighter);">—</td>
+                        <td style="padding: 8px; color: #7eb89e;">✅</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; text-align: left; color: var(--color-text-light);">Поддержка</td>
+                        <td style="padding: 8px; color: var(--color-text-lighter);">Email</td>
+                        <td style="padding: 8px; color: #7eb89e;">Приоритетная</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Частые вопросы -->
+        <div style="margin-top: 40px; max-width: 600px; margin-left: auto; margin-right: auto; padding: 0 16px;">
+            <h2 style="font-size: 20px; font-weight: 600; color: var(--color-gold); text-align: center; margin-bottom: 20px;">Частые вопросы</h2>
+            
+            <div style="margin-bottom: 16px; padding: 14px; background: rgba(30,58,30,0.4); border: 1px solid var(--color-border); border-radius: 12px;">
+                <p style="font-size: 13px; font-weight: 600; color: var(--color-gold); margin-bottom: 6px;">Можно ли сменить тариф?</p>
+                <p style="font-size: 12px; color: var(--color-text-light); line-height: 1.6;">Да, в любой момент. При смене тарифа неиспользованные дни текущего периода сгорают, новый тариф активируется сразу.</p>
+            </div>
+            
+            <div style="margin-bottom: 16px; padding: 14px; background: rgba(30,58,30,0.4); border: 1px solid var(--color-border); border-radius: 12px;">
+                <p style="font-size: 13px; font-weight: 600; color: var(--color-gold); margin-bottom: 6px;">Как отменить подписку?</p>
+                <p style="font-size: 12px; color: var(--color-text-light); line-height: 1.6;">В личном кабинете, в разделе «Безопасность». Доступ к функциям сохраняется до конца оплаченного периода.</p>
+            </div>
+            
+            <div style="margin-bottom: 16px; padding: 14px; background: rgba(30,58,30,0.4); border: 1px solid var(--color-border); border-radius: 12px;">
+                <p style="font-size: 13px; font-weight: 600; color: var(--color-gold); margin-bottom: 6px;">Есть ли возврат средств?</p>
+                <p style="font-size: 12px; color: var(--color-text-light); line-height: 1.6;">Да, в течение 14 дней с момента оплаты, если услуги не были использованы. Подробнее — в Публичной оферте.</p>
+            </div>
+            
+            <div style="margin-bottom: 16px; padding: 14px; background: rgba(30,58,30,0.4); border: 1px solid var(--color-border); border-radius: 12px;">
+                <p style="font-size: 13px; font-weight: 600; color: var(--color-gold); margin-bottom: 6px;">Можно ли попробовать перед покупкой?</p>
+                <p style="font-size: 12px; color: var(--color-text-light); line-height: 1.6;">Да, тариф «Искра» бесплатный и даёт доступ к базовым функциям без ограничений по времени.</p>
+            </div>
+        </div>
+
+        <!-- Дисклеймер -->
+        <div style="margin-top: 32px; padding: 16px; background: rgba(255,213,79,0.03); border: 1px solid var(--color-border); border-radius: 12px; max-width: 600px; margin-left: auto; margin-right: auto;">
+            <p style="font-size: 11px; color: var(--color-text-lighter); text-align: center; line-height: 1.6;">
+                Все функции сервиса носят информационно-развлекательный характер. Это не заменяет профессиональную консультацию психолога, астролога или финансового советника. Относитесь к результатам как к инструменту для самоанализа.
+            </p>
+        </div>
+
+        <p style="text-align:center;margin-top:20px;font-size:12px;color:var(--color-text-lighter);">
+            Оплата временно недоступна — все функции бесплатны в тестовом режиме
+        </p>
+    </div>
+</div>
+{% endblock %}

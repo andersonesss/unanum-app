@@ -1,0 +1,1627 @@
+{% extends "base.html" %}
+{% block title %}Нумерология по дате рождения — рассчитать число судьбы онлайн | Unanum{% endblock %}
+{% block meta_description %}Бесплатный нумерологический портрет по дате рождения. Число жизненного пути, судьбы, души. Квадрат Пифагора с расшифровкой.{% endblock %}
+{% block content %}
+<section class="page-section" style="padding-top: 80px;" data-numer-section="numerology">
+    <div class="container" style="padding: 0 16px;">
+        <h1 class="page-title" style="font-size: clamp(2rem, 5vw, 2.5rem); font-weight: 700; background: linear-gradient(135deg, #d4a843, #d4879a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 4px;">Нумерология</h1>
+        <p class="page-subtitle" style="color: var(--color-text);">Раскройте тайны вашей судьбы через числа</p>
+
+        <!-- 4 карточки инструментов -->
+        <div id="numerologyCards" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 400px; margin: 32px auto; padding: 0 12px;">
+            <div style="text-align: center; cursor: pointer; padding: 24px 16px; border-radius: 12px; background: transparent; border: 1px solid var(--color-border); transition: border-color 0.3s;" onclick="openNumerologyTool('portrait')" onmouseover="this.style.borderColor='var(--color-gold)'" onmouseout="this.style.borderColor='var(--color-border)'">
+                <div style="margin-bottom: 14px;"><img src="/static/icon/numer.svg" alt="" style="width: 84px; height: 84px; filter: brightness(0) saturate(100%) invert(84%) sepia(36%) saturate(768%) hue-rotate(346deg) brightness(105%) contrast(103%);"></div>
+                <h3 style="font-size: 14px; font-weight: 600; color: var(--color-text); margin-bottom: 4px;">Нумерологический портрет</h3>
+                <p style="font-size: 11px; color: var(--color-text-lighter); line-height: 1.4;">Числа судьбы и характера</p>
+            </div>
+            
+            <div style="text-align: center; cursor: pointer; padding: 24px 16px; border-radius: 12px; background: transparent; border: 1px solid var(--color-border); transition: border-color 0.3s;" onclick="openNumerologyTool('psychomatrix')" onmouseover="this.style.borderColor='var(--color-gold)'" onmouseout="this.style.borderColor='var(--color-border)'">
+                <div style="margin-bottom: 14px;"><img src="/static/icon/pifagor.svg" alt="" style="width: 84px; height: 84px; filter: brightness(0) saturate(100%) invert(84%) sepia(36%) saturate(768%) hue-rotate(346deg) brightness(105%) contrast(103%);"></div>
+                <h3 style="font-size: 14px; font-weight: 600; color: var(--color-text); margin-bottom: 4px;">Психоматрица</h3>
+                <p style="font-size: 11px; color: var(--color-text-lighter); line-height: 1.4;">Квадрат Пифагора</p>
+            </div>
+            
+            <div style="text-align: center; cursor: pointer; padding: 24px 16px; border-radius: 12px; background: transparent; border: 1px solid var(--color-border); transition: border-color 0.3s;" onclick="openNumerologyTool('graph')" onmouseover="this.style.borderColor='var(--color-gold)'" onmouseout="this.style.borderColor='var(--color-border)'">
+                <div style="margin-bottom: 14px;"><img src="/static/icon/graf.svg" alt="" style="width: 84px; height: 84px; filter: brightness(0) saturate(100%) invert(84%) sepia(36%) saturate(768%) hue-rotate(346deg) brightness(105%) contrast(103%);"></div>
+                <h3 style="font-size: 14px; font-weight: 600; color: var(--color-text); margin-bottom: 4px;">График жизни</h3>
+                <p style="font-size: 11px; color: var(--color-text-lighter); line-height: 1.4;">Циклы энергии</p>
+            </div>
+            
+            <div style="text-align: center; cursor: pointer; padding: 24px 16px; border-radius: 12px; background: transparent; border: 1px solid var(--color-border); transition: border-color 0.3s;" onclick="openNumerologyTool('reference')" onmouseover="this.style.borderColor='var(--color-gold)'" onmouseout="this.style.borderColor='var(--color-border)'">
+                <div style="margin-bottom: 14px;"><img src="/static/icon/chislo.svg" alt="" style="width: 84px; height: 84px; filter: brightness(0) saturate(100%) invert(84%) sepia(36%) saturate(768%) hue-rotate(346deg) brightness(105%) contrast(103%);"></div>
+                <h3 style="font-size: 14px; font-weight: 600; color: var(--color-text); margin-bottom: 4px;">Справочник чисел</h3>
+                <p style="font-size: 11px; color: var(--color-text-lighter); line-height: 1.4;">Значение каждого числа</p>
+            </div>
+        </div>
+
+        <!-- Форма и результат (скрыты до выбора инструмента) -->
+        <div id="numerologyToolSection" style="display: none; max-width: 400px; margin: 0 auto; padding: 0 12px; box-sizing: border-box;">
+            <div id="numerologyToolForm" style="margin-bottom: 24px;"></div>
+            <div class="panel-result" id="result-numerology" style="margin-top: 20px; max-width: 100%; box-sizing: border-box; word-wrap: break-word; overflow-wrap: break-word;"></div>
+            <div id="numerologyBackToCards" style="display: none; text-align: center; margin-top: 24px; padding: 20px 0;"></div>
+        </div>
+
+    </div>
+</section>
+
+<!-- Модальное окно для информации о числе -->
+<div class="modal-overlay" id="numberInfoModal" style="z-index: 500;">
+    <div class="modal" style="max-width: 420px; text-align: center;">
+        <button class="modal-close" onclick="closeNumberInfo()">&times;</button>
+        <div id="numberInfoContent"></div>
+    </div>
+</div>
+
+<script src="/static/js/numerology_data.js" defer></script>
+<script>
+let currentTool = null;
+let lastFormData = null;
+
+const toolConfig = {
+    portrait: {
+        title: 'Нумерологический портрет',
+        subtitle: 'Введите имя и дату рождения, чтобы узнать свои ключевые числа',
+        formFields: `
+            <div class="input-row" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <div class="input-group" style="flex: 1; min-width: 150px;">
+                    <label style="color: var(--color-text-light); font-size: 14px;">Имя</label>
+                    <input type="text" name="first_name" placeholder="Ваше имя" required autocomplete="off">
+                </div>
+                <div class="input-group" style="flex: 1; min-width: 150px;">
+                    <label style="color: var(--color-text-light); font-size: 14px;">Фамилия</label>
+                    <input type="text" name="last_name" placeholder="Ваша фамилия" autocomplete="off">
+                </div>
+                <div class="input-group" style="flex: 1; min-width: 150px;">
+                    <label style="color: var(--color-text-light); font-size: 14px;">Отчество</label>
+                    <input type="text" name="middle_name" placeholder="Ваше отчество" autocomplete="off">
+                </div>
+            </div>
+            <div class="input-group" style="margin-top: 12px;">
+                <label style="color: var(--color-text-light); font-size: 14px;">Дата рождения</label>
+                <input type="date" name="birth_date" required>
+            </div>
+        `,
+        backText: 'Числа уже начали говорить. Но квадрат Пифагора знает то, о чём молчит портрет — хотите взглянуть?',
+        backAction: 'psychomatrix'
+    },
+    psychomatrix: {
+        title: 'Психоматрица Пифагора',
+        subtitle: 'Квадрат Пифагора раскроет скрытые качества вашего характера',
+        formFields: `
+            <div class="input-group" style="margin-bottom: 12px;">
+                <label style="color: var(--color-text-light); font-size: 14px;">Дата рождения</label>
+                <input type="date" name="birth_date" required>
+            </div>
+        `,
+        backText: 'Цифры в квадрате уже показали характер. А что насчёт подъёмов и спадов вашей энергии по годам?',
+        backAction: 'graph'
+    },
+    graph: {
+        title: 'График жизни',
+        subtitle: 'Визуализация подъёмов и спадов жизненной энергии в 7-летних циклах',
+        formFields: `
+            <div class="input-group" style="margin-bottom: 12px;">
+                <label>Дата рождения</label>
+                <input type="date" name="birth_date" required>
+            </div>
+        `,
+        backText: 'Энергия циклов уже видна. Осталось понять значение каждого числа в судьбе — загляните в справочник.',
+        backAction: 'reference'
+    },
+    reference: {
+        title: 'Справочник чисел',
+        subtitle: 'Нажмите на число, чтобы узнать его значение',
+        formFields: '',
+        backText: 'Хотите увидеть, как все эти числа складываются в ваш личный портрет?',
+        backAction: 'portrait'
+    }
+};
+
+function openNumerologyTool(toolName) {
+    currentTool = toolName;
+    const config = toolConfig[toolName];
+    const section = document.getElementById('numerologyToolSection');
+    const formDiv = document.getElementById('numerologyToolForm');
+    const resultDiv = document.getElementById('result-numerology');
+    const backDiv = document.getElementById('numerologyBackToCards');
+    
+    section.style.display = 'block';
+    resultDiv.innerHTML = '';
+    backDiv.style.display = 'none';
+    
+    // Скроллим к форме
+    setTimeout(() => {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+
+    let formHtml = `
+        <h3 style="font-size: 16px; font-weight: 600; color: var(--color-gold); margin-bottom: 10px;">${config.title}</h3>
+        <p style="font-size: 13px; color: var(--color-text-lighter); margin-bottom: 16px;">${config.subtitle}</p>
+    `;
+    
+    if (config.formFields) {
+        formHtml += `
+            <form id="numerologyToolFormInner" class="panel-form" autocomplete="off" style="background: transparent; border: none; padding: 0; box-shadow: none;">
+                ${config.formFields}
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px; padding: 12px; border-radius: 50px;">
+                    ${toolName === 'reference' ? 'Открыть справочник' : 'Рассчитать'}
+                </button>
+            </form>
+        `;
+    } else {
+        formHtml += `<div id="referenceContent"></div>`;
+    }
+    
+    formDiv.innerHTML = formHtml;
+    
+    if (config.formFields) {
+        document.getElementById('numerologyToolFormInner').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            lastFormData = data;
+            
+            showLoading();
+            
+            try {
+                if (toolName === 'portrait') {
+                    await calculatePortrait(data);
+                } else if (toolName === 'psychomatrix') {
+                    await calculatePsychomatrix(data);
+                } else if (toolName === 'graph') {
+                    calculateLifeGraph(data);
+                }
+            } catch(e) {
+                // Ошибка уже обработана внутри функции
+            }
+            hideLoading();
+            
+            const nextTool = config.backAction;
+            const nextConfig = toolConfig[nextTool];
+            backDiv.innerHTML = `
+                <p style="font-size: 14px; color: var(--color-text-light); margin-bottom: 12px; line-height: 1.6;">${config.backText}</p>
+                <button class="btn btn-share" onclick="openNumerologyTool('${config.backAction}')" style="width: 100%;">
+                    ${nextConfig.title} →
+                </button>
+                <button class="btn btn-outline btn-sm" onclick="document.getElementById('numerologyCards').scrollIntoView({behavior:'smooth',block:'center'});" style="width: 100%; margin-top: 8px;">
+                    ← К списку инструментов
+                </button>
+            `;
+            backDiv.style.display = 'block';
+            // Скроллим к началу результата
+            setTimeout(() => {
+                document.getElementById('result-numerology').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 200);
+        });
+        
+        fetch('/api/numer/portrait')
+            .then(r => r.json())
+            .then(portrait => {
+                if (portrait.name && !document.querySelector('[name="first_name"]')) {
+                    const nameInput = document.querySelector('[name="first_name"]');
+                    if (nameInput) nameInput.value = portrait.name;
+                }
+                if (portrait.birth_date) {
+                    const dateInputs = document.querySelectorAll('[name="birth_date"]');
+                    dateInputs.forEach(input => {
+                        if (!input.value) input.value = portrait.birth_date;
+                    });
+                }
+            });
+    } else {
+        showReferenceContent();
+        backDiv.innerHTML = `
+            <p style="font-size: 14px; color: var(--color-text-light); margin-bottom: 12px; line-height: 1.6;">${config.backText}</p>
+            <button class="btn btn-share" onclick="openNumerologyTool('${config.backAction}')" style="width: 100%;">
+                ${toolConfig[config.backAction].title} →
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('numerologyCards').scrollIntoView({behavior:'smooth',block:'center'});" style="width: 100%; margin-top: 8px;">
+                ← К списку инструментов
+            </button>
+        `;
+        backDiv.style.display = 'block';
+    }    
+}
+
+async function calculatePortrait(data) {
+    const resultDiv = document.getElementById('result-numerology');
+    const isPremium = window.userTariff === 'Пламя';
+
+    if (isPremium && data.birth_date) {
+        // Пламя — SSE-стрим. Числа приходят сразу (meta), карточки
+        // аспектов наполняются по блокам. Старый /api/numerology для
+        // Пламени больше не вызывается.
+        await streamNumerologyPortrait(data, resultDiv);
+        return;
+    }
+
+    // Ниже — прежняя логика для гостя и Искры.
+    // (остальной код ветки else без изменений)
+    {
+        const res = await fetch('/api/numerology/teaser', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const teaserResult = await res.json();
+        const numbers = teaserResult.numbers || {};
+        
+        if (teaserResult.error) {
+            const fallbackRes = await fetch('/api/numerology', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const fallbackResult = await fallbackRes.json();
+            if (fallbackResult.error) {
+                resultDiv.innerHTML = '<p style="color: var(--color-error); font-size: 14px;">' + sanitizeHTML(fallbackResult.message || fallbackResult.error) + '</p>';
+                return;
+            }
+            resultDiv.innerHTML = formatNumerology(fallbackResult);
+            addNumerologyChat(resultDiv, 'numerology', fallbackResult);
+        } else {
+            resultDiv.innerHTML = formatNumerologyPortrait(teaserResult, data, false, numbers);
+            resultDiv.insertAdjacentHTML('beforeend', `
+                <div style="margin:16px 0;padding:16px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:16px;text-align:center;">
+                    <p style="font-size:13px;color:var(--color-gold);font-weight:600;margin-bottom:8px;">🔮 Полный нумерологический портрет</p>
+                    <p style="font-size:12px;color:var(--color-text-lighter);margin-bottom:12px;line-height:1.6;">
+                        Подробный разбор каждого числа с конкретными советами, примерами и персональными рекомендациями.
+                    </p>
+                    <button class="btn btn-share btn-sm" onclick="showPaywall()" style="width:100%;">Открыть полный портрет — {{ PAYWALL_PRICE_RUB }} ₽</button>
+                </div>
+            `);
+            addNumerologyChat(resultDiv, 'numerology', teaserResult);
+        }
+    }
+}
+
+// ============================================
+// ПСИХОМАТРИЦА (Пламя) — SSE-стрим
+// ============================================
+
+async function streamPsychomatrix(data, resultDiv) {
+    resultDiv.innerHTML = `
+        <div style="text-align:center;padding:20px;">
+            <div style="display:inline-block;width:36px;height:36px;border:3px solid var(--color-border);border-top-color:var(--color-gold);border-radius:50%;animation:spin 1s linear infinite;"></div>
+            <p style="font-size:13px;color:var(--color-text-lighter);margin-top:12px;">Строим квадрат...</p>
+        </div>`;
+
+    // Шаг 1: получаем ячейки и линии без AI (для квадрата и шкал).
+    let apiData;
+    try {
+        const res = await fetch('/api/numerology/psychomatrix', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        apiData = await res.json();
+    } catch (e) {
+        resultDiv.innerHTML = '<p style="color:var(--color-error);text-align:center;">Не удалось загрузить данные</p>';
+        return;
+    }
+
+    if (apiData.error) {
+        resultDiv.innerHTML = '<p style="color:var(--color-error);">' + sanitizeHTML(apiData.error) + '</p>';
+        return;
+    }
+
+    const cells = [];
+    for (let i = 1; i <= 9; i++) {
+        const cell = apiData.cells['cell' + i] || { number: i, count: 0, value: '—', name: '' };
+        cells.push({ num: i, name: cell.name, value: cell.value, count: cell.count });
+    }
+
+    const counts = {};
+    for (let i = 1; i <= 9; i++) counts[i] = cells[i - 1].count;
+
+    const lineNames = ['Целеустремлённость', 'Семья', 'Стабильность', 'Самооценка', 'Деньги и быт', 'Талант', 'Духовность', 'Темперамент'];
+
+    // Шаг 2: рисуем квадрат и шкалы линий (без AI) — как в старой функции.
+    let html = '<h3 style="text-align:center;color:var(--color-gold);margin-bottom:16px;">Психоматрица Пифагора</h3>';
+
+    html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 330px; margin: 0 auto 16px;">';
+    const quadOrder = [1, 4, 7, 2, 5, 8, 3, 6, 9];
+    quadOrder.forEach(num => {
+        const cell = cells[num - 1];
+        html += `<div style="padding: 14px 8px; background: var(--color-primary-soft); border-radius: 12px; text-align: center;">
+            <div class="psycho-digit" style="font-size: 24px; letter-spacing: 2px;">${sanitizeHTML(cell.value)}</div>
+            <div style="font-size: 9px; color: var(--color-text-lighter); margin-top: 4px; line-height: 1.3;">${sanitizeHTML(cell.name)}</div>
+        </div>`;
+    });
+    html += '</div>';
+
+    // Шкалы линий — те же, что в старой функции.
+    html += '<div style="margin-top:20px;">';
+    html += '<h3 style="font-size:16px;font-weight:600;color:var(--color-gold);text-align:center;margin-bottom:4px;">Линии судьбы</h3>';
+    html += '<p style="font-size:11px;color:var(--color-text-lighter);text-align:center;margin-bottom:16px;">Строки, столбцы и диагонали собирают цифры ячеек в сводные черты характера</p>';
+
+    function makeLineSVG(activeCells, color) {
+        var positions = {1:[9,9],4:[25,9],7:[41,9],2:[9,25],5:[25,25],8:[41,25],3:[9,41],6:[25,41],9:[41,41]};
+        var svg = '<svg viewBox="0 0 50 50" style="width:50px;height:50px;flex-shrink:0;" aria-hidden="true">';
+        svg += '<line x1="'+positions[activeCells[0]][0]+'" y1="'+positions[activeCells[0]][1]+'" x2="'+positions[activeCells[2]][0]+'" y2="'+positions[activeCells[2]][1]+'" stroke="'+color+'" stroke-width="2" stroke-linecap="round"/>';
+        for (var i=1;i<=9;i++) {
+            var pos=positions[i], isActive=activeCells.indexOf(i)!==-1;
+            svg += '<circle cx="'+pos[0]+'" cy="'+pos[1]+'" r="'+(isActive?4:2)+'" fill="'+(isActive?color:'var(--color-text-lighter)')+'" opacity="'+(isActive?1:0.4)+'"/>';
+        }
+        svg += '</svg>';
+        return svg;
+    }
+
+    var maxVal = 9;
+    var goldColor = '#ffd54f';
+
+    var allLines = [
+        {label:'Целеустремлённость',cells:[1,4,7],value:(counts[1]||0)+(counts[4]||0)+(counts[7]||0)},
+        {label:'Семья',cells:[2,5,8],value:(counts[2]||0)+(counts[5]||0)+(counts[8]||0)},
+        {label:'Стабильность',cells:[3,6,9],value:(counts[3]||0)+(counts[6]||0)+(counts[9]||0)},
+        {label:'Самооценка',cells:[1,2,3],value:(counts[1]||0)+(counts[2]||0)+(counts[3]||0)},
+        {label:'Деньги и быт',cells:[4,5,6],value:(counts[4]||0)+(counts[5]||0)+(counts[6]||0)},
+        {label:'Талант',cells:[7,8,9],value:(counts[7]||0)+(counts[8]||0)+(counts[9]||0)},
+        {label:'Духовность',cells:[1,5,9],value:(counts[1]||0)+(counts[5]||0)+(counts[9]||0)},
+        {label:'Темперамент',cells:[3,5,7],value:(counts[3]||0)+(counts[5]||0)+(counts[7]||0)}
+    ];
+
+    allLines.forEach(function(line) {
+        var pct = Math.min(100, (line.value / maxVal) * 100);
+        html += '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;margin-bottom:6px;">';
+        html += makeLineSVG(line.cells, goldColor);
+        html += '<div style="flex:1;min-width:0;">';
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+        html += '<span style="font-size:12px;font-weight:600;color:var(--color-text-light);">'+sanitizeHTML(line.label)+'</span>';
+        html += '<span style="font-size:18px;font-weight:700;color:'+goldColor+';">'+line.value+'</span>';
+        html += '</div>';
+        html += '<div style="height:6px;background:rgba(30,58,30,0.6);border-radius:3px;overflow:hidden;margin-top:6px;">';
+        html += '<div style="width:'+pct+'%;height:100%;background:'+goldColor+';border-radius:3px;"></div>';
+        html += '</div>';
+        html += '<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--color-text-lighter);margin-top:2px;">';
+        html += '<span>0</span><span>'+maxVal+'</span>';
+        html += '</div>';
+        html += '</div></div>';
+    });
+    html += '</div>';
+
+    // Пустой контейнер под AI-разбор. Наполнится в onDone.
+    html += '<div id="psyAiBlocks"></div>';
+    // Пустой контейнер под чат и FAQ.
+    html += '<div id="psyPost"></div>';
+
+    resultDiv.innerHTML = html;
+
+    // Шаг 3: SSE-стрим AI-разбора. Буферизуем блоки и рендерим в onDone
+    // в правильном порядке — сначала линии (line1..line8, lines_summary),
+    // потом ячейки (cell1..cell9, summary).
+    const blocks = {};
+
+    await streamPost(
+        '/api/numerology/psychomatrix/ai-full/stream',
+        data,
+        {
+            onMeta: function(_m) { /* не используется */ },
+            onBlock: function(b) {
+                blocks[b.name] = b.value || '';
+            },
+            onError: function(err) {
+                const slot = document.getElementById('psyAiBlocks');
+                if (slot) {
+                    slot.innerHTML = '<p style="color:var(--color-error);text-align:center;padding:20px;">' +
+                        sanitizeHTML(err.message || 'Не удалось загрузить разбор') + '</p>';
+                }
+            },
+            onDone: function() {
+                renderPsychomatrixAiBlocks(blocks, cells, lineNames);
+                renderPsychomatrixPost(resultDiv, data, cells, blocks);
+            },
+        }
+    );
+}
+
+function renderPsychomatrixAiBlocks(blocks, cells, lineNames) {
+    const slot = document.getElementById('psyAiBlocks');
+    if (!slot) return;
+
+    let html = '';
+
+    // 1. Разбор линий (line1..line8), как в старой функции.
+    const hasAnyLine = [1,2,3,4,5,6,7,8].some(i => blocks['line' + i]);
+    if (hasAnyLine) {
+        html += '<div style="margin-top:16px;">';
+        for (let i = 1; i <= 8; i++) {
+            if (blocks['line' + i]) {
+                html += '<div style="margin-bottom:10px;padding:0;background:transparent;border:none;">';
+                html += '<span style="color:var(--color-gold);font-weight:600;font-size:13px;">' + sanitizeHTML(lineNames[i-1]) + '</span>';
+                html += '<p style="font-size:13px;color:var(--color-text-light);margin-top:4px;line-height:1.6;white-space:pre-line;">' + sanitizeHTML(blocks['line' + i]) + '</p>';
+                html += '</div>';
+            }
+        }
+        html += '</div>';
+    }
+
+    if (blocks['lines_summary']) {
+        html += '<div style="margin-top:14px;padding:12px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:12px;">';
+        html += '<span style="color:var(--color-gold);font-weight:600;font-size:14px;">Итог по линиям</span>';
+        html += '<p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.6;white-space:pre-line;">' + sanitizeHTML(blocks['lines_summary']) + '</p>';
+        html += '</div>';
+    }
+
+    // 2. Разбор ячеек (cell1..cell9) — в порядке «квадрата» [1,4,7,2,5,8,3,6,9].
+    const cellOrder = [1, 4, 7, 2, 5, 8, 3, 6, 9];
+    const hasAnyCell = cellOrder.some(i => blocks['cell' + i]);
+    if (hasAnyCell) {
+        html += '<div style="margin-top:16px;">';
+        cellOrder.forEach(i => {
+            if (blocks['cell' + i]) {
+                const cell = cells[i - 1];
+                html += '<div style="margin-bottom:12px;padding:0;background:transparent;border:none;">';
+                html += '<span style="color:var(--color-gold);font-weight:600;font-size:13px;">' + sanitizeHTML(cell.name) + ' — ' + sanitizeHTML(cell.value) + '</span>';
+                html += '<p style="font-size:13px;color:var(--color-text-light);margin-top:4px;line-height:1.6;white-space:pre-line;">' + sanitizeHTML(blocks['cell' + i]) + '</p>';
+                html += '</div>';
+            }
+        });
+        html += '</div>';
+    }
+
+    if (blocks['summary']) {
+        html += '<div style="margin-top:14px;padding:12px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:12px;">';
+        html += '<span style="color:var(--color-gold);font-weight:600;font-size:14px;">Итог психоматрицы</span>';
+        html += '<p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.6;white-space:pre-line;">' + sanitizeHTML(blocks['summary']) + '</p>';
+        html += '</div>';
+    }
+
+    slot.innerHTML = html;
+}
+
+function renderPsychomatrixPost(resultDiv, data, cells, blocks) {
+    const postSlot = document.getElementById('psyPost');
+    if (!postSlot) return;
+
+    // Чат.
+    const chatHtml = `
+        <div id="psychomatrixChatBlock" style="margin-top:20px;max-width:100%;box-sizing:border-box;">
+            <p style="font-weight:600;color:var(--color-gold);margin-bottom:4px;">Психоматрица — это только начало</p>
+            <p style="font-size:11px;color:var(--color-text-lighter);margin-bottom:12px;">Задайте вопрос о вашем квадрате Пифагора</p>
+            <div id="suggestedPsychomatrixQuestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"><span style="font-size:12px;color:var(--color-text-light);">Загрузка подсказок...</span></div>
+            <div class="input-group" style="display:flex;gap:8px;">
+                <textarea id="psychomatrixQuestion" placeholder="Напишите свой вопрос..." maxlength="500" style="resize:none;overflow:hidden;font-family:var(--font-main);font-size:14px;padding:10px 14px;border:2px solid var(--color-border);border-radius:12px;outline:none;color:var(--color-text);background:rgba(15,31,15,0.8);line-height:1.4;min-height:42px;transition:border-color 0.3s;width:100%;box-sizing:border-box;"></textarea>
+                <button class="btn btn-primary btn-sm" onclick="askPsychomatrixQuestion()" style="flex-shrink:0;white-space:nowrap;">Спросить</button>
+            </div>
+            <div id="psychomatrixAnswer" style="margin-top:12px;max-width:100%;box-sizing:border-box;word-wrap:break-word;overflow-wrap:break-word;"></div>
+        </div>`;
+    postSlot.insertAdjacentHTML('beforeend', chatHtml);
+
+    // FAQ — тот же блок, что в старой функции.
+    const faqBlock = document.createElement('div');
+    faqBlock.style.cssText = 'margin-top:24px;padding:16px;background:rgba(30,58,30,0.4);border:1px solid var(--color-border);border-radius:12px;';
+    faqBlock.innerHTML = '<h3 style="font-size:15px;font-weight:600;color:var(--color-gold);text-align:center;margin-bottom:12px;">Часто задаваемые вопросы</h3>';
+    [{q:'Если рождение после 2000 года',a:'Нули в дате не меняют расчёт. Второе рабочее число считается как сумма цифр первого. Третье рабочее число берётся по модулю, поэтому отрицательных значений нет. Квадрат заполняется по тем же правилам, что и для дат прошлого века.'},{q:'Что такое квадрат Пифагора?',a:'Это таблица 3×3, где цифры даты рождения и четырёх рабочих чисел распределяются по девяти ячейкам. Каждая ячейка отвечает за своё качество: характер, энергию, логику, здоровье. Количество повторений цифры в ячейке показывает силу качества. Другое название метода — психоматрица.'},{q:'Как считаются рабочие числа?',a:'Первое — сумма всех цифр даты рождения. Второе — сумма цифр первого. Третье — из первого вычитается удвоенная первая ненулевая цифра дня. Четвёртое — сумма цифр третьего. Цифры всех четырёх чисел добавляются к цифрам даты и попадают в квадрат.'},{q:'Что означают пустые ячейки?',a:'Пустая ячейка — качество, которое не дано от рождения и проявляется через усилие. Характер без единиц или память без девяток можно развивать. Пустоты читаются вместе с соседними ячейками — слабое в одном месте часто компенсируется сильным в другом.'},{q:'Что показывают линии квадрата?',a:'Восемь линий складывают цифры по строкам, столбцам и диагоналям и дают сводные черты. Строки — про целеустремлённость, семью и стабильность. Столбцы — про самооценку, деньги и талант. Диагонали — про духовность и темперамент. Чем больше цифр на линии, тем выраженнее черта.'},{q:'Психоматрица и квадрат Пифагора — одно и то же?',a:'Да. «Квадрат Пифагора» — классическое название, «психоматрица» — термин последователей школы Александрова. Принцип один: цифры даты рождения раскладываются по матрице 3×3 и читаются по ячейкам и линиям.'}].forEach(function(item){
+        faqBlock.innerHTML += '<div style="margin-bottom:8px;border:1px solid var(--color-border);border-radius:8px;overflow:hidden;"><div onclick="toggleFAQ(this)" style="padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:rgba(30,58,30,0.6);"><span style="font-size:12px;font-weight:600;color:var(--color-text-light);">'+sanitizeHTML(item.q)+'</span><span class="faq-arrow" style="font-size:14px;color:var(--color-gold);transition:transform 0.2s;">▼</span></div><div class="faq-answer" style="display:none;padding:10px 14px;font-size:11px;color:var(--color-text-lighter);line-height:1.6;">'+sanitizeHTML(item.a)+'</div></div>';
+    });
+    postSlot.appendChild(faqBlock);
+
+    resultDiv.style.display = 'block';
+    setTimeout(function(){ loadPsychomatrixSuggestions(); }, 200);
+}
+
+async function calculatePsychomatrix(data) {
+    const resultDiv = document.getElementById('result-numerology');
+    if (!data.birth_date) return;
+
+    const isPremium = window.userTariff === 'Пламя';
+
+    if (isPremium) {
+        await streamPsychomatrix(data, resultDiv);
+        return;
+    }
+    
+    // Получаем данные психоматрицы через API
+    const apiRes = await fetch('/api/numerology/psychomatrix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    const apiData = await apiRes.json();
+    
+    if (apiData.error) {
+        resultDiv.innerHTML = '<p style="color: var(--color-error);">' + sanitizeHTML(apiData.error) + '</p>';
+        return;
+    }
+    
+    const cells = [];
+    for (let i = 1; i <= 9; i++) {
+        const cell = apiData.cells['cell' + i] || { number: i, count: 0, value: '—', name: '' };
+        cells.push({ num: i, name: cell.name, value: cell.value, count: cell.count });
+    }
+    
+    // counts для линий
+    const counts = {};
+    for (let i = 1; i <= 9; i++) counts[i] = cells[i-1].count;
+
+    const lineNames = ['Целеустремлённость', 'Семья', 'Стабильность', 'Самооценка', 'Деньги и быт', 'Талант', 'Духовность', 'Темперамент'];
+    
+    let html = '<h3 style="text-align:center;color:var(--color-gold);margin-bottom:16px;">Психоматрица Пифагора</h3>';
+    
+    // Квадрат
+    html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 330px; margin: 0 auto 16px;">';
+    const quadOrder = [1, 4, 7, 2, 5, 8, 3, 6, 9];
+    quadOrder.forEach(num => {
+        const cell = cells[num - 1]; // cells идёт по номерам 1..9
+        html += `<div style="padding: 14px 8px; background: var(--color-primary-soft); border-radius: 12px; text-align: center;">
+            <div class="psycho-digit" style="font-size: 24px; letter-spacing: 2px;">${sanitizeHTML(cell.value)}</div>
+            <div style="font-size: 9px; color: var(--color-text-lighter); margin-top: 4px; line-height: 1.3;">${sanitizeHTML(cell.name)}</div>
+        </div>`;
+    });
+    html += '</div>';
+    
+    // Линии судьбы с SVG-глифами и золотой шкалой
+    html += '<div style="margin-top:20px;">';
+    html += '<h3 style="font-size:16px;font-weight:600;color:var(--color-gold);text-align:center;margin-bottom:4px;">Линии судьбы</h3>';
+    html += '<p style="font-size:11px;color:var(--color-text-lighter);text-align:center;margin-bottom:16px;">Строки, столбцы и диагонали собирают цифры ячеек в сводные черты характера</p>';
+    
+    function makeLineSVG(activeCells, color) {
+        var positions = {1:[9,9],4:[25,9],7:[41,9],2:[9,25],5:[25,25],8:[41,25],3:[9,41],6:[25,41],9:[41,41]};
+        var svg = '<svg viewBox="0 0 50 50" style="width:50px;height:50px;flex-shrink:0;" aria-hidden="true">';
+        svg += '<line x1="'+positions[activeCells[0]][0]+'" y1="'+positions[activeCells[0]][1]+'" x2="'+positions[activeCells[2]][0]+'" y2="'+positions[activeCells[2]][1]+'" stroke="'+color+'" stroke-width="2" stroke-linecap="round"/>';
+        for (var i=1;i<=9;i++) {
+            var pos=positions[i], isActive=activeCells.indexOf(i)!==-1;
+            svg += '<circle cx="'+pos[0]+'" cy="'+pos[1]+'" r="'+(isActive?4:2)+'" fill="'+(isActive?color:'var(--color-text-lighter)')+'" opacity="'+(isActive?1:0.4)+'"/>';
+        }
+        svg += '</svg>';
+        return svg;
+    }
+    
+    var maxVal = 9;
+    var goldColor = '#ffd54f';
+    
+    var allLines = [
+        {label:'Целеустремлённость',cells:[1,4,7],value:(counts[1]||0)+(counts[4]||0)+(counts[7]||0)},
+        {label:'Семья',cells:[2,5,8],value:(counts[2]||0)+(counts[5]||0)+(counts[8]||0)},
+        {label:'Стабильность',cells:[3,6,9],value:(counts[3]||0)+(counts[6]||0)+(counts[9]||0)},
+        {label:'Самооценка',cells:[1,2,3],value:(counts[1]||0)+(counts[2]||0)+(counts[3]||0)},
+        {label:'Деньги и быт',cells:[4,5,6],value:(counts[4]||0)+(counts[5]||0)+(counts[6]||0)},
+        {label:'Талант',cells:[7,8,9],value:(counts[7]||0)+(counts[8]||0)+(counts[9]||0)},
+        {label:'Духовность',cells:[1,5,9],value:(counts[1]||0)+(counts[5]||0)+(counts[9]||0)},
+        {label:'Темперамент',cells:[3,5,7],value:(counts[3]||0)+(counts[5]||0)+(counts[7]||0)}
+    ];
+    
+    allLines.forEach(function(line) {
+        var pct = Math.min(100, (line.value / maxVal) * 100);
+        html += '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;margin-bottom:6px;">';
+        html += makeLineSVG(line.cells, goldColor);
+        html += '<div style="flex:1;min-width:0;">';
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+        html += '<span style="font-size:12px;font-weight:600;color:var(--color-text-light);">'+sanitizeHTML(line.label)+'</span>';
+        html += '<span style="font-size:18px;font-weight:700;color:'+goldColor+';">'+line.value+'</span>';
+        html += '</div>';
+        html += '<div style="height:6px;background:rgba(30,58,30,0.6);border-radius:3px;overflow:hidden;margin-top:6px;">';
+        html += '<div style="width:'+pct+'%;height:100%;background:'+goldColor+';border-radius:3px;"></div>';
+        html += '</div>';
+        html += '<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--color-text-lighter);margin-top:2px;">';
+        html += '<span>0</span><span>'+maxVal+'</span>';
+        html += '</div>';
+        html += '</div></div>';
+    });
+    html += '</div>';
+    
+    if (isPremium) {
+        // Платный тариф: AI-разбор
+        html += '<p style="text-align:center;color:var(--color-text-lighter);margin-top:16px;">✨ Загружаем разбор...</p>';
+        resultDiv.innerHTML = html;
+        
+        try {
+            const res = await fetch('/api/numerology/psychomatrix/ai-full', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+            const aiResult = await res.json();
+            
+            if (!aiResult.error) {
+                // Убираем "Загружаем..."
+                html = html.replace('<p style="text-align:center;color:var(--color-text-lighter);margin-top:16px;">✨ Загружаем разбор...</p>', '');
+                
+                // AI-разбор линий
+                if (aiResult.line1) {
+                    html += '<div style="margin-top:16px;">';
+                    for (let i = 1; i <= 8; i++) {
+                        if (aiResult['line' + i]) {
+                            html += '<div style="margin-bottom:10px;padding:0;background:transparent;border:none;">';
+                            html += '<span style="color:var(--color-gold);font-weight:600;font-size:13px;">' + sanitizeHTML(lineNames[i-1]) + '</span>';
+                            html += '<p style="font-size:13px;color:var(--color-text-light);margin-top:4px;line-height:1.6;white-space:pre-line;">' + sanitizeHTML(aiResult['line' + i]) + '</p>';
+                            html += '</div>';
+                        }
+                    }
+                    html += '</div>';
+                }
+                
+                // Итог по линиям
+                if (aiResult.lines_summary) {
+                    html += '<div style="margin-top:14px;padding:12px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:12px;">';
+                    html += '<span style="color:var(--color-gold);font-weight:600;font-size:14px;">Итог по линиям</span>';
+                    html += '<p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.6;white-space:pre-line;">' + sanitizeHTML(aiResult.lines_summary) + '</p>';
+                    html += '</div>';
+                }
+                
+                // Ячейки
+                const cellOrder = [1, 4, 7, 2, 5, 8, 3, 6, 9];
+                html += '<div style="margin-top:16px;">';
+                cellOrder.forEach(i => {
+                    if (aiResult['cell'+i]) {
+                        html += '<div style="margin-bottom:12px;padding:0;background:transparent;border:none;"><span style="color:var(--color-gold);font-weight:600;font-size:13px;">'+sanitizeHTML(cells[i-1].name)+' — '+sanitizeHTML(cells[i-1].value)+'</span><p style="font-size:13px;color:var(--color-text-light);margin-top:4px;line-height:1.6;white-space:pre-line;">'+sanitizeHTML(aiResult['cell'+i])+'</p></div>';
+                    }
+                });
+                html += '</div>';
+                
+                // Итог по ячейкам
+                if (aiResult.summary) {
+                    html += '<div style="margin-top:14px;padding:12px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:12px;"><span style="color:var(--color-gold);font-weight:600;font-size:14px;">Итог психоматрицы</span><p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.6;white-space:pre-line;">'+sanitizeHTML(aiResult.summary)+'</p></div>';
+                }
+            }
+        } catch(e) {}
+        
+        resultDiv.innerHTML = html;
+        
+    } else {
+        // Бесплатный тариф: квадрат сразу, тизеры подгружаем
+        resultDiv.innerHTML = html;
+        
+        const loaderEl = document.createElement('p');
+        loaderEl.style.cssText = 'text-align:center;color:var(--color-text-lighter);margin-top:16px;';
+        loaderEl.textContent = '✨ Загружаем...';
+        resultDiv.appendChild(loaderEl);
+        
+        try {
+            const res = await fetch('/api/numerology/psychomatrix/teaser', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+            const teaserResult = await res.json();
+            
+            loaderEl.remove();
+            
+            if (!teaserResult.error) {
+                const teaserContainer = document.createElement('div');
+                teaserContainer.style.marginTop = '16px';
+                
+                // AI-тизеры линий (сразу после SVG-линий)
+                if (teaserResult.line1 || teaserResult.lines_summary) {
+                    const linesBlock = document.createElement('div');
+                    linesBlock.style.marginTop = '16px';
+                    
+                    // Заголовок
+                    linesBlock.innerHTML = '<h3 style="font-size:16px;font-weight:600;color:var(--color-gold);text-align:center;margin-bottom:8px;">Разбор линий</h3>';
+                    
+                    for (let i = 1; i <= 8; i++) {
+                        if (teaserResult['line' + i]) {
+                            linesBlock.innerHTML += '<div style="margin-bottom:10px;padding:0;background:transparent;border:none;">' +
+                                '<span style="color:var(--color-gold);font-weight:600;font-size:13px;">' + sanitizeHTML(lineNames[i-1]) + '</span>' +
+                                '<p style="font-size:13px;color:var(--color-text-light);margin-top:4px;line-height:1.6;">' + sanitizeHTML(teaserResult['line' + i]) + '</p>' +
+                                '</div>';
+                        }
+                    }
+                    
+                    if (teaserResult.lines_summary) {
+                        linesBlock.innerHTML += '<div style="margin-top:14px;padding:12px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:12px;">' +
+                            '<span style="color:var(--color-gold);font-weight:600;font-size:14px;">Итог по линиям</span>' +
+                            '<p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.6;">' + sanitizeHTML(teaserResult.lines_summary) + '</p>' +
+                            '</div>';
+                    }
+                    
+                    teaserContainer.appendChild(linesBlock);
+                }
+
+                // Ячейки с тизерами
+                const cellOrder = [1, 4, 7, 2, 5, 8, 3, 6, 9];
+                cellOrder.forEach(i => {
+                    if (teaserResult['cell'+i]) {
+                        teaserContainer.innerHTML += '<div style="margin-bottom:12px;padding:0;background:transparent;border:none;">' +
+                            '<span style="color:var(--color-gold);font-weight:600;font-size:13px;">'+sanitizeHTML(cells[i-1].name)+' — '+sanitizeHTML(cells[i-1].value)+'</span>' +
+                            '<p style="font-size:13px;color:var(--color-text-light);margin-top:4px;line-height:1.6;">'+sanitizeHTML(teaserResult['cell'+i])+'</p>' +
+                            '</div>';
+                    }
+                });
+                
+                // Итог по ячейкам
+                if (teaserResult.summary) {
+                    teaserContainer.innerHTML += '<div style="margin-top:14px;padding:12px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:12px;">' +
+                        '<span style="color:var(--color-gold);font-weight:600;font-size:14px;">Краткий обзор</span>' +
+                        '<p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.6;">'+sanitizeHTML(teaserResult.summary)+'</p>' +
+                        '</div>';
+                }
+                
+                // Плашка с апгрейдом
+                teaserContainer.innerHTML += '<div style="margin:16px 0;padding:16px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:16px;text-align:center;">' +
+                    '<p style="font-size:13px;color:var(--color-gold);font-weight:600;margin-bottom:8px;">🔮 Полный разбор психоматрицы</p>' +
+                    '<p style="font-size:12px;color:var(--color-text-lighter);margin-bottom:12px;line-height:1.6;">Детальные описания каждой ячейки и всех восьми линий с конкретными советами по развитию качеств.</p>' +
+                    '<button class="btn btn-share btn-sm" onclick="showPaywall()" style="width:100%;">Открыть полный разбор — {{ PAYWALL_PRICE_RUB }} ₽</button>' +
+                    '</div>';
+                
+                resultDiv.appendChild(teaserContainer);
+            }
+        } catch(e) {
+            loaderEl.remove();
+            resultDiv.appendChild(document.createTextNode('Не удалось загрузить толкование'));
+        }
+    }
+    
+    // Чат
+    const chatBlock = document.createElement('div');
+    chatBlock.id = 'psychomatrixChatBlock';
+    chatBlock.style.cssText = 'margin-top:20px;max-width:100%;box-sizing:border-box;';
+    chatBlock.innerHTML = '<p style="font-weight:600;color:var(--color-gold);margin-bottom:4px;">Психоматрица — это только начало</p><p style="font-size:11px;color:var(--color-text-lighter);margin-bottom:12px;">Задайте вопрос о вашем квадрате Пифагора</p><div id="suggestedPsychomatrixQuestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"><span style="font-size:12px;color:var(--color-text-light);">Загрузка подсказок...</span></div><div class="input-group" style="display:flex;gap:8px;"><textarea id="psychomatrixQuestion" placeholder="Напишите свой вопрос..." maxlength="500" style="resize:none;overflow:hidden;font-family:var(--font-main);font-size:14px;padding:10px 14px;border:2px solid var(--color-border);border-radius:12px;outline:none;color:var(--color-text);background:rgba(15,31,15,0.8);line-height:1.4;min-height:42px;transition:border-color 0.3s;width:100%;box-sizing:border-box;"></textarea><button class="btn btn-primary btn-sm" onclick="askPsychomatrixQuestion()" style="flex-shrink:0;white-space:nowrap;">Спросить</button></div><div id="psychomatrixAnswer" style="margin-top:12px;max-width:100%;box-sizing:border-box;word-wrap:break-word;overflow-wrap:break-word;"></div>';
+    resultDiv.appendChild(chatBlock);
+    
+    // FAQ
+    const faqBlock = document.createElement('div');
+    faqBlock.style.cssText = 'margin-top:24px;padding:16px;background:rgba(30,58,30,0.4);border:1px solid var(--color-border);border-radius:12px;';
+    faqBlock.innerHTML = '<h3 style="font-size:15px;font-weight:600;color:var(--color-gold);text-align:center;margin-bottom:12px;">Часто задаваемые вопросы</h3>';
+    [{q:'Если рождение после 2000 года',a:'Нули в дате не меняют расчёт. Второе рабочее число считается как сумма цифр первого. Третье рабочее число берётся по модулю, поэтому отрицательных значений нет. Квадрат заполняется по тем же правилам, что и для дат прошлого века.'},{q:'Что такое квадрат Пифагора?',a:'Это таблица 3×3, где цифры даты рождения и четырёх рабочих чисел распределяются по девяти ячейкам. Каждая ячейка отвечает за своё качество: характер, энергию, логику, здоровье. Количество повторений цифры в ячейке показывает силу качества. Другое название метода — психоматрица.'},{q:'Как считаются рабочие числа?',a:'Первое — сумма всех цифр даты рождения. Второе — сумма цифр первого. Третье — из первого вычитается удвоенная первая ненулевая цифра дня. Четвёртое — сумма цифр третьего. Цифры всех четырёх чисел добавляются к цифрам даты и попадают в квадрат.'},{q:'Что означают пустые ячейки?',a:'Пустая ячейка — качество, которое не дано от рождения и проявляется через усилие. Характер без единиц или память без девяток можно развивать. Пустоты читаются вместе с соседними ячейками — слабое в одном месте часто компенсируется сильным в другом.'},{q:'Что показывают линии квадрата?',a:'Восемь линий складывают цифры по строкам, столбцам и диагоналям и дают сводные черты. Строки — про целеустремлённость, семью и стабильность. Столбцы — про самооценку, деньги и талант. Диагонали — про духовность и темперамент. Чем больше цифр на линии, тем выраженнее черта.'},{q:'Психоматрица и квадрат Пифагора — одно и то же?',a:'Да. «Квадрат Пифагора» — классическое название, «психоматрица» — термин последователей школы Александрова. Принцип один: цифры даты рождения раскладываются по матрице 3×3 и читаются по ячейкам и линиям.'}].forEach(function(item){
+        faqBlock.innerHTML += '<div style="margin-bottom:8px;border:1px solid var(--color-border);border-radius:8px;overflow:hidden;"><div onclick="toggleFAQ(this)" style="padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:rgba(30,58,30,0.6);"><span style="font-size:12px;font-weight:600;color:var(--color-text-light);">'+sanitizeHTML(item.q)+'</span><span class="faq-arrow" style="font-size:14px;color:var(--color-gold);transition:transform 0.2s;">▼</span></div><div class="faq-answer" style="display:none;padding:10px 14px;font-size:11px;color:var(--color-text-lighter);line-height:1.6;">'+sanitizeHTML(item.a)+'</div></div>';
+    });
+    resultDiv.appendChild(faqBlock);
+
+    resultDiv.style.display = 'block';
+    setTimeout(function(){loadPsychomatrixSuggestions();},200);
+}
+
+function toggleFAQ(el) {
+    const answer = el.nextElementSibling;
+    const arrow = el.querySelector('.faq-arrow');
+    if (answer.style.display === 'none' || !answer.style.display) {
+        answer.style.display = 'block';
+        arrow.style.transform = 'rotate(180deg)';
+    } else {
+        answer.style.display = 'none';
+        arrow.style.transform = 'rotate(0deg)';
+    }
+}
+
+async function calculateLifeGraph(data) {
+    const resultDiv = document.getElementById('result-numerology');
+    if (!data.birth_date) return;
+
+    const isPremium = window.userTariff === 'Пламя';
+
+    if (isPremium) {
+        await streamLifeGraph(data, resultDiv);
+        return;
+    }
+
+    // Ниже — прежняя логика для бесплатных (не тронута).
+    // Новый алгоритм: классический Пифагор (день × месяц × год)
+    const dt = new Date(data.birth_date + 'T00:00:00');
+    const day = dt.getDate();
+    const month = dt.getMonth() + 1;
+    const year = dt.getFullYear();
+    const product = day * month * year;
+    const graphCode = product.toString();
+    const cycles = graphCode.split('').map(Number);
+    
+    const birthYear = parseInt(data.birth_date.substring(0, 4));
+    const currentAge = new Date().getFullYear() - birthYear;
+    const currentPeriodIndex = Math.floor(currentAge / 7);
+    if (currentPeriodIndex >= cycles.length) currentPeriodIndex = cycles.length - 1;
+    const currentLevel = cycles[currentPeriodIndex];
+    const currentStartAge = currentPeriodIndex * 7;
+    const currentEndAge = currentStartAge + 6;
+    
+    let html = '<h3 style="text-align:center;color:var(--color-gold);margin-bottom:12px;">График жизни</h3>';
+    html += '<div style="display: flex; align-items: flex-end; gap: 6px; justify-content: center; height: 180px; max-width: 100%; overflow-x: auto; padding: 0 10px; margin-bottom: 4px;">';
+    
+    cycles.forEach((level, i) => {
+        const age = i * 7;
+        const height = (level / 9) * 150 + 20;
+        const isCurrent = i === currentPeriodIndex;
+        let color = level <= 2 ? 'rgba(212,131,138,0.5)' : level <= 5 ? 'rgba(212,168,67,0.5)' : 'rgba(126,184,158,0.5)';
+        let borderColor = level <= 2 ? '#d4838a' : level <= 5 ? '#d4a843' : '#7eb89e';
+        
+        html += `<div style="text-align: center; flex: 1; min-width: 44px;${isCurrent ? ' background: rgba(255,213,79,0.08); border-radius: 8px;' : ''}">
+            <div class="psycho-digit" style="font-size: 16px;">${level}</div>
+            <div style="width: 100%; height: ${height}px; background: ${color}; border-radius: 6px 6px 0 0; margin: 0 auto; border: 1px solid ${borderColor}; max-width: 44px;"></div>
+            <div style="font-size: 9px; color: var(--color-text-lighter); margin-top: 4px;">${age}</div>
+        </div>`;
+    });
+    
+    html += '</div>';
+    html += '<p style="font-size: 11px; color: var(--color-text-lighter); text-align: center;">🔴 0-2: переосмысление | 🟡 3-5: стабильность | 🟢 6-9: пик энергии</p>';
+    
+    // Карточка с кодом
+    html += `<div style="background: rgba(255,213,79,0.05); border: 1px solid var(--color-gold); border-radius: 12px; padding: 14px; margin-top: 12px; text-align: center;">
+        <span style="font-size: 11px; color: var(--color-gold); font-weight: 600;">Ваш код</span>
+        <div class="psycho-digit" style="font-size: 36px; margin: 4px 0; letter-spacing: 4px;">${graphCode}</div>
+        <p style="font-size: 12px; color: var(--color-text-lighter);">Текущий период: ${currentStartAge}–${currentEndAge} лет (уровень ${currentLevel})</p>
+    </div>`;
+    
+    // Загружаем AI-разбор
+    if (isPremium) {
+        resultDiv.innerHTML = html + '<p style="text-align:center;color:var(--color-text-lighter);margin-top:16px;">✨ Загружаем разбор...</p>';
+        
+        try {
+            const res = await fetch('/api/numerology/life-graph/ai-full', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const aiResult = await res.json();
+            
+            if (!aiResult.error) {
+                if (aiResult.current) {
+                    html += `<div style="margin-top:14px;padding:12px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:12px;">
+                        <span style="color:var(--color-gold);font-weight:600;font-size:14px;">Текущий период: ${currentStartAge}–${currentEndAge} лет</span>
+                        <p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.6;white-space:pre-line;">${sanitizeHTML(aiResult.current)}</p>
+                    </div>`;
+                }
+                if (aiResult.overview) {
+                    html += `<div style="margin-top:14px;"><span style="color:var(--color-gold);font-weight:600;font-size:14px;">Обзор</span>
+                        <p style="font-size:13px;color:var(--color-text-light);margin-top:4px;line-height:1.6;white-space:pre-line;">${sanitizeHTML(aiResult.overview)}</p></div>`;
+                }
+                html += '<div style="margin-top:14px;"><span style="color:var(--color-gold);font-weight:600;font-size:14px;">Все периоды</span></div>';
+                const ageRanges = ["0-6", "7-13", "14-20", "21-27", "28-34", "35-41", "42-48"];
+                const periodTitles = ["Детство", "Школьные годы", "Юность", "Начало взрослой жизни", "Зрелость и расцвет", "Переосмысление", "Стабильность и мудрость"];
+                for (let i = 0; i < cycles.length; i++) {
+                    if (aiResult[`period${i}`]) {
+                        const isCurrentPeriod = i === currentPeriodIndex;
+                        html += `<div style="margin-bottom:12px;padding:12px;background:rgba(255,213,79,0.03);border:1px solid ${isCurrentPeriod ? 'var(--color-gold)' : 'var(--color-border)'};border-radius:12px;">
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                                <div class="psycho-digit" style="font-size:22px;min-width:28px;text-align:center;">${cycles[i]}</div>
+                                <div>
+                                    <span style="color:var(--color-gold);font-weight:600;font-size:13px;">${ageRanges[i] || (i*7) + '-' + (i*7+6)} лет — ${periodTitles[i] || 'Период ' + (i+1)}</span>
+                                    ${isCurrentPeriod ? '<span style="font-size:10px;color:var(--color-gold);margin-left:6px;">Текущий</span>' : ''}
+                                </div>
+                            </div>
+                            <p style="font-size:13px;color:var(--color-text-light);margin-top:4px;line-height:1.7;white-space:pre-line;">${sanitizeHTML(aiResult[`period${i}`])}</p>
+                        </div>`;
+                    }
+                }
+                if (aiResult.advice) {
+                    html += `<div style="margin-top:14px;padding:12px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:12px;">
+                        <span style="color:var(--color-gold);font-weight:600;font-size:14px;">Итоговый совет</span>
+                        <p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.6;white-space:pre-line;">${sanitizeHTML(aiResult.advice)}</p>
+                    </div>`;
+                }
+            }
+        } catch(e) {}
+    } else {
+        resultDiv.innerHTML = html + '<p style="text-align:center;color:var(--color-text-lighter);margin-top:16px;">✨ Загружаем...</p>';
+        
+        try {
+            const res = await fetch('/api/numerology/life-graph/teaser', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const teaserResult = await res.json();
+            
+            if (!teaserResult.error) {
+                if (teaserResult.current) {
+                    html += `<div style="margin-top:14px;padding:12px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:12px;">
+                        <span style="color:var(--color-gold);font-weight:600;font-size:14px;">Текущий период: ${currentStartAge}–${currentEndAge} лет</span>
+                        <p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.6;">${sanitizeHTML(teaserResult.current)}</p>
+                    </div>`;
+                }
+                if (teaserResult.overview) {
+                    html += `<div style="margin-top:14px;"><span style="color:var(--color-gold);font-weight:600;font-size:14px;">Обзор</span>
+                        <p style="font-size:13px;color:var(--color-text-light);margin-top:4px;line-height:1.6;">${sanitizeHTML(teaserResult.overview)}</p></div>`;
+                }
+                html += `<div style="margin:16px 0;padding:16px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:16px;text-align:center;">
+                    <p style="font-size:13px;color:var(--color-gold);font-weight:600;margin-bottom:8px;">🔮 Полный разбор графика жизни</p>
+                    <p style="font-size:12px;color:var(--color-text-lighter);margin-bottom:12px;line-height:1.6;">Детальный разбор каждого периода с конкретными рекомендациями.</p>
+                    <button class="btn btn-share btn-sm" onclick="showPaywall()" style="width:100%;">Открыть полный разбор — {{ PAYWALL_PRICE_RUB }} ₽</button>
+                </div>`;
+            }
+        } catch(e) {}
+    }
+
+    // Чат с вопросами-подсказками
+    html += `<div id="lifeGraphChatBlock" style="margin-top:20px;max-width:100%;box-sizing:border-box;">
+        <p style="font-weight:600;color:var(--color-gold);margin-bottom:4px;">График жизни — это только начало</p>
+        <p style="font-size:11px;color:var(--color-text-lighter);margin-bottom:12px;">Задайте вопрос о ваших жизненных периодах</p>
+        <div id="suggestedLifeGraphQuestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"><span style="font-size:12px;color:var(--color-text-light);">Загрузка подсказок...</span></div>
+        <div class="input-group" style="display:flex;gap:8px;">
+            <textarea id="lifeGraphQuestion" placeholder="Напишите свой вопрос..." maxlength="500" style="resize:none;overflow:hidden;font-family:var(--font-main);font-size:14px;padding:10px 14px;border:2px solid var(--color-border);border-radius:12px;outline:none;color:var(--color-text);background:rgba(15,31,15,0.8);line-height:1.4;min-height:42px;transition:border-color 0.3s;width:100%;box-sizing:border-box;"></textarea>
+            <button class="btn btn-primary btn-sm" onclick="askChatQuestion('lifeGraph')" style="flex-shrink:0;white-space:nowrap;">Спросить</button>
+        </div>
+        <div id="lifeGraphAnswer" style="margin-top:12px;max-width:100%;box-sizing:border-box;word-wrap:break-word;overflow-wrap:break-word;"></div>
+    </div>`;
+    
+    resultDiv.innerHTML = html;
+    setTimeout(() => { loadLifeGraphSuggestions(); }, 200);
+}
+
+// ============================================
+// ГРАФИК ЖИЗНИ (Пламя) — SSE-стрим
+// ============================================
+
+async function streamLifeGraph(data, resultDiv) {
+    let lgCycles = null;   // сохраняем cycles для последующего рендера периодов
+
+    resultDiv.innerHTML = `
+        <div style="text-align:center;padding:20px;">
+            <div style="display:inline-block;width:36px;height:36px;border:3px solid var(--color-border);border-top-color:var(--color-gold);border-radius:50%;animation:spin 1s linear infinite;"></div>
+            <p style="font-size:13px;color:var(--color-text-lighter);margin-top:12px;">Считаем циклы...</p>
+        </div>`;
+
+    const blocks = {};
+
+    await streamPost(
+        '/api/numerology/life-graph/ai-full/stream',
+        data,
+        {
+            onMeta: function(meta) {
+                // Мгновенно рисуем столбики и карточку с кодом.
+                const cycles = meta.cycles || [];
+                lgCycles = cycles;
+                const currentPeriodIndex = meta.current_period;
+                const currentLevel = meta.current_level;
+                const currentStartAge = meta.current_start;
+                const currentEndAge = meta.current_end;
+                const graphCode = meta.code;
+
+                let html = '<h3 style="text-align:center;color:var(--color-gold);margin-bottom:12px;">График жизни</h3>';
+                html += '<div style="display: flex; align-items: flex-end; gap: 6px; justify-content: center; height: 180px; max-width: 100%; overflow-x: auto; padding: 0 10px; margin-bottom: 4px;">';
+
+                cycles.forEach((level, i) => {
+                    const age = i * 7;
+                    const height = (level / 9) * 150 + 20;
+                    const isCurrent = i === currentPeriodIndex;
+                    let color = level <= 2 ? 'rgba(212,131,138,0.5)' : level <= 5 ? 'rgba(212,168,67,0.5)' : 'rgba(126,184,158,0.5)';
+                    let borderColor = level <= 2 ? '#d4838a' : level <= 5 ? '#d4a843' : '#7eb89e';
+
+                    html += `<div style="text-align: center; flex: 1; min-width: 44px;${isCurrent ? ' background: rgba(255,213,79,0.08); border-radius: 8px;' : ''}">
+                        <div class="psycho-digit" style="font-size: 16px;">${level}</div>
+                        <div style="width: 100%; height: ${height}px; background: ${color}; border-radius: 6px 6px 0 0; margin: 0 auto; border: 1px solid ${borderColor}; max-width: 44px;"></div>
+                        <div style="font-size: 9px; color: var(--color-text-lighter); margin-top: 4px;">${age}</div>
+                    </div>`;
+                });
+
+                html += '</div>';
+                html += '<p style="font-size: 11px; color: var(--color-text-lighter); text-align: center;">🔴 0-2: переосмысление | 🟡 3-5: стабильность | 🟢 6-9: пик энергии</p>';
+
+                html += `<div style="background: rgba(255,213,79,0.05); border: 1px solid var(--color-gold); border-radius: 12px; padding: 14px; margin-top: 12px; text-align: center;">
+                    <span style="font-size: 11px; color: var(--color-gold); font-weight: 600;">Ваш код</span>
+                    <div class="psycho-digit" style="font-size: 36px; margin: 4px 0; letter-spacing: 4px;">${sanitizeHTML(graphCode)}</div>
+                    <p style="font-size: 12px; color: var(--color-text-lighter);">Текущий период: ${currentStartAge}–${currentEndAge} лет (уровень ${currentLevel})</p>
+                </div>`;
+
+                // Пустой контейнер под AI-разбор. Наполнится в onDone.
+                html += '<div id="lgAiBlocks"></div>';
+                // Пустой контейнер под чат.
+                html += '<div id="lgPost"></div>';
+
+                resultDiv.innerHTML = html;
+            },
+
+            onBlock: function(b) {
+                if (b.name && b.value) blocks[b.name] = b.value;
+            },
+
+            onError: function(err) {
+                const slot = document.getElementById('lgAiBlocks');
+                if (slot) {
+                    slot.innerHTML = '<p style="color:var(--color-error);text-align:center;padding:20px;">' +
+                        sanitizeHTML(err.message || 'Не удалось загрузить разбор') + '</p>';
+                }
+            },
+
+            onDone: function() {
+                renderLifeGraphAiBlocks(blocks, lgCycles);
+                renderLifeGraphPost(resultDiv);
+            },
+        }
+    );
+}
+
+function renderLifeGraphAiBlocks(blocks, cycles) {
+    const slot = document.getElementById('lgAiBlocks');
+    if (!slot) return;
+
+    let html = '';
+
+    if (blocks['current']) {
+        html += `<div style="margin-top:14px;padding:12px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:12px;">
+            <span style="color:var(--color-gold);font-weight:600;font-size:14px;">Текущий период</span>
+            <p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.6;white-space:pre-line;">${sanitizeHTML(blocks['current'])}</p>
+        </div>`;
+    }
+
+    if (blocks['overview']) {
+        html += `<div style="margin-top:14px;"><span style="color:var(--color-gold);font-weight:600;font-size:14px;">Обзор</span>
+            <p style="font-size:13px;color:var(--color-text-light);margin-top:4px;line-height:1.6;white-space:pre-line;">${sanitizeHTML(blocks['overview'])}</p></div>`;
+    }
+
+    // Все периоды.
+    const hasAnyPeriod = ['period0','period1','period2','period3','period4','period5','period6'].some(k => blocks[k]);
+    if (hasAnyPeriod) {
+        html += '<div style="margin-top:14px;"><span style="color:var(--color-gold);font-weight:600;font-size:14px;">Все периоды</span></div>';
+        const ageRanges = ["0-6", "7-13", "14-20", "21-27", "28-34", "35-41", "42-48"];
+        const periodTitles = ["Детство", "Школьные годы", "Юность", "Начало взрослой жизни", "Зрелость и расцвет", "Переосмысление", "Стабильность и мудрость"];
+        for (let i = 0; i < 7; i++) {
+            const key = 'period' + i;
+            if (blocks[key]) {
+                html += `<div style="margin-bottom:12px;padding:12px;background:rgba(255,213,79,0.03);border:1px solid var(--color-border);border-radius:12px;">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                        <div style="font-size:22px;min-width:28px;text-align:center;color:var(--color-gold);font-weight:700;" class="psycho-digit">${cycles && cycles[i] !== undefined ? cycles[i] : ''}</div>
+                        <div>
+                            <span style="color:var(--color-gold);font-weight:600;font-size:13px;">${ageRanges[i]} лет — ${periodTitles[i]}</span>
+                        </div>
+                    </div>
+                    <p style="font-size:13px;color:var(--color-text-light);margin-top:4px;line-height:1.7;white-space:pre-line;">${sanitizeHTML(blocks[key])}</p>
+                </div>`;
+            }
+        }
+    }
+
+    if (blocks['advice']) {
+        html += `<div style="margin-top:14px;padding:12px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:12px;">
+            <span style="color:var(--color-gold);font-weight:600;font-size:14px;">Итоговый совет</span>
+            <p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.6;white-space:pre-line;">${sanitizeHTML(blocks['advice'])}</p>
+        </div>`;
+    }
+
+    slot.innerHTML = html;
+}
+
+function renderLifeGraphPost(resultDiv) {
+    const postSlot = document.getElementById('lgPost');
+    if (!postSlot) return;
+
+    postSlot.innerHTML = `
+        <div id="lifeGraphChatBlock" style="margin-top:20px;max-width:100%;box-sizing:border-box;">
+            <p style="font-weight:600;color:var(--color-gold);margin-bottom:4px;">График жизни — это только начало</p>
+            <p style="font-size:11px;color:var(--color-text-lighter);margin-bottom:12px;">Задайте вопрос о ваших жизненных периодах</p>
+            <div id="suggestedLifeGraphQuestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"><span style="font-size:12px;color:var(--color-text-light);">Загрузка подсказок...</span></div>
+            <div class="input-group" style="display:flex;gap:8px;">
+                <textarea id="lifeGraphQuestion" placeholder="Напишите свой вопрос..." maxlength="500" style="resize:none;overflow:hidden;font-family:var(--font-main);font-size:14px;padding:10px 14px;border:2px solid var(--color-border);border-radius:12px;outline:none;color:var(--color-text);background:rgba(15,31,15,0.8);line-height:1.4;min-height:42px;transition:border-color 0.3s;width:100%;box-sizing:border-box;"></textarea>
+                <button class="btn btn-primary btn-sm" onclick="askChatQuestion('lifeGraph')" style="flex-shrink:0;white-space:nowrap;">Спросить</button>
+            </div>
+            <div id="lifeGraphAnswer" style="margin-top:12px;max-width:100%;box-sizing:border-box;word-wrap:break-word;overflow-wrap:break-word;"></div>
+        </div>`;
+
+    resultDiv.style.display = 'block';
+    setTimeout(function(){ loadLifeGraphSuggestions(); }, 200);
+}
+
+function showReferenceContent() {
+    const resultDiv = document.getElementById('result-numerology');
+    let html = '<div style="display:flex;flex-direction:column;gap:16px;">';
+    
+    // Поле для ввода любого числа
+    html += `
+        <div style="text-align:center;margin-bottom:8px;">
+            <p style="font-size:13px;color:var(--color-text-lighter);margin-bottom:8px;">Введите любое число, чтобы узнать его значение</p>
+            <div style="display:flex;gap:8px;justify-content:center;">
+                <input type="number" id="customNumberInput" placeholder="Например: 5" min="1" max="99"
+                    style="width:120px;padding:8px 12px;border:1px solid var(--color-border);border-radius:8px;background:rgba(15,31,15,0.8);color:var(--color-text);font-size:16px;text-align:center;font-family:var(--font-main);"
+                    onkeydown="if(event.key==='Enter')searchCustomNumber()">
+                <button class="btn btn-outline btn-sm" onclick="searchCustomNumber()" style="white-space:nowrap;">Узнать</button>
+            </div>
+        </div>
+    `;
+    
+    const sections = [
+        { key: 'life_path', title: 'Число Жизненного Пути', desc: 'Главное число. Рассчитывается по дате рождения.' },
+        { key: 'destiny', title: 'Число Судьбы', desc: 'Рассчитывается по полному имени.' },
+        { key: 'soul_urge', title: 'Число Души', desc: 'По гласным буквам имени. Глубинные желания.' },
+        { key: 'personality', title: 'Число Личности', desc: 'По согласным буквам имени. Как видят другие.' },
+        { key: 'maturity', title: 'Число Зрелости', desc: 'Сумма Пути и Судьбы. Вторая половина жизни.' },
+        { key: 'birth_day', title: 'Число Дня Рождения', desc: 'День рождения. Особый талант.' },
+    ];
+    
+    sections.forEach(sec => {
+        html += `<div style="padding: 12px 0; border-bottom: 1px solid var(--color-border); text-align: center;">
+            <span style="color:var(--color-gold);font-weight:600;font-size:14px;">${sec.title}</span>
+            <p style="font-size:11px;color:var(--color-text-lighter);margin:4px 0 8px;">${sec.desc}</p>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;">`;
+        [1,2,3,4,5,6,7,8,9,11,22,33].forEach(n => {
+            html += `<span onclick="openNumberInfo('${sec.key}', ${n})" 
+                style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:rgba(255,213,79,0.08);color:var(--color-gold);font-weight:600;font-size:14px;cursor:pointer;border:1px solid rgba(255,213,79,0.2);transition:all 0.2s ease;"
+                onmouseover="this.style.background='var(--color-gold)';this.style.color='#0f1f0f';this.style.border='1px solid var(--color-gold)';this.style.transform='scale(1.1)';"
+                onmouseout="this.style.background='rgba(255,213,79,0.08)';this.style.color='var(--color-gold)';this.style.border='1px solid rgba(255,213,79,0.2)';this.style.transform='scale(1)';"
+            >${n}</span>`;
+        });
+        html += `</div></div>`;
+    });
+    html += '</div>';
+    resultDiv.innerHTML = html;
+}
+
+function addNumerologyChat(resultDiv, type, result) {
+    const chatId = type + 'ChatBlock';
+    const questionsId = 'suggested' + type.charAt(0).toUpperCase() + type.slice(1) + 'Questions';
+    const questionInputId = type + 'Question';
+    const answerId = type + 'Answer';
+    
+    const chatHtml = `
+        <div id="${chatId}" style="margin-top:20px;max-width:100%;box-sizing:border-box;">
+            <p style="font-weight:600;color:var(--color-gold);margin-bottom:4px;">Это только начало</p>
+            <p style="font-size:11px;color:var(--color-text-lighter);margin-bottom:12px;">Задайте вопрос</p>
+            <div id="${questionsId}" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"></div>
+            <div class="input-group" style="display:flex;gap:8px;">
+                <textarea id="${questionInputId}" placeholder="Напишите свой вопрос..." maxlength="500"
+                    style="resize:none;overflow:hidden;font-family:var(--font-main);font-size:14px;padding:10px 14px;border:2px solid var(--color-border);border-radius:12px;outline:none;color:var(--color-text);background:rgba(15,31,15,0.8);line-height:1.4;min-height:42px;transition:border-color 0.3s;width:100%;box-sizing:border-box;"></textarea>
+                <button class="btn btn-primary btn-sm" onclick="askChatQuestion('${type}')" style="flex-shrink:0;white-space:nowrap;">Спросить</button>
+            </div>
+            <div id="${answerId}" style="margin-top:12px;max-width:100%;box-sizing:border-box;word-wrap:break-word;overflow-wrap:break-word;"></div>
+        </div>
+    `;
+    resultDiv.insertAdjacentHTML('beforeend', chatHtml);
+    
+    if (type === 'numerology') {
+        setTimeout(() => loadNumerologySuggestions(result), 200);
+    }
+}
+
+// ============================================
+// НУМЕРОЛОГИЯ (Пламя) — SSE-стрим
+// ============================================
+
+async function streamNumerologyPortrait(data, resultDiv) {
+    resultDiv.innerHTML = `
+        <div style="text-align:center;padding:20px;">
+            <div style="display:inline-block;width:36px;height:36px;border:3px solid var(--color-border);border-top-color:var(--color-gold);border-radius:50%;animation:spin 1s linear infinite;"></div>
+            <p style="font-size:13px;color:var(--color-text-lighter);margin-top:12px;">Считаем числа...</p>
+        </div>`;
+
+    // Порядок и подписи аспектов — те же, что в formatNumerologyPortrait.
+    const aspectDefs = [
+        { key: 'life_path',   title: 'Число Жизненного Пути',     subtitle: 'Главное число судьбы' },
+        { key: 'destiny',     title: 'Число Судьбы',              subtitle: 'Таланты и карьерные склонности' },
+        { key: 'soul',        title: 'Число Души',                subtitle: 'Глубинные желания и мотивация' },
+        { key: 'personality', title: 'Число Личности',            subtitle: 'Как воспринимают окружающие' },
+        { key: 'maturity',    title: 'Число Зрелости',            subtitle: 'Качества после 35 лет' },
+        { key: 'expression',  title: 'Число Экспрессии',          subtitle: 'Проявление себя в мире' },
+        { key: 'soul_urge',   title: 'Число Душевного Порыва',    subtitle: 'Что нужно сердцу' },
+    ];
+
+    // result — сборка для чата и suggestions, чтобы структура совпадала
+    // со старой (aiData, где ключи — это key из aspectDefs, плюс summary).
+    const result = {};
+
+    await streamPost(
+        '/api/numerology/ai-full/stream',
+        data,
+        {
+            onMeta: function(meta) {
+                const numbers = meta.numbers || {};
+
+                let html = '';
+                html += `<div style="text-align:center;margin-bottom:20px;">
+                    <div style="font-size:18px;font-weight:600;color:var(--color-gold);letter-spacing:0.5px;">Нумерологический портрет</div>
+                    <div style="font-size:13px;color:var(--color-text-lighter);margin-top:4px;">${sanitizeHTML(data.first_name || '')} ${sanitizeHTML(data.last_name || '')}</div>
+                </div>`;
+
+                // Карточки аспектов: скелет с числом в кружке + subtitle, тело — «Загружается...».
+                aspectDefs.forEach(function(aspect) {
+                    const num = numbers[aspect.key] || '';
+                    html += `<div id="numAspect_${aspect.key}" data-num="${num}" style="margin-bottom:16px;padding:20px;background:rgba(30,58,30,0.4);border:1px solid var(--color-border);border-radius:16px;">
+                        <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;">
+                            ${num !== '' ? `<div style="width:36px;height:36px;border-radius:50%;border:1.5px solid var(--color-gold);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="font-size:16px;font-weight:700;color:var(--color-gold);">${num}</span></div>` : ''}
+                            <div>
+                                <span style="font-size:13px;font-weight:600;color:var(--color-gold);">${aspect.title}</span>
+                                <p style="font-size:12px;color:var(--color-text-lighter);margin-top:2px;">${aspect.subtitle}</p>
+                            </div>
+                        </div>
+                        <p style="font-size:13px;color:var(--color-text-lighter);">Загружается...</p>
+                    </div>`;
+                });
+
+                // Слот под summary.
+                html += `<div id="numSummarySlot"></div>`;
+                // Слот под чат.
+                html += `<div id="numPostSlot"></div>`;
+
+                resultDiv.innerHTML = html;
+            },
+
+            onBlock: function(b) {
+                const name = b.name;
+                const value = b.value;
+                if (!value) return;
+
+                if (name === 'summary') {
+                    result.summary = value;
+                    const slot = document.getElementById('numSummarySlot');
+                    if (slot) {
+                        slot.innerHTML = `<div style="margin-top:16px;padding:16px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:12px;">
+                            <span style="color:var(--color-gold);font-weight:600;font-size:14px;">Итоговый портрет</span>
+                            <p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.7;">${sanitizeHTML(value)}</p>
+                        </div>`;
+                    }
+                    return;
+                }
+
+                // value — объект {meaning, strengths, challenges}
+                result[name] = value;
+
+                const aspect = aspectDefs.find(a => a.key === name);
+                if (!aspect) return;
+
+                const el = document.getElementById('numAspect_' + name);
+                if (!el) return;
+
+                const numShown = el.dataset.num || '';
+
+                // Очищаем meaning — как в formatNumerologyPortrait (там были
+                // регулярки на случай, если AI повторит заголовок в начале текста).
+                let meaning = value.meaning || '';
+                meaning = meaning.replace(new RegExp('^' + aspect.title + '\\s*' + numShown + '[,:]?\\s*', 'i'), '');
+                meaning = meaning.replace(new RegExp('^' + aspect.title + '\\s*[,:]?\\s*', 'i'), '');
+                meaning = meaning.replace(new RegExp('^Число\\s+\\d+\\s*[,:]?\\s*', 'i'), '');
+                meaning = meaning.replace(/^\d+\s*/, '');
+
+                let inner = '';
+                inner += `<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;">`;
+                if (numShown !== '') {
+                    inner += `<div style="width:36px;height:36px;border-radius:50%;border:1.5px solid var(--color-gold);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="font-size:16px;font-weight:700;color:var(--color-gold);">${numShown}</span></div>`;
+                }
+                inner += `<div><span style="font-size:13px;font-weight:600;color:var(--color-gold);">${aspect.title}</span><p style="font-size:12px;color:var(--color-text-lighter);margin-top:2px;">${aspect.subtitle}</p></div></div>`;
+                inner += `<p style="font-size:13px;color:var(--color-text-light);line-height:1.7;margin-bottom:12px;">${sanitizeHTML(meaning)}</p>`;
+
+                if (value.strengths && value.strengths.length > 0) {
+                    inner += '<div style="margin-bottom:10px;"><span style="font-size:11px;color:#7eb89e;font-weight:600;">Плюсы</span><ul style="list-style:none;padding:0;margin:4px 0 0 0;">';
+                    value.strengths.forEach(function(s) {
+                        inner += '<li style="font-size:12px;color:var(--color-text-light);padding:1px 0;">- ' + sanitizeHTML(s) + '</li>';
+                    });
+                    inner += '</ul></div>';
+                }
+                if (value.challenges && value.challenges.length > 0) {
+                    inner += '<div><span style="font-size:11px;color:#d4838a;font-weight:600;">Минусы</span><ul style="list-style:none;padding:0;margin:4px 0 0 0;">';
+                    value.challenges.forEach(function(c) {
+                        inner += '<li style="font-size:12px;color:var(--color-text-light);padding:1px 0;">- ' + sanitizeHTML(c) + '</li>';
+                    });
+                    inner += '</ul></div>';
+                }
+
+                el.innerHTML = inner;
+            },
+
+            onError: function(err) {
+                resultDiv.innerHTML = '<p style="color:var(--color-error);text-align:center;padding:20px;">' +
+                    sanitizeHTML(err.message || 'Не удалось получить портрет. Попробуйте ещё раз.') + '</p>';
+            },
+
+            onDone: function() {
+                const postSlot = document.getElementById('numPostSlot');
+                if (postSlot) {
+                    // Пустой контейнер под чат. addNumerologyChat вставит туда HTML сам.
+                    const chatAnchor = document.createElement('div');
+                    chatAnchor.id = 'numerologyChatAnchor';
+                    postSlot.appendChild(chatAnchor);
+                    addNumerologyChat(postSlot, 'numerology', result);
+                }
+            },
+        }
+    );
+}
+
+function formatNumerologyPortrait(aiData, formData, isPremium, numbers) {
+    let html = '';
+    
+    html += `<div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:18px;font-weight:600;color:var(--color-gold);letter-spacing:0.5px;">Нумерологический портрет</div>
+        <div style="font-size:13px;color:var(--color-text-lighter);margin-top:4px;">${sanitizeHTML(formData.first_name || '')} ${sanitizeHTML(formData.last_name || '')}</div>
+    </div>`;
+    
+    const aspects = [
+        {key: 'life_path', title: 'Число Жизненного Пути', subtitle: 'Главное число судьбы', number: numbers.life_path || ''},
+        {key: 'destiny', title: 'Число Судьбы', subtitle: 'Таланты и карьерные склонности', number: numbers.destiny || ''},
+        {key: 'soul', title: 'Число Души', subtitle: 'Глубинные желания и мотивация', number: numbers.soul || ''},
+        {key: 'personality', title: 'Число Личности', subtitle: 'Как воспринимают окружающие', number: numbers.personality || ''},
+        {key: 'maturity', title: 'Число Зрелости', subtitle: 'Качества после 35 лет', number: numbers.maturity || ''},
+        {key: 'expression', title: 'Число Экспрессии', subtitle: 'Проявление себя в мире', number: numbers.expression || ''},
+        {key: 'soul_urge', title: 'Число Душевного Порыва', subtitle: 'Что нужно сердцу', number: numbers.soul_urge || ''},
+    ];
+    
+    let shownCount = 0;
+    const maxFreeCards = 7;
+    
+aspects.forEach(function(aspect) {
+        const data = aiData[aspect.key];
+        const hasNumber = aspect.number && aspect.number !== '';
+        
+        if (!data && !isPremium && shownCount >= maxFreeCards) {
+            // Показываем карточку с числом в кружке и заглушкой
+            html += '<div style="margin-bottom:16px;padding:20px;background:rgba(30,58,30,0.4);border:1px solid var(--color-border);border-radius:16px;">';
+            html += '<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;">';
+            if (hasNumber) {
+                html += '<div style="width:36px;height:36px;border-radius:50%;border:1.5px solid var(--color-gold);display:flex;align-items:center;justify-content:center;flex-shrink:0;">';
+                html += '<span style="font-size:16px;font-weight:700;color:var(--color-gold);">' + aspect.number + '</span>';
+                html += '</div>';
+            }
+            html += '<div><span style="font-size:13px;font-weight:600;color:var(--color-gold);">' + aspect.title + '</span>';
+            html += '<p style="font-size:12px;color:var(--color-text-lighter);margin-top:2px;">' + sanitizeHTML(aspect.subtitle) + '</p></div>';
+            html += '</div>';
+            html += '<p style="font-size:11px;color:var(--color-text-light);font-style:italic;line-height:1.5;">Это число раскрывает важную грань личности. Одна особенность способна изменить представление о себе...</p>';
+            html += '</div>';
+            shownCount++;
+            return;
+        }
+        if (!data) return;
+        
+        shownCount++;
+        const isLocked = !isPremium && shownCount > maxFreeCards;
+        
+        html += '<div style="margin-bottom:16px;padding:20px;background:rgba(30,58,30,0.4);border:1px solid var(--color-border);border-radius:16px;">';
+        
+        if (isLocked) {
+            // Заглушка для бесплатных
+            html += '<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;">';
+            if (hasNumber) {
+                html += '<div style="width:36px;height:36px;border-radius:50%;border:1.5px solid var(--color-gold);display:flex;align-items:center;justify-content:center;flex-shrink:0;">';
+                html += '<span style="font-size:16px;font-weight:700;color:var(--color-gold);">' + aspect.number + '</span>';
+                html += '</div>';
+            }
+            html += '<div><span style="font-size:13px;font-weight:600;color:var(--color-gold);">' + aspect.title + '</span>';
+            html += '<p style="font-size:12px;color:var(--color-text-lighter);margin-top:4px;">' + sanitizeHTML(aspect.subtitle) + '</p></div>';
+            html += '</div>';
+            html += '<p style="font-size:11px;color:var(--color-text-light);font-style:italic;line-height:1.5;">Это число раскрывает важную грань личности. Одна особенность способна изменить представление о себе...</p>';
+        } else if (data.teaser) {
+            // Тизер для бесплатных
+            html += '<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;">';
+            html += '<div style="width:36px;height:36px;border-radius:50%;border:1.5px solid var(--color-gold);display:flex;align-items:center;justify-content:center;flex-shrink:0;">';
+            html += '<span style="font-size:16px;font-weight:700;color:var(--color-gold);">' + aspect.number + '</span>';
+            html += '</div>';
+            html += '<div><span style="font-size:13px;font-weight:600;color:var(--color-gold);">' + aspect.title + '</span>';
+            html += '<p style="font-size:12px;color:var(--color-text-lighter);margin-top:2px;">' + sanitizeHTML(aspect.subtitle) + '</p></div>';
+            html += '</div>';
+            html += '<p style="font-size:13px;color:var(--color-text-light);line-height:1.6;">' + sanitizeHTML(data.teaser) + '</p>';
+            html += '<p style="margin-top:6px;"><span style="color:var(--color-gold);cursor:pointer;text-decoration:underline;font-size:11px;" onclick="showPaywall()">Читать полностью →</span></p>';
+        } else {
+            // Полный разбор для платных
+            html += '<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;">';
+            html += '<div style="width:36px;height:36px;border-radius:50%;border:1.5px solid var(--color-gold);display:flex;align-items:center;justify-content:center;flex-shrink:0;">';
+            html += '<span style="font-size:16px;font-weight:700;color:var(--color-gold);">' + aspect.number + '</span>';
+            html += '</div>';
+            html += '<div><span style="font-size:13px;font-weight:600;color:var(--color-gold);">' + aspect.title + '</span>';
+            html += '<p style="font-size:12px;color:var(--color-text-lighter);margin-top:2px;">' + sanitizeHTML(aspect.subtitle) + '</p></div>';
+            html += '</div>';
+            
+            // Текст без цифры в начале
+            let meaning = data.meaning || '';
+            // Убираем повторение названия и цифры в начале текста
+            meaning = meaning.replace(new RegExp('^' + aspect.title + '\\s*' + aspect.number + '[,:]?\\s*', 'i'), '');
+            meaning = meaning.replace(new RegExp('^' + aspect.title + '\\s*[,:]?\\s*', 'i'), '');
+            meaning = meaning.replace(new RegExp('^Число\\s+\\d+\\s*[,:]?\\s*', 'i'), '');
+            meaning = meaning.replace(/^\d+\s*/, ''); // Убирает число в начале строки
+            
+            html += '<p style="font-size:13px;color:var(--color-text-light);line-height:1.7;margin-bottom:12px;">' + sanitizeHTML(meaning) + '</p>';
+            
+            if (data.strengths && data.strengths.length > 0) {
+                html += '<div style="margin-bottom:10px;"><span style="font-size:11px;color:#7eb89e;font-weight:600;">Плюсы</span>';
+                html += '<ul style="list-style:none;padding:0;margin:4px 0 0 0;">';
+                data.strengths.forEach(function(s) {
+                    html += '<li style="font-size:12px;color:var(--color-text-light);padding:1px 0;">- ' + sanitizeHTML(s) + '</li>';
+                });
+                html += '</ul></div>';
+            }
+            
+            if (data.challenges && data.challenges.length > 0) {
+                html += '<div><span style="font-size:11px;color:#d4838a;font-weight:600;">Минусы</span>';
+                html += '<ul style="list-style:none;padding:0;margin:4px 0 0 0;">';
+                data.challenges.forEach(function(c) {
+                    html += '<li style="font-size:12px;color:var(--color-text-light);padding:1px 0;">- ' + sanitizeHTML(c) + '</li>';
+                });
+                html += '</ul></div>';
+            }
+        }
+        
+        html += '</div>';
+    });
+    
+    
+    // Итоговый summary
+    if (aiData.summary) {
+        html += '<div style="margin-top:16px;padding:16px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:12px;">';
+        html += '<span style="color:var(--color-gold);font-weight:600;font-size:14px;">Итоговый портрет</span>';
+        html += '<p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.7;">' + sanitizeHTML(aiData.summary) + '</p>';
+        html += '</div>';
+    }
+    
+    return html;
+}
+
+async function loadNumerologySuggestions(result) {
+    const container = document.getElementById('suggestedNumerologyQuestions');
+    if (!container) return;
+    
+    container.innerHTML = '<span style="font-size:12px;color:var(--color-text-lighter);">Загрузка подсказок...</span>';
+    
+    const fullText = document.getElementById('result-numerology')?.textContent || '';
+    
+    if (fullText) {
+        try {
+            const res = await fetch('/api/numerology/suggestions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ full_text: fullText })
+            });
+            const data = await res.json();
+            if (data.suggestions && data.suggestions.length > 0) {
+                container.innerHTML = data.suggestions.map(q =>
+                    `<span onclick="askSuggestedChatQuestion('numerology', '${q.replace(/'/g, "\\'")}')" 
+                        style="display:inline-block;padding:8px 14px;font-size:12px;color:var(--color-text-light);cursor:pointer;background:rgba(30,58,30,0.8);border:1px solid var(--color-border);border-radius:18px;transition:all 0.2s ease;"
+                        onmouseover="this.style.borderColor='var(--color-gold)';this.style.color='var(--color-gold)';"
+                        onmouseout="this.style.borderColor='var(--color-border)';this.style.color='var(--color-text-light)';"
+                    >${sanitizeHTML(q)}</span>`
+                ).join('');
+                return;
+            }
+        } catch(e) {}
+    }
+    
+    const questions = [
+        "Что означает сочетание этих чисел для личной жизни?",
+        "Какие профессии подходят под эти числа?",
+        "Как улучшить финансовое положение с такими числами?"
+    ];
+    
+    container.innerHTML = questions.map(q =>
+        `<span onclick="askSuggestedChatQuestion('numerology', '${q.replace(/'/g, "\\'")}')" 
+            style="display:inline-block;padding:8px 14px;font-size:12px;color:var(--color-text-light);cursor:pointer;background:rgba(30,58,30,0.8);border:1px solid var(--color-border);border-radius:18px;transition:all 0.2s ease;"
+            onmouseover="this.style.borderColor='var(--color-gold)';this.style.color='var(--color-gold)';"
+            onmouseout="this.style.borderColor='var(--color-border)';this.style.color='var(--color-text-light)';"
+        >${q}</span>`
+    ).join('');
+}
+
+async function loadPsychomatrixSuggestions() {
+    const container = document.getElementById('suggestedPsychomatrixQuestions');
+    if (!container) return;
+    
+    const fullText = document.getElementById('result-numerology')?.textContent || '';
+    
+    if (fullText) {
+        try {
+            const res = await fetch('/api/numerology/psychomatrix/suggestions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ full_text: fullText })
+            });
+            const data = await res.json();
+            if (data.suggestions && data.suggestions.length > 0) {
+                container.innerHTML = data.suggestions.map(q =>
+                    `<span onclick="askSuggestedChatQuestion('psychomatrix', '${q.replace(/'/g, "\\'")}')" 
+                        style="display:inline-block;padding:8px 14px;font-size:12px;color:var(--color-text-light);cursor:pointer;background:rgba(30,58,30,0.8);border:1px solid var(--color-border);border-radius:18px;transition:all 0.2s ease;"
+                        onmouseover="this.style.borderColor='var(--color-gold)';this.style.color='var(--color-gold)';"
+                        onmouseout="this.style.borderColor='var(--color-border)';this.style.color='var(--color-text-light)';"
+                    >${sanitizeHTML(q)}</span>`
+                ).join('');
+                return;
+            }
+        } catch(e) {}
+    }
+    
+    const questions = [
+        "Почему пустая ячейка характера влияет на жизненные выборы?",
+        "Как усилить качество, если в ячейке всего одна цифра?",
+        "Что делать, если в психоматрице много пустых ячеек?"
+    ];
+    
+    container.innerHTML = questions.map(q =>
+        `<span onclick="askSuggestedChatQuestion('psychomatrix', '${q.replace(/'/g, "\\'")}')" 
+            style="display:inline-block;padding:8px 14px;font-size:12px;color:var(--color-text-light);cursor:pointer;background:rgba(30,58,30,0.8);border:1px solid var(--color-border);border-radius:18px;transition:all 0.2s ease;"
+            onmouseover="this.style.borderColor='var(--color-gold)';this.style.color='var(--color-gold)';"
+            onmouseout="this.style.borderColor='var(--color-border)';this.style.color='var(--color-text-light)';"
+        >${q}</span>`
+    ).join('');
+}
+
+function askSuggestedChatQuestion(type, question) {
+    const input = document.getElementById(type + 'Question');
+    if (input) {
+        input.value = question;
+        input.style.height = 'auto';
+        input.style.height = input.scrollHeight + 'px';
+    }
+}
+
+async function askChatQuestion(type) {
+    const question = document.getElementById(type + 'Question')?.value.trim();
+    if (!question) return;
+    const answerBlock = document.getElementById(type + 'Answer');
+    answerBlock.innerHTML += `<div style="display:flex;justify-content:flex-end;margin-top:8px;"><div style="background:rgba(76,175,80,0.35);border-radius:18px 18px 4px 18px;padding:10px 16px;max-width:90%;font-size:14px;color:var(--color-text);line-height:1.5;word-wrap:break-word;">${sanitizeHTML(question)}</div></div>`;
+    document.getElementById(type + 'Question').value = '';
+    const typingDiv = document.createElement('div');
+    typingDiv.style.cssText = 'display:flex;justify-content:flex-start;margin-top:4px;';
+    typingDiv.innerHTML = '<div style="background:rgba(30,58,30,0.6);border-radius:18px 18px 18px 4px;padding:10px 16px;max-width:90%;font-size:14px;color:var(--color-text-lighter);">Печатает...</div>';
+    answerBlock.appendChild(typingDiv);
+    try {
+        const res = await fetch('/api/numer/dialogue', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: question, section: 'numerology' })
+        });
+        const data = await res.json();
+        typingDiv.remove();
+        if (data.answer) {
+            answerBlock.innerHTML += `<div style="display:flex;justify-content:flex-start;margin-top:4px;"><div style="background:rgba(30,58,30,0.6);border-radius:18px 18px 18px 4px;padding:10px 16px;max-width:90%;font-size:14px;color:var(--color-text-light);line-height:1.5;word-wrap:break-word;">${sanitizeHTML(data.answer)}</div></div>`;
+        }
+    } catch(e) {
+        typingDiv.remove();
+    }
+}
+
+async function loadLifeGraphSuggestions() {
+    const container = document.getElementById('suggestedLifeGraphQuestions');
+    if (!container) return;
+    
+    const fullText = document.getElementById('result-numerology')?.textContent || '';
+    
+    if (fullText) {
+        try {
+            const res = await fetch('/api/numerology/life-graph/suggestions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ full_text: fullText })
+            });
+            const data = await res.json();
+            if (data.suggestions && data.suggestions.length > 0) {
+                container.innerHTML = data.suggestions.map(q =>
+                    `<span onclick="askSuggestedChatQuestion('lifeGraph', '${q.replace(/'/g, "\\'")}')" 
+                        style="display:inline-block;padding:8px 14px;font-size:12px;color:var(--color-text-light);cursor:pointer;background:rgba(30,58,30,0.8);border:1px solid var(--color-border);border-radius:18px;transition:all 0.2s ease;"
+                        onmouseover="this.style.borderColor='var(--color-gold)';this.style.color='var(--color-gold)';"
+                        onmouseout="this.style.borderColor='var(--color-border)';this.style.color='var(--color-text-light)';"
+                    >${sanitizeHTML(q)}</span>`
+                ).join('');
+                return;
+            }
+        } catch(e) {}
+    }
+    
+    const questions = [
+        "Почему период спада сменяется пиком энергии?",
+        "Как использовать текущий период максимально эффективно?",
+        "Что делать после завершения пика энергии?"
+    ];
+    
+    container.innerHTML = questions.map(q =>
+        `<span onclick="askSuggestedChatQuestion('lifeGraph', '${q.replace(/'/g, "\\'")}')" 
+            style="display:inline-block;padding:8px 14px;font-size:12px;color:var(--color-text-light);cursor:pointer;background:rgba(30,58,30,0.8);border:1px solid var(--color-border);border-radius:18px;transition:all 0.2s ease;"
+            onmouseover="this.style.borderColor='var(--color-gold)';this.style.color='var(--color-gold)';"
+            onmouseout="this.style.borderColor='var(--color-border)';this.style.color='var(--color-text-light)';"
+        >${q}</span>`
+    ).join('');
+}
+
+function searchCustomNumber() {
+    const input = document.getElementById('customNumberInput');
+    const num = parseInt(input.value);
+    if (!num || num < 1 || num > 99) {
+        alert('Введите число от 1 до 99');
+        return;
+    }
+    
+    // Проверяем, загрузился ли numerology_data.js
+    if (typeof ALL_TYPES === 'undefined' || typeof NUMBER_DATA === 'undefined') {
+        alert('Справочник загружается. Попробуйте через секунду.');
+        return;
+    }
+    
+    // Ищем число в любом из справочников
+    for (const typeKey of ALL_TYPES) {
+        if (NUMBER_DATA[typeKey] && NUMBER_DATA[typeKey].numbers[num]) {
+            openNumberInfo(typeKey, num);
+            return;
+        }
+    }
+    
+    // Если число не найдено — показываем сокращённое
+    let reduced = num;
+    while (reduced > 9 && reduced !== 11 && reduced !== 22 && reduced !== 33) {
+        reduced = String(reduced).split('').reduce((a, b) => a + parseInt(b), 0);
+    }
+    
+    let found = false;
+    for (const typeKey of ALL_TYPES) {
+        if (NUMBER_DATA[typeKey] && NUMBER_DATA[typeKey].numbers[reduced]) {
+            openNumberInfo(typeKey, reduced);
+            found = true;
+            break;
+        }
+    }
+    
+    if (!found) {
+        alert('Число ' + num + ' сокращается до ' + reduced + '. Значение не найдено в справочнике.');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof showContextOnboarding === 'function') {
+        showContextOnboarding('#numerologyCards',
+            'Выберите инструмент: портрет, психоматрица, график жизни или справочник чисел.',
+            'numerology');
+    }
+});
+</script>
+{% endblock %}

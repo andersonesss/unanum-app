@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /profile
+Disallow: /profile/settings
+
+Sitemap: https://unanum.ru/sitemap.xml

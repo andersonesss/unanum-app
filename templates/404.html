@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Страница не найдена — unanum</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body.light-theme .error-page h1 { color: var(--color-gold); }
+        body.light-theme .error-page p { color: var(--color-text-light); }
+    </style>
+</head>
+<body>
+    <div class="error-page">
+        <h1>🌙</h1>
+        <p>Эта страница скрыта в тумане...</p>
+        <a href="/" class="btn btn-primary">Вернуться на главную</a>
+    </div>
+    
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-links">
+                <a href="/privacy">Политика конфиденциальности</a>
+                <span class="footer-divider">|</span>
+                <a href="/cookies">Политика cookies</a>
+                <span class="footer-divider">|</span>
+                <a href="/terms">Пользовательское соглашение</a>
+                <span class="footer-divider">|</span>
+                <a href="/offer">Публичная оферта</a>
+                <span class="footer-divider">|</span>
+                <a href="/contacts">Контакты</a>
+            </div>
+            <div class="footer-copy">© 2026 Unanum. Все права защищены.</div>
+        </div>
+    </footer>
+
+    <script>
+        // Восстановление темы на странице 404
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+            }
+        })();
+    </script>
+</body>
+</html>

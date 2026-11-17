@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Дневник — unanum{% endblock %}
+
+{% block content %}
+<section class="page-section" data-numer-section="diary">
+    <div class="container">
+        <h1 class="page-title">Мой дневник</h1>
+        <p class="page-subtitle">Записывай мысли, настроение и карты дня</p>
+
+        <!-- Форма добавления записи -->
+        <div style="background:var(--color-primary-soft);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px;margin-bottom:20px;">
+            <form id="diaryForm" onsubmit="addDiaryEntry(event)">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <div class="input-group" style="margin-bottom:10px;">
+                    <label>Дата</label>
+                    <input type="date" id="diaryDate" required>
+                </div>
+                <div class="input-group" style="margin-bottom:10px;">
+                    <label>Настроение</label>
+                    <select id="diaryMood">
+                        <option value="">Выбери...</option>
+                        <option value="✨">✨ Вдохновлённое</option>
+                        <option value="😊">😊 Радостное</option>
+                        <option value="😌">😌 Спокойное</option>
+                        <option value="😔">😔 Грустное</option>
+                        <option value="😤">😤 Раздражённое</option>
+                        <option value="🔮">🔮 Магическое</option>
+                    </select>
+                </div>
+                <div class="input-group" style="margin-bottom:10px;">
+                    <label>Карты дня</label>
+                    <input type="text" id="diaryCards" placeholder="Какие карты выпали?">
+                </div>
+                <div class="input-group" style="margin-bottom:12px;">
+                    <label>Заметки</label>
+                    <textarea id="diaryNotes" rows="3" placeholder="Твои мысли..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;">Сохранить</button>
+            </form>
+        </div>
+
+        <!-- Список записей -->
+        <div id="diaryEntries">
+            <p style="color:var(--color-text-lighter);">Загрузка...</p>
+        </div>
+    </div>
+</section>
+
+<script>
+async function loadDiary() {
+    const container = document.getElementById('diaryEntries');
+    try {
+        const res = await fetch('/api/profile/diary');
+        const entries = await res.json();
+        
+        if (entries.length === 0) {
+            container.innerHTML = '<p style="color:var(--color-text-lighter);text-align:center;">Пока нет записей. Начни свой дневник!</p>';
+            return;
+        }
+        
+        let html = '';
+        entries.forEach(entry => {
+            html += `
+                <div class="diary-entry" style="background:var(--color-primary-soft);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:14px;margin-bottom:10px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                        <span style="font-size:13px;color:var(--color-text-light);">${entry.entry_date}</span>
+                        <span style="font-size:16px;">${entry.mood || ''}</span>
+                    </div>
+                    ${entry.cards ? `<p style="font-size:12px;color:#d4879a;margin-bottom:4px;">Карты: ${entry.cards}</p>` : ''}
+                    ${entry.notes ? `<p style="font-size:13px;color:var(--color-text);line-height:1.6;">${entry.notes}</p>` : ''}
+                </div>`;
+        });
+        container.innerHTML = html;
+    } catch (e) {
+        container.innerHTML = '<p style="color:var(--color-error);">Не удалось загрузить записи</p>';
+    }
+}
+
+async function addDiaryEntry(e) {
+    e.preventDefault();
+    
+    const data = {
+        date: document.getElementById('diaryDate').value,
+        mood: document.getElementById('diaryMood').value,
+        cards: document.getElementById('diaryCards').value,
+        notes: document.getElementById('diaryNotes').value,
+    };
+    
+    if (!data.date) return;
+    
+    try {
+        const res = await fetch('/api/profile/diary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (result.success) {
+            document.getElementById('diaryDate').value = '';
+            document.getElementById('diaryMood').value = '';
+            document.getElementById('diaryCards').value = '';
+            document.getElementById('diaryNotes').value = '';
+            loadDiary();
+        }
+    } catch (e) {
+        alert('Ошибка сохранения');
+    }
+}
+
+// Загрузка при открытии
+loadDiary();
+
+showContextOnboarding('#diaryForm',
+    'Записывай свои мысли, настроение и карты дня — твой личный дневник самопознания.',
+    'diary');
+</script>
+{% endblock %}

@@ -1,0 +1,972 @@
+{% extends "base.html" %}
+{% block title %}Натальная карта онлайн — построить бесплатно с расшифровкой | Unanum{% endblock %}
+{% block meta_description %}Постройте натальную карту по дате и времени рождения. Положение планет, дома, аспекты. Персональный астрологический разбор.{% endblock %}
+{% block content %}
+<section class="page-section" style="padding-top: 80px;" data-numer-section="natal_chart">
+    <div class="container" style="padding: 0 16px; max-width: 600px;">
+        <h1 class="page-title" style="font-size: clamp(2rem, 5vw, 2.5rem); font-weight: 700; background: linear-gradient(135deg, #d4a843, #d4879a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 4px;">Натальная карта</h1>
+        <p class="page-subtitle" style="color: var(--color-text);">Карта неба на момент вашего рождения</p>
+
+        <!-- Форма -->
+        <div style="max-width: 400px; margin: 0 auto 24px; padding: 0 12px; box-sizing: border-box;">
+            <form id="natalChartForm" autocomplete="off">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <div class="input-group" style="flex: 1; min-width: 150px;">
+                        <label style="color: var(--color-text-light); font-size: 14px;">Дата рождения</label>
+                        <input type="date" name="birth_date" required>
+                    </div>
+                    <div class="input-group" style="flex: 1; min-width: 120px;">
+                        <label style="color: var(--color-text-light); font-size: 14px;">Время рождения</label>
+                        <input type="time" name="birth_time" id="birthTime" value="12:00">
+                    </div>
+                </div>
+                
+                <!-- Галка "не знаю время" -->
+                <div style="margin-top: 8px; margin-bottom: 12px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px; color: var(--color-text-lighter);">
+                        <input type="checkbox" id="unknownTime" onchange="toggleUnknownTime()">
+                        Я не знаю время рождения
+                    </label>
+                    <p id="unknownTimeHint" style="display: none; font-size: 11px; color: var(--color-text-lighter); margin-top: 4px; margin-left: 28px; line-height: 1.4;">
+                        Построим карту на полдень — асцендент и дома будут приблизительными
+                    </p>
+                </div>
+                
+                <!-- Место рождения с автодополнением -->
+                <div class="input-group" style="position: relative; flex: 1; min-width: 150px;">
+                    <label style="color: var(--color-text-light); font-size: 14px;">Место рождения</label>
+                    <input type="text" id="birthPlace" name="birth_place" placeholder="Начните вводить город..." autocomplete="off"
+                        style="width:100%;min-width:0;box-sizing:border-box;border:1.5px solid var(--color-gold);text-align:left;padding:12px 14px;font-size:16px;border-radius:50px;background:rgba(15,31,15,0.8);color:var(--color-text);font-family:var(--font-main);">
+                        <input type="hidden" id="selectedLat" name="lat" value="">
+                        <input type="hidden" id="selectedLng" name="lng" value="">
+                        <div id="citySuggestions" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:50;background:#1a2f1a;border:1px solid var(--color-gold);border-radius:12px;max-height:200px;overflow-y:auto;margin-top:4px;box-shadow:0 4px 20px rgba(0,0,0,0.4);"></div>
+                </div>
+                
+                <!-- Ручной ввод координат -->
+                <div id="manualCoords" style="display: none; margin-top: 12px;">
+                    <p style="font-size: 11px; color: var(--color-text-lighter); margin-bottom: 8px;">Не нашли населённый пункт? Укажите координаты вручную:</p>
+                    <div style="display: flex; gap: 10px;">
+                        <div class="input-group" style="flex: 1;">
+                            <label style="color: var(--color-text-light); font-size: 12px;">Широта</label>
+                            <input type="text" id="manualLat" placeholder="55.7558" style="text-align:center;">
+                        </div>
+                        <div class="input-group" style="flex: 1;">
+                            <label style="color: var(--color-text-light); font-size: 12px;">Долгота</label>
+                            <input type="text" id="manualLng" placeholder="37.6173" style="text-align:center;">
+                        </div>
+                    </div>
+                </div>
+                
+                <p id="natalCityError" style="display:none;color:var(--color-error);font-size:12px;text-align:center;margin-top:8px;">Выберите город из выпадающего списка</p>
+                <button type="submit" id="natalSubmitBtn" class="btn btn-primary" disabled style="width: 100%; margin-top: 8px; padding: 12px; border-radius: 50px; opacity: 0.5;">Построить карту</button>
+            </form>
+        </div>
+
+        <!-- Результат -->
+        <div class="panel-result" id="natalResult" style="display: none; max-width: 600px; margin: 0 auto; padding: 0 12px; box-sizing: border-box; word-wrap: break-word; overflow-wrap: break-word;"></div>
+    </div>
+</section>
+
+<script>
+window.currentUserName = {{ (current_user.name if current_user.is_authenticated else '') | tojson }};
+
+
+// Ждём загрузки DOM, затем вешаем обработчик
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // ========== ОТПРАВКА ФОРМЫ ==========
+    var form = document.getElementById('natalChartForm');
+    if (form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var formData = new FormData(this);
+            var data = Object.fromEntries(formData);
+            if (!data.birth_time) data.birth_time = '12:00';
+            
+            
+            var resultDiv = document.getElementById('natalResult');
+            var isPremium = window.userTariff === 'Пламя';
+            
+            showLoading();
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p style="text-align:center;color:var(--color-text-lighter);padding:40px;">Строим карту...</p>';
+            
+            if (isPremium) {
+                // Пламя — SSE-стрим.
+                await streamNatalChart(data, resultDiv);
+                return;
+            }
+
+            // Ниже — старая логика для бесплатных (не тронута).
+            var url = '/api/natal-chart';
+            
+            try {
+                var res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                var result = await res.json();
+                hideLoading();
+                
+                if (result.error) {
+                    resultDiv.innerHTML = '<p style="color:var(--color-error);">' + sanitizeHTML(result.error) + '</p>';
+                    return;
+                }
+                
+                renderFullNatalChart(result, false);
+            } catch(e) {
+                hideLoading();
+                resultDiv.innerHTML = '<p style="color:var(--color-error);">Не удалось загрузить разбор: ' + sanitizeHTML(e.message) + '</p>';
+            }
+        });
+    }
+    
+    // ========== ГАЛКА ВРЕМЕНИ ==========
+    var unknownTime = document.getElementById('unknownTime');
+    if (unknownTime) {
+        unknownTime.onchange = toggleUnknownTime;
+    }
+    
+    // ========== АВТОДОПОЛНЕНИЕ ГОРОДОВ ==========
+    var birthPlace = document.getElementById('birthPlace');
+    if (birthPlace) {
+        birthPlace.addEventListener('input', function() {
+            document.getElementById('natalSubmitBtn').disabled = true;
+            document.getElementById('natalSubmitBtn').style.opacity = '0.5';
+            clearTimeout(window._cityTimer);
+            var query = this.value.trim();
+            if (query.length < 2) {
+                document.getElementById('citySuggestions').style.display = 'none';
+                return;
+            }
+            window._cityTimer = setTimeout(function() { searchCities(query); }, 400);
+        });
+    }
+    
+    // ========== КОНТЕКСТНЫЙ ОНБОРДИНГ ==========
+    if (typeof showContextOnboarding === 'function') {
+        showContextOnboarding('#natalChartForm',
+            'Укажи дату, время и место рождения — увидишь свою натальную карту с планетами, домами и аспектами.',
+            'natal_chart');
+    }
+    
+    
+    // ========== ОБРАБОТЧИК КЛИКА НА ЗАБЛОКИРОВАННУЮ КНОПКУ ==========
+    var natalBtn = document.getElementById('natalSubmitBtn');
+    if (natalBtn) {
+        natalBtn.addEventListener('click', function(e) {
+            if (this.disabled) {
+                e.preventDefault();
+                var errorEl = document.getElementById('natalCityError');
+                if (errorEl) {
+                    errorEl.style.display = 'block';
+                    setTimeout(function() {
+                        errorEl.style.display = 'none';
+                    }, 3000);
+                }
+            }
+        });
+    }
+});
+
+// ============================================
+// НАТАЛЬНАЯ КАРТА (Пламя) — SSE-стрим (F2)
+// ============================================
+
+async function streamNatalChart(data, resultDiv) {
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = `
+        <div style="text-align:center;padding:20px;">
+            <div style="display:inline-block;width:36px;height:36px;border:3px solid var(--color-border);border-top-color:var(--color-gold);border-radius:50%;animation:spin 1s linear infinite;"></div>
+            <p style="font-size:13px;color:var(--color-text-lighter);margin-top:12px;">Строим карту неба...</p>
+        </div>`;
+
+    // Накопитель AI-полей (для renderAISections и чат-подсказок).
+    // Структура — та же, что и в старом ответе /api/natal-chart/ai-full.
+    const result = {};
+
+    try {
+        await streamPost(
+            '/api/natal-chart/ai-full/stream',
+            data,
+            {
+                onMeta: function(meta) {
+                    // Копируем всё из meta в result — структурная часть.
+                    Object.assign(result, meta);
+                    // chart_data разворачиваем плоско, как это делал старый эндпоинт.
+                    // Старый ответ содержал и result.chart_data, и плоские копии
+                    // (sun, moon, ...). renderFullNatalChart и renderNatalAi
+                    // читают оба варианта. Здесь воспроизводим ту же структуру.
+                    if (meta.chart_data) {
+                        // НЕ перезаписываем плоские sun/moon/ascendant — они придут
+                        // как блоки AI. Но chart_data.sun остаётся доступным.
+                    }
+                    // Рендерим структурную часть сразу.
+                    renderNatalStructure(result, resultDiv);
+                },
+
+                onBlock: function(b) {
+                    if (!b.name || !b.value) return;
+                    // AI-поля: sun, moon, ascendant, planets, houses, summary,
+                    // strengths, challenges, advice.
+                    result[b.name] = b.value;
+                },
+
+                onError: function(err) {
+                    hideLoading();
+                    resultDiv.innerHTML = '<p style="color:var(--color-error);text-align:center;padding:20px;">' +
+                        sanitizeHTML(err.message || 'Не удалось загрузить разбор. Попробуйте ещё раз.') + '</p>';
+                },
+
+                onDone: function() {
+                    // Дорисовываем AI-секции в отдельный слот.
+                    const slot = document.getElementById('natalAiBlocks');
+                    if (slot) {
+                        slot.innerHTML = renderAISections(result);
+                    }
+                    // Чат и подсказки.
+                    renderNatalPost(resultDiv);
+                    hideLoading();
+                },
+            }
+        );
+    } finally {
+        hideLoading();
+    }
+}
+
+// Структурная часть: колесо, даты, стихии, планеты, дома, аспекты, звёзды,
+// lunar_day. Идентична первой части renderFullNatalChart.
+function renderNatalStructure(result, resultDiv) {
+    var html = '';
+
+    // 1. SVG-колесо
+    if (result.chart_svg) {
+        html += '<div class="nr-wheel-wrap" style="max-width:400px;margin:0 auto 24px;position:relative;">' + result.chart_svg + '</div>';
+    }
+
+    // 2. Данные рождения
+    if (result.birth_date) {
+        html += '<div style="text-align:center;margin-bottom:16px;">';
+        html += '<h3 style="color:var(--color-gold);margin-bottom:8px;font-size:16px;">' + sanitizeHTML(window.currentUserName || '') + ' — Натальная карта</h3>';
+        html += '<div style="font-size:11px;color:var(--color-text-lighter);line-height:1.8;max-width:300px;margin:0 auto;">';
+        if (result.birth_place) {
+            html += '<div style="display:flex;justify-content:space-between;"><span>Местоположение</span><span style="color:var(--color-text-light);">' + sanitizeHTML(result.birth_place) + '</span></div>';
+        }
+        if (result.lat && result.lng) {
+            html += '<div style="display:flex;justify-content:space-between;"><span>Широта/Долгота</span><span style="color:var(--color-text-light);">' + result.lat.toFixed(2) + '° / ' + result.lng.toFixed(2) + '°</span></div>';
+        }
+        html += '<div style="display:flex;justify-content:space-between;"><span>Дата и время</span><span style="color:var(--color-text-light);">' + result.birth_date.split('-').reverse().join('.') + ' ' + (result.birth_time || '12:00') + '</span></div>';
+        if (result.weekday) {
+            html += '<div style="display:flex;justify-content:space-between;"><span>День недели</span><span style="color:var(--color-text-light);">' + result.weekday + '</span></div>';
+        }
+        html += '</div></div>';
+    }
+
+    // 3. Стихии и кресты
+    if (result.elements && result.qualities) {
+        html += '<div style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap;">';
+        html += '<div style="flex:1;min-width:140px;">';
+        html += '<span style="font-size:12px;color:var(--color-gold);font-weight:600;">Стихии</span>';
+        var elemColors = {'Огонь': '#d4838a', 'Земля': '#7eb89e', 'Воздух': '#d4a843', 'Вода': '#6ba3c7'};
+        var elemEmoji = {'Огонь': '🔥', 'Земля': '🌍', 'Воздух': '💨', 'Вода': '💧'};
+        Object.entries(result.elements).forEach(function(entry) {
+            var name = entry[0], dataE = entry[1];
+            html += '<div style="display:flex;align-items:center;gap:8px;margin:4px 0;">';
+            html += '<span style="font-size:14px;width:20px;">' + elemEmoji[name] + '</span>';
+            html += '<span style="font-size:11px;color:var(--color-text-light);width:50px;">' + name + '</span>';
+            html += '<div style="flex:1;height:8px;background:rgba(30,58,30,0.6);border-radius:4px;overflow:hidden;">';
+            html += '<div style="width:' + dataE.percent + '%;height:100%;background:' + elemColors[name] + ';border-radius:4px;"></div>';
+            html += '</div>';
+            html += '<span style="font-size:11px;color:var(--color-text-lighter);width:30px;text-align:right;">' + dataE.percent + '%</span>';
+            html += '</div>';
+        });
+        html += '</div>';
+        html += '<div style="flex:1;min-width:140px;">';
+        html += '<span style="font-size:12px;color:var(--color-gold);font-weight:600;">Качества</span>';
+        Object.entries(result.qualities).forEach(function(entry) {
+            var name = entry[0], dataQ = entry[1];
+            html += '<div style="display:flex;align-items:center;gap:8px;margin:4px 0;">';
+            html += '<span style="font-size:11px;color:var(--color-text-light);width:80px;">' + name + '</span>';
+            html += '<div style="flex:1;height:8px;background:rgba(30,58,30,0.6);border-radius:4px;overflow:hidden;">';
+            html += '<div style="width:' + dataQ.percent + '%;height:100%;background:var(--color-gold);border-radius:4px;"></div>';
+            html += '</div>';
+            html += '<span style="font-size:11px;color:var(--color-text-lighter);width:30px;text-align:right;">' + dataQ.percent + '%</span>';
+            html += '</div>';
+        });
+        html += '</div></div>';
+    }
+
+    // 4. Лунный день
+    if (result.lunar_day) {
+        html += '<div style="text-align:center;font-size:12px;color:var(--color-text-lighter);margin-bottom:16px;">';
+        html += 'Лунный день: ' + result.lunar_day;
+        if (result.lunar_phase) html += ' · Фаза: ' + result.lunar_phase;
+        html += '</div>';
+    }
+
+    // 5. Таблица планет
+    html += '<h3 style="font-size:14px;color:var(--color-gold);margin-bottom:8px;">Положение планет</h3>';
+    html += '<div style="overflow-x:auto;margin-bottom:20px;">';
+    html += '<table style="width:100%;font-size:12px;border-collapse:collapse;">';
+    html += '<tr style="border-bottom:1px solid var(--color-border);"><th style="padding:6px;text-align:left;">Планета</th><th style="padding:6px;text-align:left;">Знак</th><th style="padding:6px;text-align:right;">Градус</th><th style="padding:6px;text-align:center;">Дом</th><th style="padding:6px;text-align:center;">R</th></tr>';
+
+    var cd = result.chart_data || {};
+    var houses = Array.isArray(cd.houses) ? cd.houses : (Array.isArray(result.houses_geo) ? result.houses_geo : null);
+    var planetsObj = cd.planets || null;
+
+    function addPlanetRow(emoji, name, pdata) {
+        if (!pdata) return;
+        var houseNum = '';
+        if (pdata.lon && houses && houses.length > 0) {
+            var lon = pdata.lon;
+            for (var h = 0; h < houses.length; h++) {
+                var hLon = houses[h].lon;
+                var nextHLon = houses[(h + 1) % houses.length].lon;
+                if (nextHLon < hLon) nextHLon += 360;
+                var checkLon = lon;
+                if (checkLon < hLon) checkLon += 360;
+                if (checkLon >= hLon && checkLon < nextHLon) {
+                    houseNum = houses[h].number;
+                    break;
+                }
+            }
+        }
+        html += '<tr style="border-bottom:1px solid rgba(210,161,125,0.1);">';
+        html += '<td style="padding:6px;"><span style="font-size:16px;">' + emoji + '</span> ' + sanitizeHTML(name) + '</td>';
+        html += '<td style="padding:6px;font-weight:600;">' + sanitizeHTML(pdata.sign || '') + '</td>';
+        var degDisplay = (pdata.degree || 0) + '°' + String(pdata.minute || 0).padStart(2,'0') + '\'';
+        html += '<td style="padding:6px;text-align:right;">' + degDisplay + '</td>';
+        html += '<td style="padding:6px;text-align:center;color:var(--color-text-lighter);">' + (houseNum || '—') + '</td>';
+        html += '<td style="padding:6px;text-align:center;color:' + (pdata.retrograde ? '#d4879a' : 'var(--color-text-lighter)') + ';">' + (pdata.retrograde ? '℞' : '—') + '</td>';
+        html += '</tr>';
+    }
+
+    addPlanetRow('☉', 'Солнце', cd.sun);
+    addPlanetRow('☽', 'Луна', cd.moon);
+    if (planetsObj) {
+        ['Меркурий','Венера','Марс','Юпитер','Сатурн','Уран','Нептун','Плутон'].forEach(function(name) {
+            if (planetsObj[name]) addPlanetRow(planetsObj[name].emoji, name, planetsObj[name]);
+        });
+    }
+    if (cd.north_node) addPlanetRow('☊', 'Сев. узел', cd.north_node);
+    if (cd.south_node) addPlanetRow('☋', 'Юж. узел', cd.south_node);
+    if (cd.chiron) addPlanetRow('⚷', 'Хирон', cd.chiron);
+
+    html += '</table></div>';
+
+    // 6. Дома
+    if (houses && houses.length > 0) {
+        html += '<h3 style="font-size:14px;color:var(--color-gold);margin-bottom:8px;">Дома</h3>';
+        html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:20px;">';
+        houses.forEach(function(h) {
+            html += '<div style="padding:8px;background:rgba(30,58,30,0.6);border:1px solid var(--color-border);border-radius:8px;text-align:center;">';
+            html += '<span style="font-size:10px;color:var(--color-text-lighter);">' + (h.number || '') + ' дом</span>';
+            html += '<div style="font-size:13px;font-weight:600;color:var(--color-text);">' + (h.degree || 0) + '°' + String(h.minute || 0).padStart(2,'0') + '\'</div>';
+            html += '<span style="font-size:10px;color:var(--color-text-lighter);">' + sanitizeHTML(h.sign || '') + '</span>';
+            html += '</div>';
+        });
+        html += '</div>';
+    }
+
+    // 7. Аспекты
+    if (result.aspects && result.aspects.length > 0) {
+        html += '<h3 style="font-size:14px;color:var(--color-gold);margin-bottom:8px;">Аспекты</h3>';
+        html += '<div style="overflow-x:auto;margin-bottom:20px;">';
+        html += '<table style="width:100%;font-size:11px;border-collapse:collapse;">';
+        html += '<tr style="border-bottom:1px solid var(--color-border);"><th style="padding:4px;">Планета</th><th>Аспект</th><th>Планета</th><th>Орбис</th><th>Тип</th></tr>';
+        result.aspects.forEach(function(a) {
+            var cmap = {'green': '#7eb89e', 'red': '#d4838a', 'gold': '#d4a843'};
+            html += '<tr style="border-bottom:1px solid rgba(210,161,125,0.1);">';
+            html += '<td style="padding:4px;">' + (a.planet1_emoji !== a.planet1 ? a.planet1_emoji + ' ' : '') + a.planet1 + '</td>';
+            html += '<td style="padding:4px;color:' + (cmap[a.color] || '#fff') + ';font-weight:600;">' + a.symbol + ' ' + a.name_ru + '</td>';
+            html += '<td style="padding:4px;">' + a.planet2_emoji + ' ' + a.planet2 + '</td>';
+            html += '<td style="padding:4px;text-align:right;">' + a.orbis.toFixed(2) + '°</td>';
+            html += '<td style="padding:4px;font-size:10px;color:var(--color-text-lighter);">' + (a.direction || '') + '</td>';
+            html += '</tr>';
+        });
+        html += '</table></div>';
+    }
+
+    // 8. Неподвижные звёзды
+    if (result.fixed_stars && result.fixed_stars.length > 0) {
+        html += '<h3 style="font-size:14px;color:var(--color-gold);margin-bottom:8px;">Планеты на неподвижных звёздах</h3>';
+        result.fixed_stars.forEach(function(fs) {
+            html += '<div style="margin-bottom:8px;padding:10px 14px;background:rgba(30,58,30,0.6);border:1px solid var(--color-border);border-radius:8px;">';
+            html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+            html += '<span style="font-size:12px;font-weight:600;color:var(--color-text-light);">' + sanitizeHTML(fs.planet) + ' на ' + sanitizeHTML(fs.star) + '</span>';
+            html += '<span style="font-size:10px;color:var(--color-gold);">Орб ' + fs.orbis.toFixed(2) + '°</span>';
+            html += '</div>';
+            html += '<p style="font-size:11px;color:var(--color-text-lighter);margin-top:4px;">' + sanitizeHTML(fs.meaning || '') + '</p>';
+            html += '</div>';
+        });
+    }
+
+    // Слот под AI-секции (наполнится в onDone) и чат.
+    html += '<div id="natalAiBlocks"></div>';
+    html += '<div id="natalPost"></div>';
+
+    resultDiv.innerHTML = html;
+}
+
+// Пост-рендер: чат, подсказки, дисклеймер — как в старой функции.
+function renderNatalPost(resultDiv) {
+    const postSlot = document.getElementById('natalPost');
+    if (!postSlot) return;
+
+    // Чат.
+    let html = '<div id="natalChatBlock" style="margin-top:24px;max-width:100%;box-sizing:border-box;">';
+    html += '<p style="font-weight:600;color:var(--color-gold);margin-bottom:4px;">Натальная карта — это только начало</p>';
+    html += '<p style="font-size:11px;color:var(--color-text-lighter);margin-bottom:12px;">Задайте вопрос о вашей карте</p>';
+    html += '<div id="suggestedNatalQuestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">';
+    html += '<span style="font-size:12px;color:var(--color-text-light);">Загрузка подсказок...</span>';
+    html += '</div>';
+    html += '<div class="input-group" style="display:flex;gap:8px;">';
+    html += '<textarea id="natalQuestion" placeholder="Напишите свой вопрос..." maxlength="500"';
+    html += 'style="resize:none;overflow:hidden;font-family:var(--font-main);font-size:14px;padding:10px 14px;border:2px solid var(--color-border);border-radius:12px;outline:none;color:var(--color-text);background:rgba(15,31,15,0.8);line-height:1.4;min-height:42px;transition:border-color 0.3s;width:100%;box-sizing:border-box;"></textarea>';
+    html += '<button class="btn btn-primary btn-sm" onclick="askNatalQuestion()" style="flex-shrink:0;white-space:nowrap;">Спросить</button>';
+    html += '</div>';
+    html += '<p id="natalQuestionLimit" style="font-size:11px;color:var(--color-text-lighter);margin-top:8px;text-align:center;"></p><div id="natalAnswer" style="margin-top:12px;max-width:100%;box-sizing:border-box;word-wrap:break-word;overflow-wrap:break-word;"></div>';
+    html += '</div>';
+
+    // Дисклеймер.
+    html += '<p style="font-size:10px;color:var(--color-text-lighter);text-align:center;margin-top:16px;font-style:italic;line-height:1.4;">Это игровая методика, а не строгая наука. Натальная карта не заменяет профессиональную консультацию.</p>';
+
+    postSlot.innerHTML = html;
+
+    setTimeout(function() { loadNatalSuggestions(); }, 300);
+    updateQuestionLimitText('natalQuestionLimit');
+}
+
+// ========== ФУНКЦИИ РЕНДЕРИНГА ==========
+function renderFullNatalChart(result, isPremium) {
+    var resultDiv = document.getElementById('natalResult');
+    var html = '';
+    // 1. SVG-колесо с подписями
+    if (result.chart_svg) {
+        html += '<div class="nr-wheel-wrap" style="max-width:400px;margin:0 auto 24px;position:relative;">' + result.chart_svg + '</div>';
+    }
+
+    // 2. Данные рождения
+    if (result.birth_date) {
+        html += '<div style="text-align:center;margin-bottom:16px;">';
+        html += '<h3 style="color:var(--color-gold);margin-bottom:8px;font-size:16px;">' + sanitizeHTML(window.currentUserName || '') + ' — Натальная карта</h3>';
+        html += '<div style="font-size:11px;color:var(--color-text-lighter);line-height:1.8;max-width:300px;margin:0 auto;">';
+        if (result.birth_place) {
+            html += '<div style="display:flex;justify-content:space-between;"><span>Местоположение</span><span style="color:var(--color-text-light);">' + sanitizeHTML(result.birth_place) + '</span></div>';
+        }
+        if (result.lat && result.lng) {
+            html += '<div style="display:flex;justify-content:space-between;"><span>Широта/Долгота</span><span style="color:var(--color-text-light);">' + result.lat.toFixed(2) + '° / ' + result.lng.toFixed(2) + '°</span></div>';
+        }
+        html += '<div style="display:flex;justify-content:space-between;"><span>Дата и время</span><span style="color:var(--color-text-light);">' + result.birth_date.split('-').reverse().join('.') + ' ' + (result.birth_time || '12:00') + '</span></div>';
+        if (result.weekday) {
+            html += '<div style="display:flex;justify-content:space-between;"><span>День недели</span><span style="color:var(--color-text-light);">' + result.weekday + '</span></div>';
+        }
+        html += '</div></div>';
+    }
+
+    // 3. Стихии и кресты
+    if (result.elements && result.qualities) {
+        html += '<div style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap;">';
+        html += '<div style="flex:1;min-width:140px;">';
+        html += '<span style="font-size:12px;color:var(--color-gold);font-weight:600;">Стихии</span>';
+        var elemColors = {'Огонь': '#d4838a', 'Земля': '#7eb89e', 'Воздух': '#d4a843', 'Вода': '#6ba3c7'};
+        var elemEmoji = {'Огонь': '🔥', 'Земля': '🌍', 'Воздух': '💨', 'Вода': '💧'};
+        Object.entries(result.elements).forEach(function(entry) {
+            var name = entry[0], data = entry[1];
+            html += '<div style="display:flex;align-items:center;gap:8px;margin:4px 0;">';
+            html += '<span style="font-size:14px;width:20px;">' + elemEmoji[name] + '</span>';
+            html += '<span style="font-size:11px;color:var(--color-text-light);width:50px;">' + name + '</span>';
+            html += '<div style="flex:1;height:8px;background:rgba(30,58,30,0.6);border-radius:4px;overflow:hidden;">';
+            html += '<div style="width:' + data.percent + '%;height:100%;background:' + elemColors[name] + ';border-radius:4px;"></div>';
+            html += '</div>';
+            html += '<span style="font-size:11px;color:var(--color-text-lighter);width:30px;text-align:right;">' + data.percent + '%</span>';
+            html += '</div>';
+        });
+        html += '</div>';
+        html += '<div style="flex:1;min-width:140px;">';
+        html += '<span style="font-size:12px;color:var(--color-gold);font-weight:600;">Качества</span>';
+        Object.entries(result.qualities).forEach(function(entry) {
+            var name = entry[0], data = entry[1];
+            html += '<div style="display:flex;align-items:center;gap:8px;margin:4px 0;">';
+            html += '<span style="font-size:11px;color:var(--color-text-light);width:80px;">' + name + '</span>';
+            html += '<div style="flex:1;height:8px;background:rgba(30,58,30,0.6);border-radius:4px;overflow:hidden;">';
+            html += '<div style="width:' + data.percent + '%;height:100%;background:var(--color-gold);border-radius:4px;"></div>';
+            html += '</div>';
+            html += '<span style="font-size:11px;color:var(--color-text-lighter);width:30px;text-align:right;">' + data.percent + '%</span>';
+            html += '</div>';
+        });
+        html += '</div></div>';
+    }
+
+    // 4. Лунный день
+    if (result.lunar_day) {
+        html += '<div style="text-align:center;font-size:12px;color:var(--color-text-lighter);margin-bottom:16px;">';
+        html += 'Лунный день: ' + result.lunar_day;
+        if (result.lunar_phase) html += ' · Фаза: ' + result.lunar_phase;
+        html += '</div>';
+    }
+
+    // 5. Таблица планет
+    html += '<h3 style="font-size:14px;color:var(--color-gold);margin-bottom:8px;">Положение планет</h3>';
+    html += '<div style="overflow-x:auto;margin-bottom:20px;">';
+    html += '<table style="width:100%;font-size:12px;border-collapse:collapse;">';
+    html += '<tr style="border-bottom:1px solid var(--color-border);"><th style="padding:6px;text-align:left;">Планета</th><th style="padding:6px;text-align:left;">Знак</th><th style="padding:6px;text-align:right;">Градус</th><th style="padding:6px;text-align:center;">Дом</th><th style="padding:6px;text-align:center;">R</th></tr>';
+    
+    var houses = null;
+    if (Array.isArray(result.houses)) houses = result.houses;
+    else if (result.chart_data && Array.isArray(result.chart_data.houses)) houses = result.chart_data.houses;
+    var planetsObj = (result.chart_data && result.chart_data.planets) ? result.chart_data.planets : 
+                     (typeof result.planets === 'object' && !Array.isArray(result.planets) ? result.planets : null);
+    
+    function addPlanetRow(emoji, name, data) {
+        if (!data) return;
+        var houseNum = '';
+        if (data.lon && houses && houses.length > 0) {
+            var lon = data.lon;
+            for (var h = 0; h < houses.length; h++) {
+                var hLon = houses[h].lon;
+                var nextHLon = houses[(h + 1) % houses.length].lon;
+                if (nextHLon < hLon) nextHLon += 360;
+                var checkLon = lon;
+                if (checkLon < hLon) checkLon += 360;
+                if (checkLon >= hLon && checkLon < nextHLon) {
+                    houseNum = houses[h].number;
+                    break;
+                }
+            }
+        }
+        html += '<tr style="border-bottom:1px solid rgba(210,161,125,0.1);">';
+        html += '<td style="padding:6px;"><span style="font-size:16px;">' + emoji + '</span> ' + sanitizeHTML(name) + '</td>';
+        html += '<td style="padding:6px;font-weight:600;">' + sanitizeHTML(data.sign || '') + '</td>';
+        var degDisplay = (data.degree || 0) + '°' + String(data.minute || 0).padStart(2,'0') + '\'';
+        html += '<td style="padding:6px;text-align:right;">' + degDisplay + '</td>';
+        html += '<td style="padding:6px;text-align:center;color:var(--color-text-lighter);">' + (houseNum || '—') + '</td>';
+        html += '<td style="padding:6px;text-align:center;color:' + (data.retrograde ? '#d4879a' : 'var(--color-text-lighter)') + ';">' + (data.retrograde ? '℞' : '—') + '</td>';
+        html += '</tr>';
+    }
+    
+    var sunData = (result.chart_data && result.chart_data.sun) ? result.chart_data.sun : (typeof result.sun === 'object' ? result.sun : null);
+    var moonData = (result.chart_data && result.chart_data.moon) ? result.chart_data.moon : (typeof result.moon === 'object' ? result.moon : null);
+    addPlanetRow('☉', 'Солнце', sunData);
+    addPlanetRow('☽', 'Луна', moonData);
+    if (planetsObj) {
+        ['Меркурий','Венера','Марс','Юпитер','Сатурн','Уран','Нептун','Плутон'].forEach(function(name) {
+            if (planetsObj[name]) addPlanetRow(planetsObj[name].emoji, name, planetsObj[name]);
+        });
+    }
+    // Лунные узлы и Хирон (могут быть в корне или в chart_data)
+    var northNode = result.north_node || (result.chart_data && result.chart_data.north_node);
+    var southNode = result.south_node || (result.chart_data && result.chart_data.south_node);
+    var chiron = result.chiron || (result.chart_data && result.chart_data.chiron);
+    if (northNode) addPlanetRow('☊', 'Сев. узел', northNode);
+    if (southNode) addPlanetRow('☋', 'Юж. узел', southNode);
+    if (chiron) addPlanetRow('⚷', 'Хирон', chiron);
+
+    html += '</table></div>';
+
+
+    // 7. Дома
+    if (houses && houses.length > 0) {
+        html += '<h3 style="font-size:14px;color:var(--color-gold);margin-bottom:8px;">Дома</h3>';
+        html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:20px;">';
+        houses.forEach(function(h) {
+            html += '<div style="padding:8px;background:rgba(30,58,30,0.6);border:1px solid var(--color-border);border-radius:8px;text-align:center;">';
+            html += '<span style="font-size:10px;color:var(--color-text-lighter);">' + (h.number || '') + ' дом</span>';
+            html += '<div style="font-size:13px;font-weight:600;color:var(--color-text);">' + (h.degree || 0) + '°' + String(h.minute || 0).padStart(2,'0') + '\'</div>';
+            html += '<span style="font-size:10px;color:var(--color-text-lighter);">' + sanitizeHTML(h.sign || '') + '</span>';
+            html += '</div>';
+        });
+        html += '</div>';
+    }
+
+    // 8. Аспекты
+    if (result.aspects && result.aspects.length > 0) {
+        html += '<h3 style="font-size:14px;color:var(--color-gold);margin-bottom:8px;">Аспекты</h3>';
+        html += '<div style="overflow-x:auto;margin-bottom:20px;">';
+        html += '<table style="width:100%;font-size:11px;border-collapse:collapse;">';
+        html += '<tr style="border-bottom:1px solid var(--color-border);"><th style="padding:4px;">Планета</th><th>Аспект</th><th>Планета</th><th>Орбис</th><th>Тип</th></tr>';
+        result.aspects.forEach(function(a) {
+            var cmap = {'green': '#7eb89e', 'red': '#d4838a', 'gold': '#d4a843'};
+            html += '<tr style="border-bottom:1px solid rgba(210,161,125,0.1);">';
+            html += '<td style="padding:4px;">' + (a.planet1_emoji !== a.planet1 ? a.planet1_emoji + ' ' : '') + a.planet1 + '</td>';
+            html += '<td style="padding:4px;color:' + (cmap[a.color] || '#fff') + ';font-weight:600;">' + a.symbol + ' ' + a.name_ru + '</td>';
+            html += '<td style="padding:4px;">' + a.planet2_emoji + ' ' + a.planet2 + '</td>';
+            html += '<td style="padding:4px;text-align:right;">' + a.orbis.toFixed(2) + '°</td>';
+            html += '<td style="padding:4px;font-size:10px;color:var(--color-text-lighter);">' + (a.direction || '') + '</td>';
+            html += '</tr>';
+        });
+        html += '</table></div>';
+
+        var top3 = result.aspects.slice(0, 3);
+        html += '<h3 style="font-size:14px;color:var(--color-gold);margin-bottom:4px;">Самые точные аспекты</h3>';
+        html += '<p style="font-size:11px;color:var(--color-text-lighter);text-align:center;margin-bottom:12px;line-height:1.5;">Чем меньше орбис, тем сильнее аспект ощущается в жизни. Эти три работают в карте громче всего.</p>';
+        top3.forEach(function(a) {
+            html += '<div style="padding:10px;background:rgba(30,58,30,0.6);border:1px solid var(--color-border);border-radius:8px;margin-bottom:8px;text-align:center;">';
+            html += '<span style="font-size:11px;color:var(--color-text-lighter);">Орбис ' + a.orbis.toFixed(2) + '°</span>';
+            html += '<div style="font-size:16px;font-weight:600;color:var(--color-text);margin:4px 0;">' + a.planet1 + ' ' + a.symbol + ' ' + a.planet2 + '</div>';
+            html += '<span style="font-size:12px;color:var(--color-text-light);">' + a.name_ru + '</span>';
+            html += '<div style="margin-top:6px;"><span style="font-size:10px;color:var(--color-gold);cursor:pointer;text-decoration:underline;" onclick="alert(\'Подробный разбор аспекта будет доступен в следующем обновлении\')">Читать про этот аспект</span></div>';
+            html += '</div>';
+        });
+    }
+
+    // 9. Неподвижные звёзды
+    if (result.fixed_stars && result.fixed_stars.length > 0) {
+        html += '<h3 style="font-size:14px;color:var(--color-gold);margin-bottom:8px;">Планеты на неподвижных звёздах</h3>';
+        html += '<p style="font-size:11px;color:var(--color-text-lighter);margin-bottom:12px;line-height:1.5;">Когда планета или угол попадает на неподвижную звезду в пределах 1°, традиция считает это сильным акцентом характера.</p>';
+        result.fixed_stars.forEach(function(fs) {
+            html += '<div style="margin-bottom:8px;padding:10px 14px;background:rgba(30,58,30,0.6);border:1px solid var(--color-border);border-radius:8px;">';
+            html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+            html += '<span style="font-size:12px;font-weight:600;color:var(--color-text-light);">' + sanitizeHTML(fs.planet) + ' на ' + sanitizeHTML(fs.star) + '</span>';
+            html += '<span style="font-size:10px;color:var(--color-gold);">Орб ' + fs.orbis.toFixed(2) + '°</span>';
+            html += '</div>';
+            html += '<p style="font-size:11px;color:var(--color-text-lighter);margin-top:4px;">' + sanitizeHTML(fs.meaning || '') + '</p>';
+            html += '</div>';
+        });
+    }
+
+    // 10. AI-разбор или тизеры
+    if (isPremium && result.sun) {
+        html += renderAISections(result);
+    } else if (!isPremium && result.teaser) {
+        // Заголовок разбора
+        html += '<div style="text-align:center;margin:24px 0 20px;">';
+        html += '<h2 style="font-size:20px;font-weight:700;background:linear-gradient(135deg, #d4a843, #d4879a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;">Персональный разбор</h2>';
+        html += '<p style="font-size:12px;color:var(--color-text-lighter);">Краткая версия. Полный разбор — на тарифе Пламя</p>';
+        html += '</div>';
+        
+        // Большая Тройка — тизеры в стиле карточек
+        var bigThreeTeasers = [
+            { key: 'sun', emoji: '☉', title: 'Солнце', subtitle: 'Суть и характер' },
+            { key: 'moon', emoji: '☽', title: 'Луна', subtitle: 'Эмоциональный мир' },
+            { key: 'ascendant', emoji: '↑', title: 'Асцендент', subtitle: 'Образ и впечатление' },
+        ];
+        bigThreeTeasers.forEach(function(sec) {
+            if (result.teaser[sec.key]) {
+                html += '<div style="margin-bottom:16px;padding:20px;background:rgba(30,58,30,0.4);border:1px solid var(--color-border);border-radius:16px;">';
+                html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">';
+                html += '<div><span style="font-size:13px;font-weight:600;color:var(--color-gold);">' + sec.emoji + ' ' + sec.title + '</span>';
+                html += '<p style="font-size:12px;color:var(--color-text-lighter);margin-top:2px;">' + sec.subtitle + '</p></div>';
+                html += '</div>';
+                html += '<p style="font-size:13px;color:var(--color-text-light);line-height:1.7;white-space:pre-line;">' + sanitizeHTML(result.teaser[sec.key]) + '</p>';
+                html += '</div>';
+            }
+        });
+        
+        // Плашка с призывом открыть полный разбор
+        html += '<div style="margin:16px 0;padding:20px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:16px;text-align:center;">';
+        html += '<p style="font-size:14px;color:var(--color-gold);font-weight:600;margin-bottom:8px;">Полный разбор натальной карты</p>';
+        html += '<p style="font-size:13px;color:var(--color-text-lighter);margin-bottom:16px;line-height:1.6;">';
+        html += 'Детальный анализ Большой Тройки, всех планет в знаках с указанием градусов, разбор домов, ';
+        html += 'общая картина личности, сильные стороны и зоны роста, персональные рекомендации.';
+        html += '</p>';
+        html += '<button class="btn btn-share" onclick="showPaywall()" style="width:100%;padding:12px;font-size:14px;">Открыть полный разбор — {{ PAYWALL_PRICE_RUB }} ₽</button>';
+        html += '<p style="font-size:11px;color:var(--color-text-lighter);margin-top:8px;">Или оформите тариф Пламя — и все разборы без ограничений</p>';
+        html += '</div>';
+    }
+
+    // Чат с вопросами-подсказками
+    html += '<div id="natalChatBlock" style="margin-top:24px;max-width:100%;box-sizing:border-box;">';
+    html += '<p style="font-weight:600;color:var(--color-gold);margin-bottom:4px;">Натальная карта — это только начало</p>';
+    html += '<p style="font-size:11px;color:var(--color-text-lighter);margin-bottom:12px;">Задайте вопрос о вашей карте</p>';
+    html += '<div id="suggestedNatalQuestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">';
+    html += '<span style="font-size:12px;color:var(--color-text-light);">Загрузка подсказок...</span>';
+    html += '</div>';
+    html += '<div class="input-group" style="display:flex;gap:8px;">';
+    html += '<textarea id="natalQuestion" placeholder="Напишите свой вопрос..." maxlength="500"';
+    html += 'style="resize:none;overflow:hidden;font-family:var(--font-main);font-size:14px;padding:10px 14px;border:2px solid var(--color-border);border-radius:12px;outline:none;color:var(--color-text);background:rgba(15,31,15,0.8);line-height:1.4;min-height:42px;transition:border-color 0.3s;width:100%;box-sizing:border-box;"></textarea>';
+    html += '<button class="btn btn-primary btn-sm" onclick="askNatalQuestion()" style="flex-shrink:0;white-space:nowrap;">Спросить</button>';
+    html += '</div>';
+    html += '<p id="natalQuestionLimit" style="font-size:11px;color:var(--color-text-lighter);margin-top:8px;text-align:center;"></p><div id="natalAnswer" style="margin-top:12px;max-width:100%;box-sizing:border-box;word-wrap:break-word;overflow-wrap:break-word;"></div>';
+    html += '</div>';
+    
+    // Загрузка подсказок
+    setTimeout(function() { loadNatalSuggestions(); }, 300);
+    updateQuestionLimitText('natalQuestionLimit');
+
+
+    // 11. Дисклеймер
+    if (!result.birth_time || result.birth_time === '12:00') {
+        html += '<p style="font-size:10px;color:var(--color-text-lighter);text-align:center;margin-top:16px;font-style:italic;">Время рождения неизвестно — карта рассчитана на 12:00. Дома и асцендент приблизительны.</p>';
+    }
+    html += '<p style="font-size:10px;color:var(--color-text-lighter);text-align:center;margin-top:8px;font-style:italic;line-height:1.4;">Это игровая методика, а не строгая наука. Натальная карта не заменяет профессиональную консультацию.</p>';
+
+    resultDiv.innerHTML = html;
+    resultDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderAISections(result) {
+    var html = '';
+    
+    // Заголовок разбора
+    html += '<div style="text-align:center;margin:24px 0 20px;">';
+    html += '<h2 style="font-size:20px;font-weight:700;background:linear-gradient(135deg, #d4a843, #d4879a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;">Персональный разбор</h2>';
+    html += '<p style="font-size:12px;color:var(--color-text-lighter);">Ваша карта — это только начало</p>';
+    html += '</div>';
+    
+    // Карточки Большой Тройки
+    var bigThree = [
+        { key: 'sun', emoji: '☉', title: 'Солнце', subtitle: 'Суть и характер' },
+        { key: 'moon', emoji: '☽', title: 'Луна', subtitle: 'Эмоциональный мир' },
+        { key: 'ascendant', emoji: '↑', title: 'Асцендент', subtitle: 'Образ и впечатление' },
+    ];
+    bigThree.forEach(function(sec) {
+        if (result[sec.key]) {
+            html += '<div style="margin-bottom:16px;padding:20px;background:rgba(30,58,30,0.4);border:1px solid var(--color-border);border-radius:16px;">';
+            html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">';
+            html += '<div><span style="font-size:13px;font-weight:600;color:var(--color-gold);">' + sec.emoji + ' ' + sec.title + '</span>';
+            html += '<p style="font-size:12px;color:var(--color-text-lighter);margin-top:2px;">' + sec.subtitle + '</p></div>';
+            html += '</div>';
+            html += '<p style="font-size:13px;color:var(--color-text-light);line-height:1.7;white-space:pre-line;">' + sanitizeHTML(result[sec.key]) + '</p>';
+            html += '</div>';
+        }
+    });
+    
+    // Карточка: Планеты в знаках
+    if (result.planets) {
+        html += '<div style="margin-bottom:16px;padding:20px;background:rgba(30,58,30,0.4);border:1px solid var(--color-border);border-radius:16px;">';
+        html += '<span style="font-size:13px;font-weight:600;color:var(--color-gold);">Планеты в знаках</span>';
+        html += '<p style="font-size:12px;color:var(--color-text-lighter);margin-top:2px;margin-bottom:8px;">Влияние каждой планеты на характер</p>';
+        html += '<p style="font-size:13px;color:var(--color-text-light);line-height:1.7;white-space:pre-line;">' + sanitizeHTML(result.planets) + '</p>';
+        html += '</div>';
+    }
+    
+    // Карточка: Дома
+    if (result.houses) {
+        html += '<div style="margin-bottom:16px;padding:20px;background:rgba(30,58,30,0.4);border:1px solid var(--color-border);border-radius:16px;">';
+        html += '<span style="font-size:13px;font-weight:600;color:var(--color-gold);">Дома</span>';
+        html += '<p style="font-size:12px;color:var(--color-text-lighter);margin-top:2px;margin-bottom:8px;">Ключевые сферы жизни</p>';
+        html += '<p style="font-size:13px;color:var(--color-text-light);line-height:1.7;white-space:pre-line;">' + sanitizeHTML(result.houses) + '</p>';
+        html += '</div>';
+    }
+    
+    // Карточка: Общая картина
+    if (result.summary) {
+        html += '<div style="margin-bottom:16px;padding:20px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:16px;">';
+        html += '<span style="font-size:13px;font-weight:600;color:var(--color-gold);">Общая картина</span>';
+        html += '<p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.7;white-space:pre-line;">' + sanitizeHTML(result.summary) + '</p>';
+        html += '</div>';
+    }
+    
+    // Карточка: Плюсы и Минусы
+    html += '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">';
+    if (result.strengths) {
+        html += '<div style="flex:1;min-width:200px;padding:20px;background:rgba(30,58,30,0.4);border:1px solid #7eb89e;border-radius:16px;">';
+        html += '<span style="font-size:13px;font-weight:600;color:#7eb89e;">Плюсы</span>';
+        html += '<p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.7;white-space:pre-line;">' + sanitizeHTML(result.strengths) + '</p>';
+        html += '</div>';
+    }
+    if (result.challenges) {
+        html += '<div style="flex:1;min-width:200px;padding:20px;background:rgba(30,58,30,0.4);border:1px solid #d4838a;border-radius:16px;">';
+        html += '<span style="font-size:13px;font-weight:600;color:#d4838a;">Минусы</span>';
+        html += '<p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.7;white-space:pre-line;">' + sanitizeHTML(result.challenges) + '</p>';
+        html += '</div>';
+    }
+    html += '</div>';
+    
+    // Карточка: Совет
+    if (result.advice) {
+        html += '<div style="margin-bottom:16px;padding:20px;background:rgba(212,135,154,0.08);border:1px solid #d4879a;border-radius:16px;">';
+        html += '<span style="font-size:13px;font-weight:600;color:#d4879a;">Совет</span>';
+        html += '<p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.7;white-space:pre-line;">' + sanitizeHTML(result.advice) + '</p>';
+        html += '</div>';
+    }
+    
+    return html;
+}
+
+// ========== АВТОДОПОЛНЕНИЕ ГОРОДОВ ==========
+function searchCities(query) {
+    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&accept-language=ru&q=' + encodeURIComponent(query), {
+        headers: { 'User-Agent': 'UnanumApp/1.0' }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var container = document.getElementById('citySuggestions');
+        if (data.length === 0) {
+            container.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--color-text-lighter);text-align:center;">Ничего не найдено</div><div style="padding:8px 12px;border-top:1px solid var(--color-border);cursor:pointer;font-size:12px;color:var(--color-gold);text-align:center;" onclick="showManualCoords()">Указать координаты вручную</div>';
+            container.style.display = 'block';
+            return;
+        }
+        window._cityData = data.map(function(place) {
+            return { name: place.display_name || '', lat: parseFloat(place.lat).toFixed(4), lng: parseFloat(place.lon).toFixed(4) };
+        });
+        var html = '';
+        data.forEach(function(place, index) {
+            var name = place.display_name || '';
+            html += '<div style="padding:10px 14px;cursor:pointer;font-size:12px;color:var(--color-text-light);border-bottom:1px solid rgba(210,161,125,0.1);transition:background 0.2s;" onmouseover="this.style.background=\'rgba(255,213,79,0.08)\'" onmouseout="this.style.background=\'transparent\'" onclick="selectCityByIndex(' + index + ')"><span style="font-size:13px;color:var(--color-text);">' + escapeHTML(name.split(',')[0]) + '</span><br><span style="font-size:10px;color:var(--color-text-lighter);">' + escapeHTML(name) + ' · ' + parseFloat(place.lat).toFixed(4) + ', ' + parseFloat(place.lon).toFixed(4) + '</span></div>';
+        });
+        html += '<div style="padding:8px 12px;border-top:1px solid var(--color-border);cursor:pointer;font-size:12px;color:var(--color-gold);text-align:center;" onclick="showManualCoords()">Указать координаты вручную</div>';
+        container.innerHTML = html;
+        container.style.display = 'block';
+    })
+    .catch(function() {
+        document.getElementById('citySuggestions').style.display = 'none';
+    });
+}
+
+function selectCityByIndex(index) {
+    var data = window._cityData[index];
+    if (data) selectCity(data.name, data.lat, data.lng);
+}
+
+function selectCity(name, lat, lng) {
+    document.getElementById('birthPlace').value = name;
+    document.getElementById('selectedLat').value = lat;
+    document.getElementById('selectedLng').value = lng;
+    document.getElementById('citySuggestions').style.display = 'none';
+    document.getElementById('manualCoords').style.display = 'none';
+    document.getElementById('natalSubmitBtn').disabled = false;
+    document.getElementById('natalSubmitBtn').style.opacity = '1';
+    document.getElementById('natalCityError').style.display = 'none';
+}
+
+function showManualCoords() {
+    document.getElementById('citySuggestions').style.display = 'none';
+    document.getElementById('manualCoords').style.display = 'block';
+    document.getElementById('natalSubmitBtn').disabled = false;
+    document.getElementById('natalSubmitBtn').style.opacity = '1';
+    document.getElementById('natalCityError').style.display = 'none';
+}
+
+function toggleUnknownTime() {
+    var checked = document.getElementById('unknownTime').checked;
+    var timeInput = document.getElementById('birthTime');
+    var hint = document.getElementById('unknownTimeHint');
+    if (checked) {
+        timeInput.value = '12:00';
+        timeInput.disabled = true;
+        timeInput.style.opacity = '0.5';
+        hint.style.display = 'block';
+    } else {
+        timeInput.disabled = false;
+        timeInput.style.opacity = '1';
+        hint.style.display = 'none';
+    }
+}
+
+// Закрытие подсказок городов
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#birthPlace') && !e.target.closest('#citySuggestions')) {
+        var cs = document.getElementById('citySuggestions');
+        if (cs) cs.style.display = 'none';
+    }
+});
+
+// Автозаполнение из портрета
+fetch('/api/numer/portrait')
+    .then(function(r) { return r.json(); })
+    .then(function(portrait) {
+        if (portrait.birth_date && !document.querySelector('[name="birth_date"]').value) {
+            document.querySelector('[name="birth_date"]').value = portrait.birth_date;
+        }
+        if (portrait.birth_time && !document.querySelector('[name="birth_time"]').value) {
+            document.querySelector('[name="birth_time"]').value = portrait.birth_time || '12:00';
+        }
+        if (portrait.birth_place && !document.querySelector('[name="birth_place"]').value) {
+            document.querySelector('[name="birth_place"]').value = portrait.birth_place || '';
+        }
+    });
+
+// ========== ЧАТ НАТАЛЬНОЙ КАРТЫ ==========
+
+function renderNatalSuggestions(container, suggestions) {
+    container.innerHTML = suggestions.map(function(q) {
+        var attrQ = String(q).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        return '<span class="natal-suggested-q" data-question="' + attrQ + '" style="display:inline-block;padding:8px 14px;font-size:12px;color:var(--color-text-light);cursor:pointer;background:rgba(30,58,30,0.8);border:1px solid var(--color-border);border-radius:18px;transition:all 0.2s ease;" onmouseover="this.style.borderColor=\'var(--color-gold)\';this.style.color=\'var(--color-gold)\';" onmouseout="this.style.borderColor=\'var(--color-border)\';this.style.color=\'var(--color-text-light)\';">' + sanitizeHTML(q) + '</span>';
+    }).join('');
+
+    if (!container.dataset.clickBound) {
+        container.dataset.clickBound = '1';
+        container.addEventListener('click', function(e) {
+            var item = e.target.closest('.natal-suggested-q');
+            if (item && item.dataset.question) {
+                askSuggestedNatalQuestion(item.dataset.question);
+            }
+        });
+    }
+}
+
+async function loadNatalSuggestions() {
+    var container = document.getElementById('suggestedNatalQuestions');
+    if (!container) return;
+    
+    var fullText = document.getElementById('natalResult')?.textContent || '';
+    
+    if (fullText) {
+        try {
+            var res = await fetch('/api/natal-chart/suggestions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ full_text: fullText })
+            });
+            var data = await res.json();
+            if (data.suggestions && data.suggestions.length > 0) {
+                renderNatalSuggestions(container, data.suggestions);
+                return;
+            }
+        } catch(e) {}
+    }
+    
+    var questions = [
+        "Что означает Солнце в этом знаке?",
+        "Как Луна влияет на эмоциональную сферу?",
+        "Почему Асцендент важен для первого впечатления?"
+    ];
+    
+    renderNatalSuggestions(container, questions);
+}
+
+function askSuggestedNatalQuestion(question) {
+    var input = document.getElementById('natalQuestion');
+    if (input) {
+        input.value = question;
+        input.style.height = 'auto';
+        input.style.height = input.scrollHeight + 'px';
+    }
+}
+
+async function askNatalQuestion() {
+    if (!canAskQuestion()) {
+        updateQuestionLimitText('natalQuestionLimit');
+        return;
+    }
+    
+    var question = document.getElementById('natalQuestion')?.value.trim();
+    if (!question) return;
+    
+    var answerBlock = document.getElementById('natalAnswer');
+    
+    answerBlock.innerHTML += '<div style="display:flex;justify-content:flex-end;margin-top:8px;"><div style="background:rgba(76,175,80,0.35);border-radius:18px 18px 4px 18px;padding:10px 16px;max-width:90%;font-size:14px;color:var(--color-text);line-height:1.5;word-wrap:break-word;">' + sanitizeHTML(question) + '</div></div>';
+    
+    document.getElementById('natalQuestion').value = '';
+    
+    var typingDiv = document.createElement('div');
+    typingDiv.style.cssText = 'display:flex;justify-content:flex-start;margin-top:4px;';
+    typingDiv.innerHTML = '<div style="background:rgba(30,58,30,0.6);border-radius:18px 18px 18px 4px;padding:10px 16px;max-width:90%;font-size:14px;color:var(--color-text-lighter);">Печатает...</div>';
+    answerBlock.appendChild(typingDiv);
+    
+    try {
+        var res = await fetch('/api/numer/dialogue', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: question, section: 'natal_chart' })
+        });
+        var data = await res.json();
+        typingDiv.remove();
+        if (data.answer) {
+            answerBlock.innerHTML += '<div style="display:flex;justify-content:flex-start;margin-top:4px;"><div style="background:rgba(30,58,30,0.6);border-radius:18px 18px 18px 4px;padding:10px 16px;max-width:90%;font-size:14px;color:var(--color-text-light);line-height:1.5;word-wrap:break-word;">' + sanitizeHTML(data.answer) + '</div></div>';
+        }
+    } catch(e) {
+        typingDiv.remove();
+    }
+    
+    answerBlock.scrollTop = answerBlock.scrollHeight;
+    markQuestionAsked();
+    updateQuestionLimitText('natalQuestionLimit');
+}
+
+</script>
+{% endblock %}

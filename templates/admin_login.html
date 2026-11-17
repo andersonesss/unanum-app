@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Админ-панель — Unanum{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <h1>Админ-панель</h1>
+    <form class="admin-form" id="adminLoginForm" onsubmit="submitAdminLogin(event)">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+        <input type="password" id="adminPassword" placeholder="Мастер-ключ" required>
+        <button type="submit" class="btn btn-primary">Войти</button>
+    </form>
+    <p id="adminError" style="display:none;color:var(--color-error);font-size:13px;text-align:center;margin-top:8px;"></p>
+
+    <script>
+    async function submitAdminLogin(e) {
+        e.preventDefault();
+        const password = document.getElementById('adminPassword').value;
+        try {
+            const res = await fetch('/api/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: password })
+            });
+            const data = await res.json();
+            if (data.success) {
+                window.location.href = data.redirect;
+            } else {
+                document.getElementById('adminError').textContent = data.error;
+                document.getElementById('adminError').style.display = 'block';
+            }
+        } catch(e) {
+            document.getElementById('adminError').textContent = 'Ошибка соединения';
+            document.getElementById('adminError').style.display = 'block';
+        }
+    }
+    </script>
+    <p class="admin-hint">Доступ только для администраторов Unanum</p>
+</div>
+{% endblock %}

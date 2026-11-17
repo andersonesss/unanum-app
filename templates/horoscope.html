@@ -1,0 +1,648 @@
+{% extends "base.html" %}
+{% block title %}Гороскоп на сегодня по знаку зодиака — бесплатный прогноз | Unanum{% endblock %}
+{% block meta_description %}Бесплатный гороскоп на сегодня для всех знаков зодиака. Прогноз по любви, карьере и здоровью. Персональные рекомендации звёзд.{% endblock %}
+{% block content %}
+<section class="page-section" style="padding-top: 80px;" data-numer-section="horoscope">
+    <div class="container" style="padding: 0 16px;">
+        <h1 class="page-title" style="font-size:clamp(2rem, 5vw, 2.5rem);font-weight:700;background:linear-gradient(135deg, #d4a843, #d4879a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;">Гороскоп</h1>
+        <p class="page-subtitle" style="color: var(--color-text);">Выбери знак и узнай, что приготовили звёзды</p>
+        
+        <!-- Форма -->
+        <div class="panel-form" style="max-width: 400px; width: 100%; margin: 0 auto 24px; padding: 0 12px; box-sizing: border-box;">
+            <form id="horoscopeForm" autocomplete="off" style="width:100%;">
+                <div class="input-group" style="margin-bottom: 12px; width: 100%;">
+                    <label>Твой знак зодиака</label>
+                    <select name="zodiac_sign" required style="width:100%;min-width:0;box-sizing:border-box;border:1.5px solid var(--color-gold);text-align:center;padding:12px 14px;font-size:16px;border-radius:50px;background:rgba(15,31,15,0.8);color:var(--color-text);font-family:var(--font-main);appearance:none;-webkit-appearance:none;-moz-appearance:none;">
+                        <option value="">Выбери знак...</option>
+                        <option value="aries">Овен</option>
+                        <option value="taurus">Телец</option>
+                        <option value="gemini">Близнецы</option>
+                        <option value="cancer">Рак</option>
+                        <option value="leo">Лев</option>
+                        <option value="virgo">Дева</option>
+                        <option value="libra">Весы</option>
+                        <option value="scorpio">Скорпион</option>
+                        <option value="sagittarius">Стрелец</option>
+                        <option value="capricorn">Козерог</option>
+                        <option value="aquarius">Водолей</option>
+                        <option value="pisces">Рыбы</option>
+                    </select>
+                </div>
+                <input type="hidden" name="period" value="сегодня">
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; border-radius: 50px; box-sizing: border-box;">Узнать</button>
+            </form>
+            <div class="panel-result" id="result-horoscope" style="margin-top: 20px; max-width: 100%; box-sizing: border-box; word-wrap: break-word; overflow-wrap: break-word;"></div>
+        </div>
+
+        <!-- Что такое гороскоп -->
+        <div id="horoscopeInfo" style="max-width: 400px; width: 100%; margin: 0 auto; padding: 0 12px; box-sizing: border-box;">
+            <h3 style="font-size: 16px; font-weight: 600; color: var(--color-text); margin-bottom: 12px;">Что такое гороскоп?</h3>
+            <p style="font-size: 13px; color: var(--color-text-light); line-height: 1.7; margin-bottom: 12px;">
+                Гороскоп — это астрологический прогноз, основанный на положении планет относительно вашего знака зодиака. Он помогает понять энергии дня, недели, месяца или года и принять верные решения.
+            </p>
+            <p style="font-size: 13px; color: var(--color-text-light); line-height: 1.7; margin-bottom: 12px;">
+                Выберите свой знак и период, чтобы получить персональные рекомендации по любви, карьере и здоровью.
+            </p>
+            <p style="font-size: 11px; color: var(--color-text-lighter); line-height: 1.5; font-style: italic;">
+                Гороскоп носит развлекательный характер. Это не научный прогноз, а способ взглянуть на ситуацию с новой стороны.
+            </p>
+        </div>
+
+        <!-- Как применять эти данные -->
+        <div id="howToUseInfo" style="max-width: 400px; width: 100%; margin: 24px auto 0; padding: 0 12px; box-sizing: border-box;">
+            <h3 style="font-size: 16px; font-weight: 600; color: var(--color-text); margin-bottom: 12px;">Как применять эти данные</h3>
+            
+            <div style="margin-bottom: 12px; padding: 12px; background: rgba(30, 58, 30, 0.6); border-radius: 10px; border: 1px solid var(--color-border);">
+                <span style="font-size: 13px; font-weight: 600; color: var(--color-gold);">Счастливые числа</span>
+                <p style="font-size: 12px; color: var(--color-text-lighter); margin-top: 4px; line-height: 1.6;">
+                    В астрологии считается, что определённые числа усиливают природную энергию знака. Их можно использовать при выборе важных дат, номеров или даже при принятии решений — чтобы повысить шансы на успех.
+                </p>
+            </div>
+            
+            <div style="margin-bottom: 12px; padding: 12px; background: rgba(30, 58, 30, 0.6); border-radius: 10px; border: 1px solid var(--color-border);">
+                <span style="font-size: 13px; font-weight: 600; color: var(--color-gold);">Камни-талисманы</span>
+                <p style="font-size: 12px; color: var(--color-text-lighter); margin-top: 4px; line-height: 1.6;">
+                    Камень знака не обязательно носить постоянно. Достаточно надевать его в важные моменты: собеседования, подписание договоров, переговоры. В такие дни талисман способен придать уверенности и укрепить внутреннюю энергию.
+                </p>
+            </div>
+            
+            <div style="margin-bottom: 12px; padding: 12px; background: rgba(30, 58, 30, 0.6); border-radius: 10px; border: 1px solid var(--color-border);">
+                <span style="font-size: 13px; font-weight: 600; color: var(--color-gold);">Цвета знака</span>
+                <p style="font-size: 12px; color: var(--color-text-lighter); margin-top: 4px; line-height: 1.6;">
+                    Счастливые цвета можно использовать в одежде, аксессуарах или деталях интерьера. Даже небольшая деталь нужного оттенка — обложка блокнота, чехол телефона — способна мягко поддерживать энергетику знака в повседневной жизни.
+                </p>
+            </div>
+            
+            <div style="margin-bottom: 12px; padding: 12px; background: rgba(30, 58, 30, 0.6); border-radius: 10px; border: 1px solid var(--color-border);">
+                <span style="font-size: 13px; font-weight: 600; color: var(--color-gold);">Удачные дни</span>
+                <p style="font-size: 12px; color: var(--color-text-lighter); margin-top: 4px; line-height: 1.6;">
+                    У каждого знака есть день недели, когда энергия особенно сильна. Планируйте важные дела, встречи и начинания на этот день — и вы сможете почувствовать дополнительную поддержку своей стихии.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+
+window.__lastHoroscope = null;
+
+// ========== ОГРАНИЧЕНИЕ ВОПРОСОВ ДЛЯ БЕСПЛАТНЫХ ==========
+
+function updateHorLimitText() {
+    updateQuestionLimitText('horQuestionLimit');
+}
+
+function renderHoroscopeResult(result) {
+    const resultDiv = document.getElementById('result-horoscope');
+    resultDiv.classList.add('panel-result');
+    let resultHtml = '';
+
+    // Совет (название зависит от периода)
+    const isPaid = window.userTariff === 'Пламя';
+    const dailyAdvice = isPaid ? (result.daily_advice_full || '') : (result.daily_advice_short || result.daily_advice_full || '');
+    const periodNames = { 'день': 'Совет дня', 'неделя': 'Совет недели', 'месяц': 'Совет месяца', 'год': 'Совет года' };
+    const periodLabel = periodNames[result.period_type] || 'Совет дня';
+
+    if (dailyAdvice) {
+        resultHtml += `<div style="background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:12px;padding:12px 14px;margin-bottom:16px;text-align:center;">
+            <span style="font-size:11px;color:var(--color-gold);font-weight:600;">${periodLabel}</span>
+            <p style="font-size:13px;color:var(--color-text-light);margin-top:4px;line-height:1.6;">${sanitizeHTML(dailyAdvice)}</p>
+        </div>`;
+    }
+
+    // Результат гороскопа
+    resultHtml += formatResult(result);
+    resultDiv.innerHTML = resultHtml;
+    resultDiv.style.overflow = 'visible';
+    resultDiv.style.maxHeight = 'none';
+    window.__lastHoroscope = result;
+    
+    // Кнопки смены периода с подсветкой активной
+    const periodBlock = document.createElement('div');
+    periodBlock.style.cssText = 'display:flex;gap:6px;justify-content:center;margin-top:16px;flex-wrap:wrap;';
+    const currentPeriod = result.period_type || 'день';
+    ['день','неделя','месяц','год'].forEach(function(p) {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-outline btn-sm' + (p === currentPeriod ? ' active' : '');
+        btn.textContent = p.charAt(0).toUpperCase() + p.slice(1);
+        btn.onclick = function() { changePeriod(p); };
+        periodBlock.appendChild(btn);
+    });
+    resultDiv.appendChild(periodBlock);
+    
+    // Принудительно подсвечиваем активную кнопку
+    setTimeout(() => {
+        const btns = periodBlock.querySelectorAll('button');
+        btns.forEach(b => {
+            b.classList.remove('active');
+            if (b.textContent.trim() === 'День' && currentPeriod === 'день') b.classList.add('active');
+            if (b.textContent.trim() === 'Неделя' && currentPeriod === 'неделя') b.classList.add('active');
+            if (b.textContent.trim() === 'Месяц' && currentPeriod === 'месяц') b.classList.add('active');
+            if (b.textContent.trim() === 'Год' && currentPeriod === 'год') b.classList.add('active');
+        });
+    }, 100);
+
+    // Чат с подсказками
+    if (result.daily || result.love || result.career || result.health) {
+        const chatHtml = `
+            <div id="horChatBlock" style="margin-top:20px;max-width:100%;box-sizing:border-box;">
+                <p style="font-weight:600;color:var(--color-gold);margin-bottom:4px;">Гороскоп — это только начало</p>
+                <p style="font-size:11px;color:var(--color-text-lighter);margin-bottom:12px;">Задайте вопрос о своих звёздах</p>
+                <div id="suggestedHorQuestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+                    <span style="font-size:12px;color:var(--color-text-light);">Загрузка подсказок...</span>
+                </div>
+                <div class="input-group" style="display:flex;gap:8px;">
+                    <textarea id="horQuestion" placeholder="Напишите свой вопрос..." maxlength="500"
+                        rows="1"
+                        oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';"
+                        style="resize:none;overflow:hidden;
+                        font-family:var(--font-main);font-size:14px;
+                        padding:10px 14px;border:2px solid var(--color-border);border-radius:12px;
+                        outline:none;color:var(--color-text);background:rgba(15,31,15,0.8);line-height:1.4;
+                        min-height:42px;transition:border-color 0.3s;width:100%;box-sizing:border-box;"></textarea>
+                    <button class="btn btn-primary btn-sm" onclick="askHoroscopeChat()" style="flex-shrink:0;white-space:nowrap;">Спросить</button>
+                </div>
+                <p id="horQuestionLimit" style="font-size:11px;color:var(--color-text-lighter);margin-top:8px;text-align:center;"></p>
+                <div id="horAnswer" style="margin-top:12px;max-width:100%;box-sizing:border-box;word-wrap:break-word;overflow-wrap:break-word;"></div>
+            </div>
+        `;
+        resultDiv.insertAdjacentHTML('beforeend', chatHtml);
+        updateHorLimitText();
+        setTimeout(function() {
+            loadHoroscopeSuggestions(result);
+        }, 200);
+        resultDiv.insertAdjacentHTML('beforeend', '<p style="font-size:10px;color:var(--color-text-lighter);margin-top:16px;text-align:center;font-style:italic;line-height:1.4;max-width:100%;box-sizing:border-box;">Это игровая методика, а не строгая наука. Она не гарантирует точность прогнозов, но может быть полезным инструментом для самоанализа.</p>');
+    }
+}
+
+document.getElementById('horoscopeForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    document.getElementById('horoscopeInfo').style.display = 'none';
+    
+    const zodiac = (data.zodiac_sign || '').trim();
+    const period = (data.period || 'день').trim();
+    if (!zodiac) return;
+    
+    await streamHoroscope(zodiac, period);
+});
+
+async function changePeriod(period) {
+    const signEl = document.querySelector('[name="zodiac_sign"]');
+    if (!signEl || !signEl.value) return;
+    const zodiac = signEl.value;
+    document.querySelector('[name="period"]').value = period;
+    
+    await streamHoroscope(zodiac, period);
+}
+
+// ========== СТРИМ ГОРОСКОПА ==========
+
+async function streamHoroscope(zodiac, period) {
+    const resultDiv = document.getElementById('result-horoscope');
+    resultDiv.classList.add('panel-result');
+    resultDiv.style.overflow = 'visible';
+    resultDiv.style.maxHeight = 'none';
+    
+    // Пока стрим не начался — показываем скелет шапки.
+    // Он заменится настоящей шапкой через ~300 мс, когда придёт event:meta.
+    resultDiv.innerHTML = `
+        <div style="text-align:center;padding:20px;">
+            <div style="display:inline-block;width:36px;height:36px;border:3px solid var(--color-border);border-top-color:var(--color-gold);border-radius:50%;animation:spin 1s linear infinite;"></div>
+            <p style="font-size:13px;color:var(--color-text-lighter);margin-top:12px;">Смотрим, что говорят звёзды...</p>
+        </div>`;
+
+    // Объект-накопитель: собирается по мере прихода блоков.
+    // После onDone по структуре совпадает с ответом старого /api/horoscope —
+    // благодаря этому loadHoroscopeSuggestions и askHoroscopeChat работают без изменений.
+    const result = {
+        zodiac_sign: zodiac,
+        period_type: period,
+    };
+    
+    // Плейсхолдеры блоков: name → DOM-элемент. Нужны, чтобы заменить «Загружается...» на реальный контент.
+    const placeholders = {};
+    
+    const isPaid = window.userTariff === 'Пламя';
+    
+    await streamPost(
+        '/api/horoscope/stream',
+        { zodiac_sign: zodiac, period: period },
+        {
+            onMeta: function(meta) {
+                result.sign = meta.sign;
+                result.emoji = meta.emoji;
+                result.element = meta.element;
+                result.period = meta.period;
+                result.period_type = meta.period_type;
+                result.extra = meta.extra;
+                
+                // Перерисовываем весь контейнер: шапка + слот советника + блоки.
+                // daily_advice идёт в отдельный слот сверху — визуально как было в старом формате.
+                resultDiv.innerHTML = `
+                    <div id="horHeader"></div>
+                    <div id="horAdviceSlot"></div>
+                    <div id="horBlocks"></div>
+                    <div id="horPost"></div>`;
+                
+                document.getElementById('horHeader').innerHTML = renderHoroscopeHeader(meta);
+                
+                // Скелеты блоков. daily НЕ показываем — в старом формате он не рендерился,
+                // только использовался как контекст для чат-подсказок. Сохраняем это поведение.
+                const blocksContainer = document.getElementById('horBlocks');
+                const visibleBlocks = ['description', 'love', 'career', 'health'];
+                for (const name of visibleBlocks) {
+                    const placeholder = document.createElement('div');
+                    placeholder.id = 'horBlock-' + name;
+                    placeholder.innerHTML = renderHoroscopeSkeleton(name);
+                    blocksContainer.appendChild(placeholder);
+                    placeholders[name] = placeholder;
+                }
+                
+                // Слот советника сверху — тоже со скелетом.
+                const adviceSlot = document.getElementById('horAdviceSlot');
+                adviceSlot.innerHTML = renderHoroscopeSkeleton('daily_advice');
+                placeholders['daily_advice'] = adviceSlot;
+            },
+            
+            onBlock: function(block) {
+                const name = block.name;
+                
+                // Сохраняем в result для дальнейшего использования (чат-подсказки, кнопки периодов).
+                // Ключи полностью совпадают с полями старого /api/horoscope.
+                if (name === 'description') {
+                    result.description = block.value;
+                } else if (name === 'daily') {
+                    result.daily = block.value;
+                    if (block.teaser) result.daily_teaser = block.teaser;
+                } else if (name === 'love') {
+                    result.love = block.value;
+                    if (block.teaser) result.love_teaser = block.teaser;
+                } else if (name === 'career') {
+                    result.career = block.value;
+                    if (block.teaser) result.career_teaser = block.teaser;
+                } else if (name === 'health') {
+                    result.health = block.value;
+                    if (block.teaser) result.health_teaser = block.teaser;
+                } else if (name === 'daily_advice') {
+                    result.daily_advice_short = block.short || '';
+                    result.daily_advice_full = block.full || '';
+                }
+                
+                // Рендерим реальный блок поверх скелета.
+                const placeholder = placeholders[name];
+                if (!placeholder) return;
+                
+                if (name === 'daily') {
+                    // daily не рендерится — оставляем только в result.
+                    return;
+                }
+                
+                if (name === 'daily_advice') {
+                    placeholder.innerHTML = renderHoroscopeAdvice(block, isPaid, result.period_type);
+                } else {
+                    placeholder.innerHTML = renderHoroscopeBlock(name, block, isPaid);
+                }
+            },
+            
+            onError: function(err) {
+                resultDiv.innerHTML = '<p style="color:var(--color-error);text-align:center;padding:20px;">' +
+                    sanitizeHTML(err.message || 'Не удалось получить ответ. Попробуйте ещё раз.') + '</p>';
+            },
+            
+            onDone: function() {
+                window.__lastHoroscope = result;
+                renderHoroscopePost(result, isPaid);
+            },
+        }
+    );
+}
+
+// ========== РЕНДЕР ШАПКИ (после meta) ==========
+
+function renderHoroscopeHeader(meta) {
+    const signToSvgKey = {
+        'Овен': 'aries', 'Телец': 'taurus', 'Близнецы': 'gemini',
+        'Рак': 'cancer', 'Лев': 'leo', 'Дева': 'virgo',
+        'Весы': 'libra', 'Скорпион': 'scorpio', 'Стрелец': 'sagittarius',
+        'Козерог': 'capricorn', 'Водолей': 'aquarius', 'Рыбы': 'pisces'
+    };
+    const svgKey = signToSvgKey[meta.sign] || 'aries';
+    const svg = (typeof zodiacSvgs !== 'undefined' && zodiacSvgs[svgKey]) ? zodiacSvgs[svgKey] : '';
+    
+    let html = `<div style="text-align:center;margin:12px 0;">
+        <div class="horoscope-sign-svg">${svg}</div>
+        <div style="font-size:22px;font-weight:600;color:var(--color-text);">${sanitizeHTML(meta.sign)}</div>
+        <div style="font-size:13px;color:var(--color-text-lighter);">${sanitizeHTML(meta.element)} • ${sanitizeHTML(meta.period)}</div>
+    </div>`;
+    
+    // Дополнительные теги (цвет, камень, удачный день...)
+    if (meta.extra && (meta.extra.color || meta.extra.lucky_day || meta.extra.unlucky_day || meta.extra.stone || meta.extra.lucky_number)) {
+        const tagStyle = 'font-size:11px;color:var(--color-text-light);background:rgba(30,58,30,0.6);padding:4px 10px;border-radius:12px;border:1px solid var(--color-border);';
+        html += '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:16px;">';
+        if (meta.extra.color) html += `<span style="${tagStyle}">Цвет: ${sanitizeHTML(meta.extra.color)}</span>`;
+        if (meta.extra.lucky_day) html += `<span style="${tagStyle}">Удачный день: ${sanitizeHTML(meta.extra.lucky_day)}</span>`;
+        if (meta.extra.unlucky_day) html += `<span style="${tagStyle}">Неудачный день: ${sanitizeHTML(meta.extra.unlucky_day)}</span>`;
+        if (meta.extra.stone) html += `<span style="${tagStyle}">Камень: ${sanitizeHTML(meta.extra.stone)}</span>`;
+        if (meta.extra.lucky_number) html += `<span style="${tagStyle}">Число удачи: ${sanitizeHTML(meta.extra.lucky_number)}</span>`;
+        html += '</div>';
+    }
+    
+    return html;
+}
+
+// ========== СКЕЛЕТ БЛОКА ==========
+
+function renderHoroscopeSkeleton(name) {
+    const titles = {
+        'description': 'Описание знака',
+        'love': 'Любовь и отношения',
+        'career': 'Карьера и финансы',
+        'health': 'Здоровье',
+        'daily_advice': 'Совет дня',
+    };
+    const title = titles[name] || 'Загружается';
+    return `
+        <div style="margin-top:14px;padding:14px;background:rgba(30,58,30,0.3);border-radius:12px;">
+            <span style="color:var(--color-gold);font-weight:600;font-size:13px;">${title}</span>
+            <p style="font-size:13px;color:var(--color-text-lighter);margin-top:6px;">
+                Загружается<span class="hor-dots">...</span>
+            </p>
+        </div>`;
+}
+
+// ========== РЕНДЕР БЛОКА ==========
+
+function renderHoroscopeBlock(name, block, isPaid) {
+    const value = block.value || '';
+    const teaser = block.teaser || '';
+    
+    if (name === 'description') {
+        // Мелкое описание знака — как было в старом formatHoroscope.
+        return `<p style="font-size:11px;color:var(--color-text-lighter);text-align:center;margin:8px 0 16px;">${sanitizeHTML(value)}</p>`;
+    }
+    
+    // Заголовки — как в старом formatHoroscope.
+    const titles = {
+        'love': 'Любовь и отношения',
+        'career': 'Карьера и финансы',
+        'health': 'Здоровье',
+    };
+    const title = titles[name] || '';
+    
+    // Для бесплатных показываем тизер + «Читать полностью →».
+    // Для платных — полный текст.
+    const text = isPaid ? value : (teaser || value);
+    
+    let html = `<div style="margin-top:14px;"><span style="font-weight:600;color:var(--color-gold);">${title}</span></div>`;
+    html += `<p class="result-text" style="margin-top:4px;">${sanitizeHTML(text)}</p>`;
+    if (!isPaid) {
+        html += '<div style="margin-top:4px;font-size:10px;color:var(--color-gold);cursor:pointer;" onclick="showPaywall()">Читать полностью →</div>';
+    }
+    return html;
+}
+
+// ========== РЕНДЕР СОВЕТНИКА (daily_advice) ==========
+
+function renderHoroscopeAdvice(block, isPaid, periodType) {
+    const short = block.short || '';
+    const full = block.full || '';
+    const advice = isPaid ? full : (short || full);
+    if (!advice) return '';
+    
+    const periodNames = { 'день': 'Совет дня', 'неделя': 'Совет недели', 'месяц': 'Совет месяца', 'год': 'Совет года' };
+    const periodLabel = periodNames[periodType] || 'Совет дня';
+    
+    return `<div style="background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:12px;padding:12px 14px;margin-bottom:16px;text-align:center;">
+        <span style="font-size:11px;color:var(--color-gold);font-weight:600;">${periodLabel}</span>
+        <p style="font-size:13px;color:var(--color-text-light);margin-top:4px;line-height:1.6;">${sanitizeHTML(advice)}</p>
+    </div>`;
+}
+
+// ========== ПОСТ-РЕНДЕР (кнопки периодов + чат) ==========
+
+function renderHoroscopePost(result, isPaid) {
+    const postDiv = document.getElementById('horPost');
+    if (!postDiv) return;
+    
+    // Кнопки смены периода — как в старом renderHoroscopeResult.
+    const periodBlock = document.createElement('div');
+    periodBlock.style.cssText = 'display:flex;gap:6px;justify-content:center;margin-top:16px;flex-wrap:wrap;';
+    const currentPeriod = result.period_type || 'день';
+    ['день','неделя','месяц','год'].forEach(function(p) {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-outline btn-sm' + (p === currentPeriod ? ' active' : '');
+        btn.textContent = p.charAt(0).toUpperCase() + p.slice(1);
+        btn.onclick = function() { changePeriod(p); };
+        periodBlock.appendChild(btn);
+    });
+    postDiv.appendChild(periodBlock);
+    
+    // Принудительно подсвечиваем активную — как в старом коде.
+    setTimeout(function() {
+        const btns = periodBlock.querySelectorAll('button');
+        btns.forEach(function(b) {
+            b.classList.remove('active');
+            if (b.textContent.trim() === 'День' && currentPeriod === 'день') b.classList.add('active');
+            if (b.textContent.trim() === 'Неделя' && currentPeriod === 'неделя') b.classList.add('active');
+            if (b.textContent.trim() === 'Месяц' && currentPeriod === 'месяц') b.classList.add('active');
+            if (b.textContent.trim() === 'Год' && currentPeriod === 'год') b.classList.add('active');
+        });
+    }, 100);
+    
+    // Чат-подсказки — как в старом renderHoroscopeResult.
+    if (result.daily || result.love || result.career || result.health) {
+        const chatHtml = `
+            <div id="horChatBlock" style="margin-top:20px;max-width:100%;box-sizing:border-box;">
+                <p style="font-weight:600;color:var(--color-gold);margin-bottom:4px;">Гороскоп — это только начало</p>
+                <p style="font-size:11px;color:var(--color-text-lighter);margin-bottom:12px;">Задайте вопрос о своих звёздах</p>
+                <div id="suggestedHorQuestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+                    <span style="font-size:12px;color:var(--color-text-light);">Загрузка подсказок...</span>
+                </div>
+                <div class="input-group" style="display:flex;gap:8px;">
+                    <textarea id="horQuestion" placeholder="Напишите свой вопрос..." maxlength="500"
+                        rows="1"
+                        oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';"
+                        style="resize:none;overflow:hidden;
+                        font-family:var(--font-main);font-size:14px;
+                        padding:10px 14px;border:2px solid var(--color-border);border-radius:12px;
+                        outline:none;color:var(--color-text);background:rgba(15,31,15,0.8);line-height:1.4;
+                        min-height:42px;transition:border-color 0.3s;width:100%;box-sizing:border-box;"></textarea>
+                    <button class="btn btn-primary btn-sm" onclick="askHoroscopeChat()" style="flex-shrink:0;white-space:nowrap;">Спросить</button>
+                </div>
+                <p id="horQuestionLimit" style="font-size:11px;color:var(--color-text-lighter);margin-top:8px;text-align:center;"></p>
+                <div id="horAnswer" style="margin-top:12px;max-width:100%;box-sizing:border-box;word-wrap:break-word;overflow-wrap:break-word;"></div>
+            </div>`;
+        postDiv.insertAdjacentHTML('beforeend', chatHtml);
+        updateHorLimitText();
+        setTimeout(function() {
+            loadHoroscopeSuggestions(result);
+        }, 200);
+        postDiv.insertAdjacentHTML('beforeend', '<p style="font-size:10px;color:var(--color-text-lighter);margin-top:16px;text-align:center;font-style:italic;line-height:1.4;max-width:100%;box-sizing:border-box;">Это игровая методика, а не строгая наука. Она не гарантирует точность прогнозов, но может быть полезным инструментом для самоанализа.</p>');
+    }
+}
+
+async function loadHoroscopeSuggestions(data) {
+    const container = document.getElementById('suggestedHorQuestions');
+    if (!container) return;
+    const isPaid = window.userTariff === 'Пламя';
+    
+    // Формируем текст, который видел пользователь
+    let dailyText = '';
+    if (!isPaid) {
+        // Бесплатные видят тизеры — по ним и генерируем вопросы
+        dailyText = [data.daily_teaser || '', data.love_teaser || '', data.career_teaser || '', data.health_teaser || ''].filter(Boolean).join(' ');
+    }
+    if (!dailyText) {
+        // Платные видят полные тексты
+        dailyText = [data.daily || '', data.love || '', data.career || '', data.health || ''].filter(Boolean).join(' ');
+    }
+    if (!dailyText) return;
+    
+    try {
+        const res = await fetch('/api/horoscope/suggestions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ zodiac_sign: data.sign, daily_text: dailyText })
+        });
+        const resp = await res.json();
+        if (resp.suggestions && resp.suggestions.length > 0) {
+            container.innerHTML = resp.suggestions.map(q => {
+                const attrQ = String(q).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                return `<span class="suggested-question hor-suggested-q" data-question="${attrQ}"
+                    style="display:inline-block;padding:8px 14px;font-size:12px;color:var(--color-text-light);cursor:pointer;background:rgba(30,58,30,0.8);border:1px solid var(--color-border);border-radius:18px;transition:all 0.2s ease;"
+                    onmouseover="this.style.borderColor='var(--color-gold)';this.style.color='var(--color-gold)';"
+                    onmouseout="this.style.borderColor='var(--color-border)';this.style.color='var(--color-text-light)';"
+                >${sanitizeHTML(q)}</span>`;
+            }).join('');
+
+            if (!container.dataset.clickBound) {
+                container.dataset.clickBound = '1';
+                container.addEventListener('click', function(e) {
+                    const item = e.target.closest('.hor-suggested-q');
+                    if (item && item.dataset.question) {
+                        askSuggestedHorQuestion(item.dataset.question);
+                    }
+                });
+            }
+        }
+    } catch(e) {}
+}
+
+function askSuggestedHorQuestion(question) {
+    const input = document.getElementById('horQuestion');
+    if (input) {
+        input.value = question;
+        input.style.height = 'auto';
+        input.style.height = input.scrollHeight + 'px';
+    }
+}
+
+async function askHoroscopeChat() {
+    if (!canAskQuestion()) {
+        updateHorLimitText();
+        return;
+    }
+    const question = document.getElementById('horQuestion')?.value.trim();
+    if (!question) return;
+    
+    const answerBlock = document.getElementById('horAnswer');
+    
+    answerBlock.innerHTML += `
+        <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+            <div style="background:rgba(76,175,80,0.35);border-radius:18px 18px 4px 18px;padding:10px 16px;max-width:90%;font-size:14px;color:var(--color-text);line-height:1.5;word-wrap:break-word;overflow-wrap:break-word;">
+                ${sanitizeHTML(question)}
+            </div>
+        </div>`;
+    
+    document.getElementById('horQuestion').value = '';
+    
+    const askBtn = document.querySelector('#horQuestion + .btn');
+    if (askBtn) {
+        askBtn.disabled = true;
+        askBtn.textContent = 'Думаю...';
+    }
+    
+    const signEl = document.querySelector('[name="zodiac_sign"]');
+    const periodEl = document.querySelector('[name="period"]');
+    const zodiac = signEl?.value || '';
+    const period = periodEl?.value || 'день';
+    
+    const typingDiv = document.createElement('div');
+    typingDiv.style.cssText = 'display:flex;justify-content:flex-start;margin-top:4px;';
+    typingDiv.innerHTML = '<div style="background:rgba(30,58,30,0.6);border-radius:18px 18px 18px 4px;padding:10px 16px;max-width:90%;font-size:14px;color:var(--color-text-lighter);">Печатает...</div>';
+    answerBlock.appendChild(typingDiv);
+    
+    try {
+        const res = await fetch('/api/numer/dialogue', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                message: question, 
+                section: 'horoscope',
+                context: { zodiac_sign: zodiac, period: period }
+            })
+        });
+        const data = await res.json();
+        
+        typingDiv.remove();
+        
+        if (data.answer) {
+            answerBlock.innerHTML += `
+                <div style="display:flex;justify-content:flex-start;margin-top:4px;">
+                    <div style="background:rgba(30,58,30,0.6);border-radius:18px 18px 18px 4px;padding:10px 16px;max-width:90%;font-size:14px;color:var(--color-text-light);line-height:1.5;word-wrap:break-word;overflow-wrap:break-word;">
+                        ${sanitizeHTML(data.answer)}
+                    </div>
+                </div>`;
+        }
+        
+        markQuestionAsked();
+        updateHorLimitText();
+    } catch(e) {
+        typingDiv.remove();
+    }
+    
+    if (askBtn) {
+        askBtn.disabled = false;
+        askBtn.textContent = 'Спросить';
+    }
+    
+    answerBlock.scrollTop = answerBlock.scrollHeight;
+}
+
+// Автозаполнение знака зодиака из портрета (для всех)
+fetch('/api/numer/portrait')
+    .then(r => r.json())
+    .then(portrait => {
+        if (portrait.birth_date) {
+            const zodiac = getZodiacSign(portrait.birth_date);
+            if (zodiac) {
+                const signName = zodiac.replace(/[♈♉♊♋♌♍♎♏♐♑♒♓]\s*/, '').trim().toLowerCase();
+                if (!signName) return;
+                const signMap = {
+                    'овен': 'aries', 'телец': 'taurus', 'близнецы': 'gemini',
+                    'рак': 'cancer', 'лев': 'leo', 'дева': 'virgo',
+                    'весы': 'libra', 'скорпион': 'scorpio', 'стрелец': 'sagittarius',
+                    'козерог': 'capricorn', 'водолей': 'aquarius', 'рыбы': 'pisces'
+                };
+                const select = document.querySelector('[name="zodiac_sign"]');
+                if (select && signMap[signName] && !select.value) {
+                    select.value = signMap[signName];
+                }
+            }
+        }
+    })
+    .catch(() => {});
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof showContextOnboarding === 'function') {
+        showContextOnboarding('#horoscopeForm',
+            'Выбери знак зодиака и период — звёзды расскажут о любви, карьере и здоровье.',
+            'horoscope');
+    }
+});
+</script>
+{% endblock %}

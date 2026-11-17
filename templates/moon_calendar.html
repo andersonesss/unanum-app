@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% block title %}Лунный календарь на сегодня — фаза луны, лунный день | Unanum{% endblock %}
+{% block meta_description %}Лунный календарь на каждый день. Узнайте фазу луны, лунный день, рекомендации по стрижке и здоровью. Советы на каждый день.{% endblock %}
+{% block content %}
+<section class="page-section" style="padding-top: 80px;" data-numer-section="moon_calendar">
+    <div class="container">
+                <h1 class="page-title" style="font-size:clamp(2rem, 5vw, 2.5rem);font-weight:700;background:linear-gradient(135deg, #d4a843, #d4879a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;">Лунный Календарь</h1>
+        <p class="page-subtitle" style="color: var(--color-text);">Планируйте важные дела в гармонии с лунными циклами</p>
+
+        <!-- Навигация по годам -->
+        <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:16px 0;margin-bottom:8px;">
+            <button class="btn btn-outline btn-sm" onclick="changeYear(-1)" style="display:flex;align-items:center;gap:4px;">
+                <span>◀</span><span id="prevYear">---</span>
+            </button>
+            <div id="currentYearDisplay" style="padding:12px 28px;background:linear-gradient(135deg, rgba(212,135,154,0.15), rgba(212,168,67,0.1));border:2px solid var(--color-gold);border-radius:8px;color:var(--color-text);font-size:1.2rem;font-weight:700;min-width:80px;text-align:center;">2026</div>
+            <button class="btn btn-outline btn-sm" onclick="changeYear(1)" style="display:flex;align-items:center;gap:4px;">
+                <span id="nextYear">---</span><span>▶</span>
+            </button>
+        </div>
+
+        <!-- Навигация по месяцам -->
+        <h2 id="monthYearTitle" style="font-size:1rem;margin-bottom:12px;color:var(--color-text);text-align:center;font-weight:600;">Май 2026</h2>
+        <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:20px;">
+            <button class="btn btn-outline btn-sm btn-arrow-sm" onclick="changeMonth(-1)">◀</button>
+            <div id="monthsScroll" style="display:flex;gap:8px;justify-content:center;align-items:center;overflow:hidden;width:100%;max-width:500px;">
+            </div>
+            <button class="btn btn-outline btn-sm btn-arrow-sm" onclick="changeMonth(1)">▶</button>
+        </div>
+
+        <!-- Загрузка -->
+        <div id="moonLoading" style="text-align:center;padding:40px;">
+            <div style="display:inline-block;width:36px;height:36px;border:3px solid var(--color-border);border-top-color:var(--color-gold);border-radius:50%;animation:spin 1s linear infinite;"></div>
+            <p style="font-size:13px;color:var(--color-text-lighter);margin-top:12px;">Рассчитываем лунный календарь...</p>
+        </div>
+
+        <!-- Календарная сетка -->
+        <div id="moonCalendarGrid" style="display:none;">
+            <div id="moodGreeting" style="display:none;text-align:center;margin-bottom:10px;font-size:14px;color:var(--color-gold);font-weight:600;"></div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px;text-align:center;font-size:11px;color:var(--color-text-lighter);font-weight:600;">
+                <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div>
+            </div>
+            <div id="calendarCells" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">
+            </div>
+        </div>
+
+        <!-- Детальная информация -->
+        <div id="dayDetail" style="display:none;max-width:400px;width:100%;margin:40px auto 0;padding:0 12px;box-sizing:border-box;">
+        </div>
+        <!-- Информационный блок о лунном календаре -->
+        <div id="moonInfo" style="max-width: 400px; width: 100%; margin: 40px auto 0; padding: 0 12px; box-sizing: border-box;">
+            <h2 style="font-size: 20px; font-weight: 600; color: var(--color-gold); text-align: center; margin-bottom: 20px;">Что такое лунный календарь?</h2>
+
+            <div style="margin-bottom: 16px; padding: 0;">
+                <h3 style="font-size: 16px; font-weight: 600; color: var(--color-gold); margin-bottom: 8px;">Как работает лунный цикл</h3>
+                <p style="font-size: 14px; color: var(--color-text-light); line-height: 1.7; margin-bottom: 8px;">
+                    Лунный месяц длится около 29,5 солнечных суток и делится на 30 лунных дней. Каждый день несёт свою энергию и по-разному влияет на человека, его эмоции, здоровье и дела.
+                </p>
+                <p style="font-size: 14px; color: var(--color-text-light); line-height: 1.7;">
+                    Луна проходит через 8 фаз — от Новолуния до Старой Луны, и каждый день меняет знак зодиака, в котором находится. Это создаёт уникальную энергетическую картину каждые сутки.
+                </p>
+            </div>
+
+            <div style="margin-bottom: 16px; padding: 0;">
+                <h3 style="font-size: 16px; font-weight: 600; color: var(--color-gold); margin-bottom: 8px;">Фазы Луны</h3>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div><span style="color: var(--color-text); font-weight: 600; font-size: 14px;">🌑 Новолуние</span> - <span style="font-size: 14px; color: var(--color-text);">время планирования, закладки намерений и начала новых циклов. Энергия минимальна, но потенциал огромен.</span></div>
+                    <div><span style="color: var(--color-text); font-weight: 600; font-size: 14px;">🌒 Молодая Луна</span> - <span style="font-size: 14px; color: var(--color-text);">энергия начинает расти. Хорошо для обучения, начала диет и новых привычек.</span></div>
+                    <div><span style="color: var(--color-text); font-weight: 600; font-size: 14px;">🌓 Первая четверть</span> - <span style="font-size: 14px; color: var(--color-text);">время активных действий, преодоления препятствий и движения вперёд.</span></div>
+                    <div><span style="color: var(--color-text); font-weight: 600; font-size: 14px;">🌔 Прибывающая Луна</span> - <span style="font-size: 14px; color: var(--color-text);">энергия на подъёме. Благоприятно для роста, развития, укрепления позиций.</span></div>
+                    <div><span style="color: var(--color-text); font-weight: 600; font-size: 14px;">🌕 Полнолуние</span> - <span style="font-size: 14px; color: var(--color-text);">пик энергии, эмоции на пределе. Время завершения дел, а не начинаний. Обостряется интуиция.</span></div>
+                    <div><span style="color: var(--color-text); font-weight: 600; font-size: 14px;">🌖 Убывающая Луна</span> - <span style="font-size: 14px; color: var(--color-text);">энергия идёт на спад. Хорошо для очищения, избавления от лишнего, подведения итогов.</span></div>
+                    <div><span style="color: var(--color-text); font-weight: 600; font-size: 14px;">🌗 Последняя четверть</span> - <span style="font-size: 14px; color: var(--color-text);">время анализа, рефлексии и подготовки к новому циклу.</span></div>
+                    <div><span style="color: var(--color-text); font-weight: 600; font-size: 14px;">🌘 Старая Луна</span> - <span style="font-size: 14px; color: var(--color-text);">завершение, прощение, отпускание. Лучше отдыхать и не начинать новое.</span></div>                </div>
+            </div>
+
+            <div style="margin-bottom: 16px; padding: 0;">
+                <h3 style="font-size: 16px; font-weight: 600; color: var(--color-gold); margin-bottom: 8px;">Зачем следить за лунным календарём</h3>
+                <ul style="font-size: 14px; color: var(--color-text-light); line-height: 1.8; padding-left: 20px;">
+                    <li><strong>Планирование дел:</strong> начинайте важные проекты на растущей Луне, завершайте на убывающей.</li>
+                    <li><strong>Красота и здоровье:</strong> стрижки, процедуры и операции лучше делать в благоприятные лунные дни.</li>
+                    <li><strong>Эмоциональное состояние:</strong> понимание лунных ритмов помогает управлять настроением и энергией.</li>
+                    <li><strong>Духовные практики:</strong> каждый лунный день имеет свои ритуалы и рекомендации для медитации.</li>
+                    <li><strong>Финансы:</strong> денежные вопросы лучше решать в определённые дни лунного цикла.</li>
+                    <li><strong>Отношения:</strong> зная лунный день, можно выбрать лучшее время для важных разговоров и встреч.</li>
+                </ul>
+            </div>
+
+            <div style="margin-bottom: 16px; padding: 0;">
+                <h3 style="font-size: 16px; font-weight: 600; color: var(--color-gold); margin-bottom: 8px;">Интересные факты</h3>
+                <ul style="font-size: 14px; color: var(--color-text-light); line-height: 1.8; padding-left: 20px;">
+                    <li>Лунный день не равен солнечному — он может длиться от 22 до 25 часов.</li>
+                    <li>Первый лунный день начинается в момент новолуния, а не в полночь.</li>
+                    <li>30-й лунный день бывает не в каждом лунном месяце — иногда цикл длится 29 дней.</li>
+                    <li>Луна всегда повёрнута к Земле одной стороной — обратную сторону мы никогда не видим.</li>
+                    <li>В полнолуние люди спят в среднем на 20 минут меньше — это научный факт.</li>
+                    <li>Луна влияет на приливы и отливы, а человек на 60% состоит из воды — поэтому лунные ритмы ощущаются физически.</li>
+                </ul>
+            </div>
+
+            <p style="font-size: 12px; color: var(--color-text-lighter); text-align: center; margin-top: 16px; font-style: italic; line-height: 1.5;">
+                Это игровая методика, а не строгая наука. Она не гарантирует точность, но может быть полезным инструментом для самоанализа и планирования.
+            </p>
+        </div>
+        <!-- Плашка для гостя -->
+        <div id="moonGuestHint" style="display:none;text-align:center;margin-top:20px;padding:14px;background:transparent;border-radius:16px;border:2px solid var(--color-border);">
+            <p style="font-size:13px;color:var(--color-text);margin-bottom:4px;font-weight:600;">🔮 Хочешь персональные ритуалы и рекомендации?</p>
+            <p style="font-size:11px;color:var(--color-text-lighter);margin-bottom:12px;">Знак Луны, время восхода и захода, советы по стрижкам и здоровью — на тарифе Пламя</p>
+            <button class="btn btn-share btn-sm" onclick="openAuthModal()" style="width:100%;">✨ Войти и открыть</button>
+        </div>
+    </div>
+</section>
+
+<style>
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.calendar-cell {
+    aspect-ratio: 1 / 1.4;
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid var(--color-border);
+    background: rgba(30,58,30,0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    min-width: 0;
+    position: relative;
+    overflow: hidden;
+    padding: 5px 2px;
+}
+.calendar-cell:hover {
+    border-color: var(--color-gold);
+    box-shadow: 0 2px 8px rgba(212,168,67,0.1);
+    background: rgba(212,168,67,0.05);
+}
+.calendar-cell.empty {
+    background: transparent;
+    border-color: transparent;
+    cursor: default;
+}
+.calendar-cell.empty:hover {
+    border-color: transparent;
+    box-shadow: none;
+    background: transparent;
+}
+.calendar-cell.today {
+    border: 2px solid var(--color-gold);
+    background: rgba(212,168,67,0.08);
+}
+.calendar-cell .day-number {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--color-text);
+}
+.calendar-cell .moon-phase-icon { display: none; }
+.calendar-cell .lunar-day-num {
+    font-size: 10px;
+    color: var(--color-text-lighter);
+    font-weight: 400;
+}
+.calendar-cell .phase-icon {
+    width: 28px;
+    height: 28px;
+    margin: 3px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.calendar-cell .phase-icon svg {
+    width: 28px;
+    height: 28px;
+}
+.calendar-cell .zodiac-sign { display: none; }
+.calendar-cell .day-hint {
+    font-size: 9px;
+    color: var(--color-text-lighter);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    line-height: 1.2;
+    margin-top: 1px;
+}
+.calendar-cell .phase-dot { display: none; }
+.month-btn {
+    padding: 10px 16px;
+    background: rgba(30,58,30,0.4);
+    border: 2px solid rgba(212,168,67,0.15);
+    border-radius: 10px;
+    color: var(--color-text-light);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    min-width: 70px;
+    flex-shrink: 0;
+}
+.month-btn:hover {
+    border-color: rgba(212,168,67,0.4);
+    background: rgba(212,168,67,0.06);
+}
+.month-btn.active {
+    background: transparent;
+    border-color: var(--color-gold);
+    color: var(--color-gold);
+    font-weight: 700;
+    box-shadow: none;
+    transform: none;
+}
+.btn-arrow-sm {
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+    min-width: auto !important;
+    height: 34px !important;
+    flex-shrink: 0;
+}
+.calendar-cell.mood-highlight {
+    border-color: var(--color-gold) !important;
+    box-shadow: 0 0 0 1px rgba(212,168,67,0.5);
+}
+.calendar-cell.mood-highlight .day-number {
+    color: var(--color-gold);
+    font-weight: 700;
+}
+</style>
+
+<script src="/static/js/moon_calendar.js" defer></script>
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+    initMoonCalendar();
+});
+</script>
+{% endblock %}

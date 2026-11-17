@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Unanum — персональные расклады Таро, гороскоп и нумерология онлайн{% endblock %}
+{% block meta_description %}Бесплатный гороскоп на сегодня, расклад Таро, денежный код и нумерологический портрет по дате рождения. Пространство для женщин, которые ищут свой путь.{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero" id="hero" data-numer-section="home">
+    <div class="hero-content">
+        <span class="hero-badge" id="welcomeBadge">✨ Добро пожаловать в пространство unanum</span>
+        <h1 class="hero-title"></h1>
+        <p class="hero-subtitle"></p>
+
+        <!-- 6 портальных кнопок -->
+        <div class="portal-buttons" id="portalButtons">
+            <div class="portal-item">
+                <a href="/financial-code" class="portal-btn" style="text-decoration: none;">Денежный код</a>
+            </div>
+            <div class="portal-item">
+                <a href="/horoscope" class="portal-btn" style="text-decoration: none;">Гороскоп</a>
+            </div>
+            <div class="portal-item">
+                <a href="/moon-calendar" class="portal-btn" style="text-decoration: none;">Лунный календарь</a>
+            </div>
+            <div class="portal-item">
+                <a href="/numerology" class="portal-btn" style="text-decoration: none;">Нумерология</a>
+            </div>
+            <div class="portal-item">
+                <a href="/natal-chart" class="portal-btn" style="text-decoration: none;">Натальная карта</a>
+            </div>
+            <div class="portal-item">
+                <a href="/compatibility" class="portal-btn" style="text-decoration: none;">Совместимость</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,6 @@
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <path d="M5 12 Q5 5 12 5Q19 5 19 12Q19 19 12 19Q5 19 5 12Z" fill="none" stroke="#d4a843" stroke-width="1.5"/>
+  <line x1="12" y1="5" x2="12" y2="19" stroke="#d4a843" stroke-width="0.8" opacity="0.4"/>
+  <line x1="5" y1="12" x2="19" y2="12" stroke="#d4a843" stroke-width="0.8" opacity="0.4"/>
+  <text x="12" y="16" text-anchor="middle" fill="#d4a843" font-size="5" font-weight="700">4</text>
+</svg>

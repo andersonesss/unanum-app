@@ -1,0 +1,562 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль — unanum{% endblock %}
+
+{% block content %}
+<section class="page-section" data-numer-section="profile">
+    <div class="container">
+        <h1 class="page-title" style="font-size:clamp(2rem, 5vw, 2.5rem);font-weight:700;background:linear-gradient(135deg, #d4a843, #d4879a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;">Профиль</h1>
+        <p class="page-subtitle">Твои данные и настройки</p>
+
+        <!-- Табы -->
+        <div class="profile-tabs">
+            <button class="profile-tab active" onclick="switchProfileTab('profile')">Профиль</button>
+            <button class="profile-tab" onclick="switchProfileTab('partner')">Партнёр</button>
+            <button class="profile-tab" onclick="switchProfileTab('people')">Люди</button>
+            <button class="profile-tab" onclick="switchProfileTab('tariff')">Тариф</button>
+            <button class="profile-tab" onclick="switchProfileTab('security')">Безопасность</button>
+        </div>
+
+        <!-- Профиль -->
+        <div class="profile-panel active" id="panel-profile">
+            <form id="profileForm">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <div class="input-group"><label>Имя</label><input type="text" id="profileNameInput"></div>
+                <div class="input-group"><label>Дата рождения</label><input type="date" id="profileBirthDate"></div>
+                <div class="input-group"><label>Пол</label>
+                    <select id="profileGender">
+                        <option value="">Не указан</option>
+                        <option value="female">Женский</option>
+                        <option value="male">Мужской</option>
+                    </select>
+                </div>
+                <div class="input-group"><label>Телефон</label><input type="tel" id="profilePhone" placeholder="+7 (___) ___-__-__" readonly></div>
+                <button type="submit" class="btn btn-primary" style="width:100%;margin-top:12px;">Сохранить</button>
+            </form>
+        </div>
+
+        <!-- Партнёр -->
+        <div class="profile-panel" id="panel-partner">
+            <form id="partnerForm">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <div class="input-group"><label>Имя партнёра</label><input type="text" id="partnerName"></div>
+                <div class="input-group"><label>Дата рождения</label><input type="date" id="partnerBirthDate"></div>
+                <div class="input-group"><label>Пол</label>
+                    <select id="partnerGender">
+                        <option value="">Не указан</option>
+                        <option value="female">Женский</option>
+                        <option value="male">Мужской</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;margin-top:12px;">Сохранить партнёра</button>
+            </form>
+        </div>
+
+        <!-- Люди -->
+        <div class="profile-panel" id="panel-people">
+            <div style="text-align:center;margin-bottom:16px;">
+                <p style="font-size:16px;font-weight:600;color:var(--color-gold);">Сохранённые люди</p>
+                <p style="font-size:12px;color:var(--color-text-lighter);line-height:1.5;">
+                    {% if current_user.subscription == 'Пламя' %}
+                        До 10 человек для быстрых расчётов
+                    {% else %}
+                        Доступно на тарифе Пламя
+                    {% endif %}
+                </p>
+            </div>
+
+            {% if current_user.subscription == 'Пламя' %}
+            <div style="margin-bottom:16px;text-align:center;">
+                <button class="btn btn-outline btn-sm" onclick="toggleAddPersonForm()" style="display:inline-flex;align-items:center;gap:6px;">
+                    <span style="font-size:18px;">+</span> Добавить человека
+                </button>
+            </div>
+
+            <div id="addPersonForm" style="display:none;background:rgba(30,58,30,0.6);border:1px solid var(--color-border);border-radius:12px;padding:16px;margin-bottom:16px;">
+                <form id="addPersonFormInner">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                    <div id="addPersonError" style="display:none;color:var(--color-error);font-size:12px;text-align:center;margin-bottom:10px;"></div>
+                    <div class="input-group" style="margin-bottom:10px;">
+                        <label style="color:var(--color-text-light);font-size:12px;">Имя</label>
+                        <input type="text" id="newPersonName" required placeholder="Имя человека"
+                            style="width:100%;padding:10px 14px;border:2px solid var(--color-border);border-radius:12px;background:rgba(15,31,15,0.8);color:var(--color-text);font-family:var(--font-main);font-size:14px;outline:none;box-sizing:border-box;">
+                    </div>
+                    <div class="input-group" style="margin-bottom:10px;">
+                        <label style="color:var(--color-text-light);font-size:12px;">Дата рождения</label>
+                        <input type="date" id="newPersonBirth" required
+                            style="width:100%;padding:10px 14px;border:2px solid var(--color-border);border-radius:12px;background:rgba(15,31,15,0.8);color:var(--color-text);font-family:var(--font-main);font-size:14px;outline:none;box-sizing:border-box;">
+                    </div>
+                    <div class="input-group" style="margin-bottom:12px;">
+                        <label style="color:var(--color-text-light);font-size:12px;">Роль</label>
+                        <select id="newPersonRole" required
+                            style="width:100%;padding:10px 14px;border:2px solid var(--color-border);border-radius:12px;background:rgba(15,31,15,0.8);color:var(--color-text);font-family:var(--font-main);font-size:14px;outline:none;box-sizing:border-box;appearance:none;-webkit-appearance:none;-moz-appearance:none;">
+                            <option value="">Выберите роль...</option>
+                            <option value="Мать">Мать</option>
+                            <option value="Отец">Отец</option>
+                            <option value="Сын">Сын</option>
+                            <option value="Дочь">Дочь</option>
+                            <option value="Сестра">Сестра</option>
+                            <option value="Брат">Брат</option>
+                            <option value="Друг">Друг</option>
+                            <option value="Подруга">Подруга</option>
+                            <option value="Дедушка">Дедушка</option>
+                            <option value="Бабушка">Бабушка</option>
+                            <option value="Коллега">Коллега</option>
+                            <option value="Другое">Другое</option>
+                        </select>
+                    </div>
+                    <input type="hidden" id="editingPersonId" value="">
+                    <button type="submit" class="btn btn-primary btn-sm" id="addPersonSubmitBtn" style="width:100%;">Добавить</button>
+                </form>
+            </div>
+            {% endif %}
+
+            <div id="peopleList" style="display:flex;flex-direction:column;gap:8px;">
+                <p style="color:var(--color-text-lighter);text-align:center;">Загрузка...</p>
+            </div>
+
+            {% if current_user.subscription != 'Пламя' %}
+            <div style="margin-top:20px;padding:16px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:12px;text-align:center;">
+                <p style="font-size:13px;color:var(--color-gold);font-weight:600;margin-bottom:6px;">Хотите сохранять людей?</p>
+                <p style="font-size:12px;color:var(--color-text-lighter);margin-bottom:12px;line-height:1.5;">На тарифе Пламя можно сохранить до 10 человек и использовать их для быстрых расчётов на всех страницах сайта.</p>
+                <button class="btn btn-share btn-sm" onclick="showPaywall()" style="width:100%;">Перейти на Пламя — {{ PAYWALL_PRICE_RUB }} ₽/мес</button>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Тариф -->
+        <div class="profile-panel" id="panel-tariff">
+            <div style="text-align:center;margin-bottom:16px;">
+                <p style="font-size:14px;color:var(--color-gold);font-weight:600;">Текущий тариф:</p>
+                <p id="currentTariffName" style="font-size:22px;font-weight:700;background:linear-gradient(135deg, #d4a843, #d4879a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">{{ current_user.subscription if current_user.is_authenticated else 'Искра' }}</p>
+            </div>
+
+            <div class="tariffs-mini">
+                <!-- Искра -->
+                <div class="tariff-mini-card {% if current_user.subscription == 'Искра' %}current{% endif %}">
+                    <span style="font-size:28px;">✨</span>
+                    <h3>Искра</h3>
+                    <p style="font-size:12px;color:var(--color-text-lighter);">Бесплатно навсегда</p>
+                    <ul style="list-style:none;padding:0;margin:10px 0;text-align:left;font-size:11px;color:var(--color-text-light);line-height:1.8;">
+                        <li>✨ Карта дня</li>
+                        <li>✨ Денежный код (4 цифры)</li>
+                        <li>✨ Гороскоп на сегодня</li>
+                        <li>✨ Лунный календарь</li>
+                        <li>✨ Нумерология (число судьбы)</li>
+                        <li>✨ Совместимость (только %)</li>
+                        <li style="color:var(--color-text-lighter);">— Полные расшифровки</li>
+                        <li style="color:var(--color-text-lighter);">— Вопросы к гороскопу</li>
+                        <li style="color:var(--color-text-lighter);">— Расклады Таро</li>
+                    </ul>
+                    {% if current_user.subscription == 'Искра' %}
+                        <button class="btn btn-outline btn-sm" style="width:100%;margin-top:8px;opacity:0.6;" disabled>Текущий тариф</button>
+                    {% else %}
+                        <button class="btn btn-outline btn-sm tariff-btn" onclick="selectTariff('Искра')" style="width:100%;margin-top:8px;">Перейти</button>
+                    {% endif %}
+                </div>
+
+                <!-- Пламя -->
+                <div class="tariff-mini-card {% if current_user.subscription == 'Пламя' %}current{% endif %}" style="{% if current_user.subscription == 'Пламя' %}border-color: var(--color-gold);{% endif %}">
+                    {% if current_user.subscription != 'Пламя' %}
+                        <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--color-gold);color:#0f1f0f;padding:3px 12px;border-radius:12px;font-size:10px;font-weight:600;">Рекомендуем</div>
+                    {% endif %}
+                    <span style="font-size:28px;">🔥</span>
+                    <h3>Пламя</h3>
+                    <p style="font-size:12px;color:var(--color-text-lighter);">{{ PAYWALL_PRICE_RUB }} ₽ / месяц</p>
+                    <ul style="list-style:none;padding:0;margin:10px 0;text-align:left;font-size:11px;color:var(--color-text-light);line-height:1.8;">
+                        <li>✨ Всё из Искры</li>
+                        <li>✨ Полные AI-расшифровки</li>
+                        <li>✨ Безлимитные вопросы</li>
+                        <li>✨ Полный анализ совместимости</li>
+                        <li>✨ Расклады Таро (3 карты)</li>
+                        <li>✨ Гороскоп на год</li>
+                        <li>✨ Прогноз финкода на 3 года</li>
+                        <li>✨ Сохранение до 10 людей</li>
+                        <li>✨ Персональные ритуалы</li>
+                        <li>✨ Приоритетная поддержка</li>
+                    </ul>
+                    {% if current_user.subscription == 'Пламя' %}
+                        <button class="btn btn-primary btn-sm" style="width:100%;margin-top:8px;opacity:0.6;" disabled>Текущий тариф</button>
+                    {% else %}
+                        <button class="btn btn-primary btn-sm tariff-btn" onclick="selectTariff('Пламя')" style="width:100%;margin-top:8px;">Выбрать 🔥</button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div style="text-align:center;margin-top:16px;">
+                <a href="/tariffs" style="font-size:12px;color:var(--color-gold);text-decoration:none;">Подробнее о тарифах →</a>
+            </div>
+
+            <p style="text-align:center;margin-top:12px;font-size:11px;color:var(--color-text-lighter);">
+                Оплата временно недоступна — все функции бесплатны в тестовом режиме
+            </p>
+        </div>
+
+        <!-- Безопасность -->
+        <div class="profile-panel" id="panel-security">
+            <form id="securityForm">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <div class="input-group"><label>Старый пароль</label><input type="password" id="oldPassword" required></div>
+                <div class="input-group"><label>Новый пароль</label><input type="password" id="newPassword" required></div>
+                <button type="submit" class="btn btn-primary" style="width:100%;margin-top:12px;">Сменить пароль</button>
+            </form>
+            
+            <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--color-border);">
+                <p style="font-size: 14px; font-weight: 600; color: var(--color-error); margin-bottom: 8px;">Удаление аккаунта</p>
+                <p style="font-size: 12px; color: var(--color-text-lighter); margin-bottom: 12px; line-height: 1.5;">
+                    Все ваши данные, расчёты, история и сохранённые люди будут безвозвратно удалены.
+                </p>
+                <button type="button" class="btn btn-outline btn-sm" onclick="showDeleteAccountModal()" style="color: var(--color-error); border-color: var(--color-error); width: 100%;">
+                    Удалить аккаунт
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+// ========== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ==========
+function switchProfileTab(tab) {
+    document.querySelectorAll('.profile-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.profile-panel').forEach(function(p) { p.classList.remove('active'); });
+    
+    var tabBtn = document.querySelector('.profile-tab[onclick*="' + tab + '"]');
+    if (tabBtn) tabBtn.classList.add('active');
+    document.getElementById('panel-' + tab).classList.add('active');
+    
+    if (tab === 'people') loadPeople();
+}
+
+// ========== ФОРМА ПРОФИЛЯ ==========
+document.getElementById('profileForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    var name = document.getElementById('profileNameInput').value;
+    var birthDate = document.getElementById('profileBirthDate').value;
+    var gender = document.getElementById('profileGender').value;
+    
+    try {
+        await fetch('/api/profile/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name, birth_date: birthDate, gender: gender })
+        });
+        
+        // Синхронизируем портрет
+        await fetch('/api/numer/init', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name, birth_date: birthDate })
+        });
+        
+        alert('Сохранено!');
+    } catch(e) {
+        alert('Ошибка сохранения');
+    }
+});
+
+// ========== ФОРМА ПАРТНЁРА ==========
+document.getElementById('partnerForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    var name = document.getElementById('partnerName').value;
+    var birthDate = document.getElementById('partnerBirthDate').value;
+    var gender = document.getElementById('partnerGender').value;
+    var zodiac = birthDate ? getZodiacSign(birthDate) : '';
+    
+    try {
+        await fetch('/api/profile/partner', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name, birth_date: birthDate, gender: gender, zodiac: zodiac })
+        });
+        alert('Партнёр сохранён!');
+    } catch(e) {
+        alert('Ошибка сохранения');
+    }
+});
+
+// ========== ФОРМА БЕЗОПАСНОСТИ ==========
+document.getElementById('securityForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    var oldPassword = document.getElementById('oldPassword').value;
+    var newPassword = document.getElementById('newPassword').value;
+    
+    try {
+        var res = await fetch('/api/profile/change-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ old_password: oldPassword, new_password: newPassword })
+        });
+        var result = await res.json();
+        if (res.ok) {
+            alert('Пароль изменён!');
+            document.getElementById('oldPassword').value = '';
+            document.getElementById('newPassword').value = '';
+        } else {
+            alert(result.error || 'Ошибка');
+        }
+    } catch(e) {
+        alert('Ошибка соединения');
+    }
+});
+
+function showDeleteAccountModal() {
+    var modal = document.createElement('div');
+    modal.className = 'modal-overlay active';
+    modal.style.zIndex = '600';
+    modal.innerHTML = `
+        <div class="modal" style="max-width: 360px; text-align: center;">
+            <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+            <div style="font-size: 40px; margin-bottom: 12px;">⚠️</div>
+            <h2 style="font-size: 18px; color: var(--color-error); margin-bottom: 8px;">Удаление аккаунта</h2>
+            <p style="font-size: 13px; color: var(--color-text-light); margin-bottom: 16px; line-height: 1.5;">
+                Все ваши данные будут безвозвратно удалены. Введите пароль для подтверждения.
+            </p>
+            <input type="password" id="deletePassword" placeholder="Ваш пароль" 
+                style="width: 100%; padding: 10px 14px; border: 2px solid var(--color-border); border-radius: 12px; background: rgba(15,31,15,0.8); color: var(--color-text); font-family: var(--font-main); font-size: 14px; outline: none; box-sizing: border-box; margin-bottom: 12px;">
+            <p id="deleteError" style="display: none; color: var(--color-error); font-size: 12px; margin-bottom: 8px;"></p>
+            <button class="btn btn-outline btn-sm" onclick="deleteAccount()" style="color: var(--color-error); border-color: var(--color-error); width: 100%;">
+                Да, удалить аккаунт
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="this.closest('.modal-overlay').remove()" style="width: 100%; margin-top: 8px;">
+                Отмена
+            </button>
+        </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+}
+
+async function deleteAccount() {
+    var password = document.getElementById('deletePassword').value;
+    var errorEl = document.getElementById('deleteError');
+    
+    if (!password) {
+        errorEl.textContent = 'Введите пароль';
+        errorEl.style.display = 'block';
+        return;
+    }
+    
+    try {
+        var res = await fetch('/api/profile/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: password })
+        });
+        var data = await res.json();
+        
+        if (data.success) {
+            alert('Аккаунт удалён');
+            window.location.href = '/';
+        } else {
+            errorEl.textContent = data.error || 'Ошибка';
+            errorEl.style.display = 'block';
+        }
+    } catch(e) {
+        errorEl.textContent = 'Ошибка соединения';
+        errorEl.style.display = 'block';
+    }
+}
+
+// ========== ЗАГРУЗКА ДАННЫХ ==========
+async function loadMyData() {
+    try {
+        var res = await fetch('/api/profile/data');
+        var data = await res.json();
+        
+        var nameInput = document.getElementById('profileNameInput');
+        var birthInput = document.getElementById('profileBirthDate');
+        var genderInput = document.getElementById('profileGender');
+        var phoneInput = document.getElementById('profilePhone');
+        
+        if (nameInput) nameInput.value = data.name || '';
+        if (birthInput) birthInput.value = data.birth_date || '';
+        if (genderInput) genderInput.value = data.gender || '';
+        if (phoneInput) phoneInput.value = data.phone ? formatPhoneDisplay(data.phone) : '';
+    } catch(e) {}
+}
+
+async function loadPartner() {
+    try {
+        var res = await fetch('/api/profile/partner');
+        var data = await res.json();
+        
+        if (document.getElementById('partnerName')) {
+            document.getElementById('partnerName').value = data.name || '';
+            document.getElementById('partnerBirthDate').value = data.birth_date || '';
+            document.getElementById('partnerGender').value = data.gender || '';
+        }
+    } catch(e) {}
+}
+
+function formatPhoneDisplay(phone) {
+    if (!phone) return '';
+    var cleaned = phone.replace(/\D/g, '');
+    if (cleaned.length === 11) {
+        return '+7 (' + cleaned.substring(1, 4) + ') ' + cleaned.substring(4, 7) + '-' + cleaned.substring(7, 9) + '-' + cleaned.substring(9, 11);
+    }
+    return '+' + cleaned;
+}
+
+
+// ========== ЛЮДИ ==========
+function toggleAddPersonForm() {
+    var form = document.getElementById('addPersonForm');
+    if (form.style.display === 'none' || !form.style.display) {
+        form.style.display = 'block';
+        resetPersonForm();
+    } else {
+        form.style.display = 'none';
+    }
+    document.getElementById('addPersonError').style.display = 'none';
+}
+
+function resetPersonForm() {
+    document.getElementById('newPersonName').value = '';
+    document.getElementById('newPersonBirth').value = '';
+    document.getElementById('newPersonRole').value = '';
+    document.getElementById('editingPersonId').value = '';
+    document.getElementById('addPersonSubmitBtn').textContent = 'Добавить';
+}
+
+async function loadPeople() {
+    var container = document.getElementById('peopleList');
+    if (!container) return;
+    
+    try {
+        var res = await fetch('/api/profile/people');
+        var people = await res.json();
+        
+        if (people.length === 0) {
+            container.innerHTML = '<p style="color:var(--color-text-lighter);text-align:center;padding:20px;">Пока никого нет. Добавьте первого человека.</p>';
+            return;
+        }
+        
+        var html = '';
+        people.forEach(function(p) {
+            var initials = (p.name || '?').charAt(0).toUpperCase();
+            var roleText = p.role ? '<span style="font-size:11px;color:var(--color-gold);">' + sanitizeHTML(p.role) + '</span>' : '';
+            var birthText = p.birth_date ? '<span style="font-size:11px;color:var(--color-text-lighter);">' + sanitizeHTML(p.birth_date.split('-').reverse().join('.')) + '</span>' : '';
+            var zodiacText = p.zodiac ? '<span style="font-size:11px;color:var(--color-text-lighter);">' + sanitizeHTML(p.zodiac) + '</span>' : '';
+            
+            html += '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(30,58,30,0.4);border:1px solid var(--color-border);border-radius:12px;margin-bottom:8px;">';
+            html += '<div style="width:40px;height:40px;border-radius:50%;background:rgba(255,213,79,0.1);border:1px solid var(--color-gold);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:var(--color-gold);flex-shrink:0;">' + initials + '</div>';
+            html += '<div style="flex:1;min-width:0;">';
+            html += '<div style="font-size:14px;font-weight:600;color:var(--color-text);">' + sanitizeHTML(p.name) + '</div>';
+            html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;">' + roleText + birthText + zodiacText + '</div>';
+            html += '</div>';
+            html += '<div style="display:flex;gap:6px;flex-shrink:0;">';
+            html += '<button class="btn btn-outline btn-sm" onclick="editPerson(' + p.id + ')" style="color:var(--color-gold);font-size:11px;">Изменить</button>';
+            html += '<button class="btn btn-outline btn-sm" onclick="deletePerson(' + p.id + ')" style="color:var(--color-error);font-size:11px;">Удалить</button>';
+            html += '</div>';
+            html += '</div>';
+        });
+        container.innerHTML = html;
+    } catch(e) {
+        container.innerHTML = '<p style="color:var(--color-error);text-align:center;">Не удалось загрузить</p>';
+    }
+}
+
+// Форма добавления человека рендерится только на тарифе «Пламя».
+// Для остальных тарифов элемента нет в DOM — проверяем перед подпиской,
+// иначе TypeError обрывает весь inline-скрипт профиля (loadMyData,
+// loadPartner, обработчики форм — всё ниже по коду).
+var addPersonFormInner = document.getElementById('addPersonFormInner');
+if (addPersonFormInner) {
+    addPersonFormInner.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        var name = document.getElementById('newPersonName').value.trim();
+        var birthDate = document.getElementById('newPersonBirth').value;
+        var role = document.getElementById('newPersonRole').value;
+        var editingId = document.getElementById('editingPersonId').value;
+        var errorEl = document.getElementById('addPersonError');
+        
+        var errors = [];
+        if (!name) errors.push('Введите имя');
+        if (!birthDate) errors.push('Выберите дату рождения');
+        if (!role) errors.push('Выберите роль');
+        
+        if (errors.length > 0) {
+            errorEl.textContent = errors.join('. ') + '.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        
+        errorEl.style.display = 'none';
+        var zodiac = birthDate ? getZodiacSign(birthDate) : '';
+        
+        // Проверка лимита при добавлении нового
+        if (!editingId) {
+            var res = await fetch('/api/profile/people');
+            var people = await res.json();
+            if (people.length >= 10) {
+                errorEl.textContent = 'Можно сохранить не более 10 человек.';
+                errorEl.style.display = 'block';
+                return;
+            }
+        }
+        
+        try {
+            if (editingId) {
+                await fetch('/api/profile/people/' + editingId + '/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name, role: role, birth_date: birthDate, zodiac: zodiac })
+                });
+            } else {
+                await fetch('/api/profile/people', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name, role: role, birth_date: birthDate, zodiac: zodiac, abbreviation: '' })
+                });
+            }
+            
+            resetPersonForm();
+            document.getElementById('addPersonForm').style.display = 'none';
+            loadPeople();
+        } catch(e) {
+            errorEl.textContent = 'Ошибка сохранения';
+            errorEl.style.display = 'block';
+        }
+    });
+}
+
+function editPerson(id) {
+    fetch('/api/profile/people')
+        .then(function(r) { return r.json(); })
+        .then(function(people) {
+            var person = people.find(function(p) { return p.id === id; });
+            if (!person) return;
+            
+            document.getElementById('newPersonName').value = person.name || '';
+            document.getElementById('newPersonBirth').value = person.birth_date || '';
+            document.getElementById('newPersonRole').value = person.role || '';
+            document.getElementById('editingPersonId').value = id;
+            document.getElementById('addPersonSubmitBtn').textContent = 'Сохранить';
+            document.getElementById('addPersonForm').style.display = 'block';
+            document.getElementById('addPersonError').style.display = 'none';
+        })
+        .catch(function() {
+            alert('Не удалось загрузить данные человека');
+        });
+}
+
+async function deletePerson(id) {
+    if (!confirm('Удалить?')) return;
+    try {
+        await fetch('/api/profile/people/' + id, { method: 'DELETE' });
+        loadPeople();
+    } catch(e) {
+        alert('Ошибка удаления');
+    }
+}
+
+// ========== ЗАГРУЗКА ПРИ ОТКРЫТИИ ==========
+document.addEventListener('DOMContentLoaded', function() {
+    loadMyData();
+    loadPartner();
+});
+</script>
+{% endblock %}

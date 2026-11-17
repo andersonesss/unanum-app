@@ -1,0 +1,506 @@
+{% extends "base.html" %}
+{% block title %}Совместимость по именам и дате рождения — рассчитать онлайн | Unanum{% endblock %}
+{% block meta_description %}Проверьте совместимость с партнёром по именам и датам рождения. Анализ по 7 критериям: любовь, быт, финансы, карма.{% endblock %}
+{% block content %}
+<section class="page-section" style="padding-top: 80px;" data-numer-section="compatibility">
+    <div class="container" style="padding: 0 16px;">
+        <h1 class="page-title" style="font-size:clamp(2rem, 5vw, 2.5rem);font-weight:700;background:linear-gradient(135deg, #d4a843, #d4879a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;">Совместимость</h1>
+        <p class="page-subtitle" style="color: var(--color-text);">Узнай совместимость с партнёром по именам и датам рождения</p>
+
+        <!-- Форма -->
+        <div class="panel-form" style="max-width: 400px; width: 100%; margin: 0 auto 24px; padding: 0 12px; box-sizing: border-box;">
+            <form id="compatibilityForm" autocomplete="off" style="width:100%;">
+                <div class="input-row" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <div class="person-block" style="flex: 1; min-width: 180px; background: var(--color-primary-soft); padding: 14px; border-radius: var(--radius-md);">
+                        <h4 style="font-size: 13px; color: var(--color-gold); margin-bottom: 8px;">Первый партнёр</h4>
+                        <div class="input-group" style="margin-bottom: 8px;"><label>Имя</label><input type="text" name="person1_name" required style="width:100%;min-width:0;box-sizing:border-box;border:1.5px solid var(--color-gold);text-align:center;padding:12px 14px;font-size:16px;border-radius:50px;background:rgba(15,31,15,0.8);color:var(--color-text);font-family:var(--font-main);"></div>
+                        <div class="input-group"><label>Дата рождения</label><input type="date" name="person1_birth" required style="width:100%;min-width:0;box-sizing:border-box;border:1.5px solid var(--color-gold);text-align:center;padding:12px 14px;font-size:16px;border-radius:50px;background:rgba(15,31,15,0.8);color:var(--color-text);font-family:var(--font-main);"></div>
+                    </div>
+                    <div class="person-block" style="flex: 1; min-width: 180px; background: var(--color-primary-soft); padding: 14px; border-radius: var(--radius-md);">
+                        <h4 style="font-size: 13px; color: var(--color-gold); margin-bottom: 8px;">Второй партнёр</h4>
+                        <div class="input-group" style="margin-bottom: 8px;"><label>Имя</label><input type="text" name="person2_name" required style="width:100%;min-width:0;box-sizing:border-box;border:1.5px solid var(--color-gold);text-align:center;padding:12px 14px;font-size:16px;border-radius:50px;background:rgba(15,31,15,0.8);color:var(--color-text);font-family:var(--font-main);"></div>
+                        <div class="input-group"><label>Дата рождения</label><input type="date" name="person2_birth" required style="width:100%;min-width:0;box-sizing:border-box;border:1.5px solid var(--color-gold);text-align:center;padding:12px 14px;font-size:16px;border-radius:50px;background:rgba(15,31,15,0.8);color:var(--color-text);font-family:var(--font-main);"></div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; border-radius: 50px; box-sizing: border-box; margin-top: 16px;">Рассчитать</button>
+            </form>
+            <div class="panel-result" id="result-compatibility" style="margin-top: 20px; max-width: 100%; box-sizing: border-box; word-wrap: break-word; overflow-wrap: break-word;"></div>
+        </div>
+
+        <!-- Что такое совместимость -->
+        <div id="compatibilityInfo" style="max-width: 400px; width: 100%; margin: 0 auto; padding: 0 12px; box-sizing: border-box;">
+            <h3 style="font-size: 16px; font-weight: 600; color: var(--color-gold); margin-bottom: 12px;">Что такое совместимость?</h3>
+            <p style="font-size: 13px; color: var(--color-text); line-height: 1.7; margin-bottom: 12px;">
+                Совместимость — это уникальный процент, рассчитанный по вашим именам и датам рождения. Он показывает, насколько гармонично сочетаются ваши энергии в любви, быту и финансах.
+            </p>
+            <p style="font-size: 13px; color: var(--color-text); line-height: 1.7; margin-bottom: 12px;">
+                Введите данные обоих партнёров, чтобы узнать сильные стороны вашей пары и над чем стоит поработать.
+            </p>
+            <p style="font-size: 11px; color: var(--color-text-lighter); line-height: 1.5; font-style: italic;">
+                Это игровая методика, а не научный факт. Относитесь к результатам как к весёлому поводу для размышлений.
+            </p>
+        </div>
+    </div>
+</section>
+
+<script>
+
+window.__lastCompatibility = null;
+
+function renderCompatibilityResult(result) {
+    const resultDiv = document.getElementById('result-compatibility');
+    resultDiv.innerHTML = formatResult(result);
+    resultDiv.style.overflow = 'visible';
+    resultDiv.style.maxHeight = 'none';
+    window.__lastCompatibility = result;
+
+    // Блок чата в стиле Telegram
+    const chatHtml = `
+        <div id="compatChatBlock" style="margin-top:20px;max-width:100%;box-sizing:border-box;">
+            <p style="font-weight:600;color:var(--color-gold);margin-bottom:4px;">Совместимость — это только начало</p>
+            <p style="font-size:11px;color:var(--color-text-lighter);margin-bottom:12px;">Задайте вопрос о ваших отношениях</p>
+            <div id="suggestedCompatQuestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"></div>
+            <div class="input-group" style="display:flex;gap:8px;">
+                <textarea id="compatQuestion" placeholder="Напишите свой вопрос..." maxlength="500"
+                    style="resize:none;overflow:hidden;font-family:var(--font-main);font-size:14px;padding:10px 14px;border:2px solid var(--color-border);border-radius:12px;outline:none;color:var(--color-text);background:rgba(15,31,15,0.8);line-height:1.4;min-height:42px;transition:border-color 0.3s;width:100%;box-sizing:border-box;"></textarea>
+                <button class="btn btn-primary btn-sm" onclick="askCompatQuestion()" style="flex-shrink:0;white-space:nowrap;">Спросить</button>
+            </div>
+            <div id="compatAnswer" style="margin-top:12px;max-width:100%;box-sizing:border-box;word-wrap:break-word;overflow-wrap:break-word;"></div>
+        </div>
+    `;
+    resultDiv.insertAdjacentHTML('beforeend', chatHtml);
+    setTimeout(() => loadCompatSuggestions(result), 200);
+
+    // Дисклеймер
+    resultDiv.insertAdjacentHTML('beforeend', '<p style="font-size:10px;color:var(--color-text-lighter);margin-top:16px;text-align:center;font-style:italic;line-height:1.4;max-width:100%;box-sizing:border-box;">Это игровая методика, а не строгая наука. Она не гарантирует точность, но может быть полезным инструментом для самоанализа.</p>');
+}
+
+document.getElementById('compatibilityForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+
+    const payload = {
+        person1: { name: data.person1_name, birth_date: data.person1_birth },
+        person2: { name: data.person2_name, birth_date: data.person2_birth }
+    };
+
+    document.getElementById('compatibilityInfo').style.display = 'none';
+    showLoading();
+    
+    const isPremium = window.userTariff === 'Пламя';
+    const resultDiv = document.getElementById('result-compatibility');
+    
+    if (isPremium) {
+        // Платные — SSE-стрим. Мета — сразу, AI-секции наполняются по блокам.
+        hideLoading();
+        await streamCompatFull(payload, resultDiv);
+        return;
+    } else {
+        // Бесплатные — статика с тизерами
+        let result;
+        try {
+            const res = await fetch('/api/compatibility', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            result = await res.json();
+        } catch (err) {
+            hideLoading();
+            resultDiv.innerHTML = '<p style="color: var(--color-error);">Не удалось получить ответ. Проверьте соединение и попробуйте ещё раз.</p>';
+            return;
+        }
+        hideLoading();
+        
+        if (result.error) {
+            resultDiv.innerHTML = '<p style="color: var(--color-error);">' + sanitizeHTML(result.message || result.error) + '</p>';
+            return;
+        }
+        
+        resultDiv.innerHTML = formatResult(result);
+        window.__lastCompatibility = result;
+        
+        // Плашка с призывом открыть полный разбор
+        if (!isPremium) {
+            resultDiv.insertAdjacentHTML('beforeend', `
+                <div style="margin:16px 0;padding:20px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:16px;text-align:center;">
+                    <p style="font-size:14px;color:var(--color-gold);font-weight:600;margin-bottom:8px;">Полный разбор совместимости</p>
+                    <p style="font-size:12px;color:var(--color-text-lighter);margin-bottom:12px;line-height:1.6;">Детальный анализ по 7 критериям, сильные стороны пары, точки роста и персональный совет.</p>
+                    <button class="btn btn-share btn-sm" onclick="showPaywall()" style="width:100%;">Открыть полный разбор — {{ PAYWALL_PRICE_RUB }} ₽</button>
+                </div>
+            `);
+        }
+    }
+    
+    resultDiv.style.overflow = 'visible';
+    resultDiv.style.maxHeight = 'none';
+    
+    // Чат с подсказками
+    const chatHtml = `
+        <div id="compatChatBlock" style="margin-top:20px;max-width:100%;box-sizing:border-box;">
+            <p style="font-weight:600;color:var(--color-gold);margin-bottom:4px;">Совместимость — это только начало</p>
+            <p style="font-size:11px;color:var(--color-text-lighter);margin-bottom:12px;">Задайте вопрос о ваших отношениях</p>
+            <div id="suggestedCompatQuestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"></div>
+            <div class="input-group" style="display:flex;gap:8px;">
+                <textarea id="compatQuestion" placeholder="Напишите свой вопрос..." maxlength="500"
+                    style="resize:none;overflow:hidden;font-family:var(--font-main);font-size:14px;padding:10px 14px;border:2px solid var(--color-border);border-radius:12px;outline:none;color:var(--color-text);background:rgba(15,31,15,0.8);line-height:1.4;min-height:42px;transition:border-color 0.3s;width:100%;box-sizing:border-box;"></textarea>
+                <button class="btn btn-primary btn-sm" onclick="askCompatQuestion()" style="flex-shrink:0;white-space:nowrap;">Спросить</button>
+            </div>
+            <div id="compatAnswer" style="margin-top:12px;max-width:100%;box-sizing:border-box;word-wrap:break-word;overflow-wrap:break-word;"></div>
+        </div>
+    `;
+    resultDiv.insertAdjacentHTML('beforeend', chatHtml);
+    setTimeout(() => loadCompatSuggestions(window.__lastCompatibility), 200);
+    
+    resultDiv.insertAdjacentHTML('beforeend', '<p style="font-size:10px;color:var(--color-text-lighter);margin-top:16px;text-align:center;font-style:italic;line-height:1.4;max-width:100%;box-sizing:border-box;">Это игровая методика, а не строгая наука. Она не гарантирует точность, но может быть полезным инструментом для самоанализа.</p>');
+});
+
+// ============================================
+// СОВМЕСТИМОСТЬ (Пламя) — SSE-стрим
+// ============================================
+
+async function streamCompatFull(payload, resultDiv) {
+    resultDiv.classList.add('panel-result');
+    resultDiv.style.overflow = 'visible';
+    resultDiv.style.maxHeight = 'none';
+    resultDiv.innerHTML = `
+        <div style="text-align:center;padding:20px;">
+            <div style="display:inline-block;width:36px;height:36px;border:3px solid var(--color-border);border-top-color:var(--color-gold);border-radius:50%;animation:spin 1s linear infinite;"></div>
+            <p style="font-size:13px;color:var(--color-text-lighter);margin-top:12px;">Смотрим на пару...</p>
+        </div>`;
+
+    // Объект-накопитель — с той же структурой, что ждёт formatAICompatibility
+    // и loadCompatSuggestions. Собираем по мере прихода блоков.
+    const result = {
+        person1: payload.person1.name,
+        person2: payload.person2.name,
+        ai_interpretation: {},
+    };
+
+    // Скелеты секций: name → DOM-элемент, чтобы заменять «Загружается...» на контент.
+    const sectionTitles = {
+        names:     { title: 'Совместимость по именам',             subtitle: 'Как вибрации имён влияют на союз' },
+        birth:     { title: 'Совместимость по дате рождения',       subtitle: 'Ритмы дат и их влияние' },
+        destiny:   { title: 'Число судьбы',                        subtitle: 'Кармическая задача пары' },
+        karma:     { title: 'Кармическая связь',                   subtitle: 'Уроки, которые несут друг другу' },
+        love:      { title: 'Любовь и эмоции',                     subtitle: 'Что питает и охлаждает чувства' },
+        household: { title: 'Совместный быт',                      subtitle: 'Как живут вместе' },
+        finance:   { title: 'Финансовая совместимость',            subtitle: 'Отношение к деньгам' },
+    };
+    const sections = {};
+
+    await streamPost(
+        '/api/compatibility/ai-full/stream',
+        payload,
+        {
+            onMeta: function(meta) {
+                result.compatibility_percent = meta.compatibility_percent;
+                result.verdict = meta.verdict;
+
+                let html = '';
+                html += `<div class="result-code" style="font-size:42px;font-weight:700;">${meta.compatibility_percent}%</div>`;
+                html += `<div class="result-label">Совместимость</div>`;
+                html += `<p style="font-size:13px;color:var(--color-gold);text-align:center;margin-bottom:16px;">${sanitizeHTML(meta.person1)} и ${sanitizeHTML(meta.person2)}</p>`;
+
+                // Скелеты под каждую AI-секцию.
+                for (const key of Object.keys(sectionTitles)) {
+                    const s = sectionTitles[key];
+                    html += `<div id="compatSec_${key}" style="margin-bottom:14px;padding:20px;background:rgba(30,58,30,0.4);border:1px solid var(--color-border);border-radius:16px;">
+                        <span style="font-size:13px;font-weight:600;color:var(--color-gold);">${s.title}</span>
+                        <p style="font-size:12px;color:var(--color-text-lighter);margin-top:2px;margin-bottom:8px;">${s.subtitle}</p>
+                        <p style="font-size:13px;color:var(--color-text-lighter);">Загружается...</p>
+                    </div>`;
+                    sections[key] = true;
+                }
+
+                // Слоты под strengths/challenges (две колонки) и advice.
+                html += `<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;">
+                    <div id="compatStrengths" style="flex:1;min-width:200px;padding:20px;background:rgba(30,58,30,0.4);border:1px solid #7eb89e;border-radius:16px;display:none;"></div>
+                    <div id="compatChallenges" style="flex:1;min-width:200px;padding:20px;background:rgba(30,58,30,0.4);border:1px solid #d4838a;border-radius:16px;display:none;"></div>
+                </div>`;
+                html += `<div id="compatAdvice" style="margin-bottom:14px;padding:20px;background:rgba(212,135,154,0.08);border:1px solid #d4879a;border-radius:16px;display:none;"></div>`;
+
+                html += `<div id="compatPost"></div>`;
+
+                resultDiv.innerHTML = html;
+            },
+
+            onBlock: function(b) {
+                const name = b.name;
+                const value = b.value || '';
+                if (!value) return;
+
+                // Сохраняем в общий объект — для formatAICompatibility/чат-подсказок.
+                result.ai_interpretation[name] = value;
+
+                if (sectionTitles[name]) {
+                    const el = document.getElementById('compatSec_' + name);
+                    if (el) {
+                        el.innerHTML = `
+                            <span style="font-size:13px;font-weight:600;color:var(--color-gold);">${sectionTitles[name].title}</span>
+                            <p style="font-size:12px;color:var(--color-text-lighter);margin-top:2px;margin-bottom:8px;">${sectionTitles[name].subtitle}</p>
+                            <p style="font-size:13px;color:var(--color-text-light);line-height:1.7;white-space:pre-line;">${sanitizeHTML(value)}</p>`;
+                    }
+                } else if (name === 'strengths') {
+                    const el = document.getElementById('compatStrengths');
+                    if (el) {
+                        el.style.display = 'block';
+                        el.innerHTML = `<span style="font-size:13px;font-weight:600;color:#7eb89e;">Плюсы</span><p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.7;white-space:pre-line;">${sanitizeHTML(value)}</p>`;
+                    }
+                } else if (name === 'challenges') {
+                    const el = document.getElementById('compatChallenges');
+                    if (el) {
+                        el.style.display = 'block';
+                        el.innerHTML = `<span style="font-size:13px;font-weight:600;color:#d4838a;">Минусы</span><p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.7;white-space:pre-line;">${sanitizeHTML(value)}</p>`;
+                    }
+                } else if (name === 'advice') {
+                    const el = document.getElementById('compatAdvice');
+                    if (el) {
+                        el.style.display = 'block';
+                        el.innerHTML = `<span style="font-size:13px;font-weight:600;color:#d4879a;">Совет паре</span><p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.7;white-space:pre-line;">${sanitizeHTML(value)}</p>`;
+                    }
+                } else if (name === 'conclusion') {
+                    // Итоговый вывод — отдельная строка под advice.
+                    const el = document.getElementById('compatAdvice');
+                    if (el) {
+                        el.style.display = 'block';
+                        el.insertAdjacentHTML('beforeend',
+                            `<div style="margin-top:12px;padding:10px;background:transparent;border-radius:12px;border:1px solid var(--color-gold);"><span style="color:var(--color-gold);font-weight:600;font-size:12px;">Итог от unanum</span><p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.6;font-style:italic;">${sanitizeHTML(value)}</p></div>`);
+                    }
+                }
+            },
+
+            onError: function(err) {
+                resultDiv.innerHTML = '<p style="color:var(--color-error);text-align:center;padding:20px;">' +
+                    sanitizeHTML(err.message || 'Не удалось получить разбор. Попробуйте ещё раз.') + '</p>';
+            },
+
+            onDone: function() {
+                window.__lastCompatibility = result;
+
+                // Чат и дисклеймер — как в старом пути.
+                const postDiv = document.getElementById('compatPost');
+                if (!postDiv) return;
+
+                postDiv.innerHTML = `
+                    <div id="compatChatBlock" style="margin-top:20px;max-width:100%;box-sizing:border-box;">
+                        <p style="font-weight:600;color:var(--color-gold);margin-bottom:4px;">Совместимость — это только начало</p>
+                        <p style="font-size:11px;color:var(--color-text-lighter);margin-bottom:12px;">Задайте вопрос о ваших отношениях</p>
+                        <div id="suggestedCompatQuestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"></div>
+                        <div class="input-group" style="display:flex;gap:8px;">
+                            <textarea id="compatQuestion" placeholder="Напишите свой вопрос..." maxlength="500"
+                                style="resize:none;overflow:hidden;font-family:var(--font-main);font-size:14px;padding:10px 14px;border:2px solid var(--color-border);border-radius:12px;outline:none;color:var(--color-text);background:rgba(15,31,15,0.8);line-height:1.4;min-height:42px;transition:border-color 0.3s;width:100%;box-sizing:border-box;"></textarea>
+                            <button class="btn btn-primary btn-sm" onclick="askCompatQuestion()" style="flex-shrink:0;white-space:nowrap;">Спросить</button>
+                        </div>
+                        <div id="compatAnswer" style="margin-top:12px;max-width:100%;box-sizing:border-box;word-wrap:break-word;overflow-wrap:break-word;"></div>
+                    </div>`;
+
+                setTimeout(function() { loadCompatSuggestions(result); }, 200);
+
+                postDiv.insertAdjacentHTML('beforeend', '<p style="font-size:10px;color:var(--color-text-lighter);margin-top:16px;text-align:center;font-style:italic;line-height:1.4;max-width:100%;box-sizing:border-box;">Это игровая методика, а не строгая наука. Она не гарантирует точность, но может быть полезным инструментом для самоанализа.</p>');
+            },
+        }
+    );
+}
+
+function formatAICompatibility(aiData) {
+    // Поддержка нового формата (ai_interpretation — объект)
+    const data = aiData.ai_interpretation || aiData;
+    
+    let html = '';
+    html += `<div class="result-code" style="font-size:42px;font-weight:700;">${aiData.compatibility_percent}%</div>`;
+    html += `<div class="result-label">Совместимость</div>`;
+
+    const sections = [
+        { key: 'names', title: 'Совместимость по именам', subtitle: 'Как вибрации имён влияют на союз' },
+        { key: 'birth', title: 'Совместимость по дате рождения', subtitle: 'Ритмы дат и их влияние' },
+        { key: 'destiny', title: 'Число судьбы', subtitle: 'Кармическая задача пары' },
+        { key: 'karma', title: 'Кармическая связь', subtitle: 'Уроки, которые несут друг другу' },
+        { key: 'love', title: 'Любовь и эмоции', subtitle: 'Что питает и охлаждает чувства' },
+        { key: 'household', title: 'Совместный быт', subtitle: 'Как живут вместе' },
+        { key: 'finance', title: 'Финансовая совместимость', subtitle: 'Отношение к деньгам' },
+    ];
+
+    sections.forEach(sec => {
+        if (data[sec.key]) {
+            html += '<div style="margin-bottom:14px;padding:20px;background:rgba(30,58,30,0.4);border:1px solid var(--color-border);border-radius:16px;">';
+            html += '<span style="font-size:13px;font-weight:600;color:var(--color-gold);">' + sec.title + '</span>';
+            html += '<p style="font-size:12px;color:var(--color-text-lighter);margin-top:2px;margin-bottom:8px;">' + sec.subtitle + '</p>';
+            html += '<p style="font-size:13px;color:var(--color-text-light);line-height:1.7;white-space:pre-line;">' + sanitizeHTML(data[sec.key]) + '</p>';
+            html += '</div>';
+        }
+    });
+
+    // Плюсы и Минусы
+    html += '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;">';
+    if (data.strengths) {
+        html += '<div style="flex:1;min-width:200px;padding:20px;background:rgba(30,58,30,0.4);border:1px solid #7eb89e;border-radius:16px;">';
+        html += '<span style="font-size:13px;font-weight:600;color:#7eb89e;">Плюсы</span>';
+        html += '<p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.7;white-space:pre-line;">' + sanitizeHTML(data.strengths) + '</p>';
+        html += '</div>';
+    }
+    if (data.challenges) {
+        html += '<div style="flex:1;min-width:200px;padding:20px;background:rgba(30,58,30,0.4);border:1px solid #d4838a;border-radius:16px;">';
+        html += '<span style="font-size:13px;font-weight:600;color:#d4838a;">Минусы</span>';
+        html += '<p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.7;white-space:pre-line;">' + sanitizeHTML(data.challenges) + '</p>';
+        html += '</div>';
+    }
+    html += '</div>';
+
+    // Совет
+    if (data.advice) {
+        html += '<div style="margin-bottom:14px;padding:20px;background:rgba(212,135,154,0.08);border:1px solid #d4879a;border-radius:16px;">';
+        html += '<span style="font-size:13px;font-weight:600;color:#d4879a;">Совет паре</span>';
+        html += '<p style="font-size:13px;color:var(--color-text-light);margin-top:6px;line-height:1.7;white-space:pre-line;">' + sanitizeHTML(data.advice) + '</p>';
+        html += '</div>';
+    }
+
+    return html;
+}
+
+function renderCompatSuggestions(container, questions) {
+    container.innerHTML = questions.map(q => {
+        const attrQ = String(q).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        return `<span class="compat-suggested-q" data-question="${attrQ}"
+            style="display:inline-block;padding:8px 14px;font-size:12px;color:var(--color-text-light);cursor:pointer;background:rgba(30,58,30,0.8);border:1px solid var(--color-border);border-radius:18px;transition:all 0.2s ease;"
+            onmouseover="this.style.borderColor='var(--color-gold)';this.style.color='var(--color-gold)';"
+            onmouseout="this.style.borderColor='var(--color-border)';this.style.color='var(--color-text-light)';"
+        >${sanitizeHTML(q)}</span>`;
+    }).join('');
+
+    if (!container.dataset.clickBound) {
+        container.dataset.clickBound = '1';
+        container.addEventListener('click', function(e) {
+            const item = e.target.closest('.compat-suggested-q');
+            if (item && item.dataset.question) {
+                const input = document.getElementById('compatQuestion');
+                if (input) input.value = item.dataset.question;
+            }
+        });
+    }
+}
+
+async function loadCompatSuggestions(result) {
+    const container = document.getElementById('suggestedCompatQuestions');
+    if (!container) return;
+    const fullText = typeof result === 'string' ? result : JSON.stringify(result);
+    try {
+        const res = await fetch('/api/compatibility/suggestions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ full_text: fullText })
+        });
+        const data = await res.json();
+        if (data.suggestions && data.suggestions.length > 0) {
+            renderCompatSuggestions(container, data.suggestions);
+        } else {
+            renderCompatSuggestions(container, generateCompatQuestions(result));
+        }
+    } catch(e) {
+        renderCompatSuggestions(container, generateCompatQuestions(result));
+    }
+}
+
+function generateCompatQuestions(result) {
+    const questions = [];
+    const percent = result.compatibility_percent || '';
+    const person1 = result.person1 || '';
+    const person2 = result.person2 || '';
+    
+    if (percent) {
+        questions.push(`Что означает совместимость ${percent} процентов для этой пары?`);
+    }
+    if (person1 && person2) {
+        questions.push(`Как имена ${person1} и ${person2} влияют на союз?`);
+    }
+    questions.push('Какие кармические задачи решает эта пара?');
+    questions.push('Как улучшить эмоциональную связь в этом союзе?');
+    questions.push('Что делать если финансовые взгляды не совпадают?');
+    
+    return questions;
+}
+
+async function askCompatQuestion() {
+    const question = document.getElementById('compatQuestion')?.value.trim();
+    if (!question) return;
+
+    const answerBlock = document.getElementById('compatAnswer');
+
+    // Сообщение пользователя — справа (зелёный пузырь)
+    answerBlock.innerHTML += `
+        <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+            <div style="background:rgba(76,175,80,0.35);border-radius:18px 18px 4px 18px;padding:10px 16px;max-width:90%;font-size:14px;color:var(--color-text);line-height:1.5;word-wrap:break-word;overflow-wrap:break-word;">
+                ${sanitizeHTML(question)}
+            </div>
+        </div>`;
+
+    document.getElementById('compatQuestion').value = '';
+
+    // Заглушка «Печатает...»
+    const typingDiv = document.createElement('div');
+    typingDiv.style.cssText = 'display:flex;justify-content:flex-start;margin-top:4px;';
+    typingDiv.innerHTML = '<div style="background:rgba(30,58,30,0.6);border-radius:18px 18px 18px 4px;padding:10px 16px;max-width:90%;font-size:14px;color:var(--color-text-lighter);">Печатает...</div>';
+    answerBlock.appendChild(typingDiv);
+
+    // Контекст
+    const ctx = {};
+    if (window.__lastCompatibility) {
+        const r = window.__lastCompatibility;
+        ctx.person1 = r.person1 || '';
+        ctx.person2 = r.person2 || '';
+        ctx.percent = r.compatibility_percent || 0;
+        ctx.verdict = r.verdict || '';
+    }
+
+    try {
+        const res = await fetch('/api/numer/dialogue', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: question, section: 'compatibility', context: ctx })
+        });
+        const data = await res.json();
+        typingDiv.remove();
+
+        // Ответ unanum — слева (тёмный пузырь)
+        if (data.answer) {
+            answerBlock.innerHTML += `
+                <div style="display:flex;justify-content:flex-start;margin-top:4px;">
+                    <div style="background:rgba(30,58,30,0.6);border-radius:18px 18px 18px 4px;padding:10px 16px;max-width:90%;font-size:14px;color:var(--color-text-light);line-height:1.5;word-wrap:break-word;overflow-wrap:break-word;">
+                        ${sanitizeHTML(data.answer)}
+                    </div>
+                </div>`;
+        }
+    } catch(e) {
+        typingDiv.remove();
+    }
+}
+
+// Автозаполнение первого партнёра из портрета (для всех)
+fetch('/api/numer/portrait')
+    .then(r => r.json())
+    .then(portrait => {
+        if (portrait.name && !document.querySelector('[name="person1_name"]').value) {
+            document.querySelector('[name="person1_name"]').value = portrait.name;
+        }
+        if (portrait.birth_date && !document.querySelector('[name="person1_birth"]').value) {
+            document.querySelector('[name="person1_birth"]').value = portrait.birth_date;
+        }
+    });
+// Попытка загрузить партнёра (только для залогиненных)
+if (document.querySelector('.user-greeting')) {
+    fetch('/api/profile/partner')
+        .then(r => r.json())
+        .then(partner => {
+            if (partner.name) document.querySelector('[name="person2_name"]').value = partner.name;
+            if (partner.birth_date) document.querySelector('[name="person2_birth"]').value = partner.birth_date;
+        });
+}
+
+if (typeof showContextOnboarding === 'function') {
+    showContextOnboarding('#compatibilityForm',
+        'Введи имена и даты рождения двух людей — узнай процент совместимости и получи анализ.',
+        'compatibility');
+}
+</script>
+{% endblock %}

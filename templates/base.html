@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() | e }}">
+    <title>{% block title %}Unanum — нумерология, Таро, гороскоп, лунный календарь{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}Персональные расклады Таро, гороскоп на сегодня, нумерологический портрет и денежный код по дате рождения. Пространство для ищущих свой путь.{% endblock %}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Unanum">
+    <meta property="og:locale" content="ru_RU">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="robots" content="index, follow">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='icon/unanum_logo.ico') }}?v=4">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='icon/unanum_logo.ico') }}?v=4">
+    <meta property="og:title" content="Unanum — персональные расклады Таро, гороскоп и нумерология">
+    <meta property="og:description" content="Бесплатный гороскоп на сегодня, расклад Таро, денежный код и нумерологический портрет по дате рождения.">
+    <meta property="og:image" content="https://unanum.ru/static/icon/logo_circle.svg">
+    <meta property="og:url" content="https://unanum.ru">
+    <style>
+        @font-face {
+            font-family: 'Inter';
+            src: url('{{ url_for("static", filename="fonts/Inter/Inter-Regular.woff2") }}') format('woff2');
+            font-weight: 400;
+        }
+        @font-face {
+            font-family: 'Inter';
+            src: url('{{ url_for("static", filename="fonts/Inter/Inter-Medium.woff2") }}') format('woff2');
+            font-weight: 500;
+        }
+        @font-face {
+            font-family: 'Inter';
+            src: url('{{ url_for("static", filename="fonts/Inter/Inter-SemiBold.woff2") }}') format('woff2');
+            font-weight: 600;
+        }
+        @font-face {
+            font-family: 'Inter';
+            src: url('{{ url_for("static", filename="fonts/Inter/Inter-Bold.woff2") }}') format('woff2');
+            font-weight: 700;
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='icon/phosphor/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="stars-container" id="starsContainer"></div>
+
+<header class="header">
+    <div class="container">
+        <a href="/" class="logo">
+            <img src="{{ url_for('static', filename='icon/unanum_logo.svg') }}" alt="Unanum" style="height: 15px; width: auto; vertical-align: middle;">
+        </a>
+        <div class="auth-buttons">
+            {% if current_user.is_authenticated %}
+                <span class="user-greeting">
+                    <span class="user-zodiac" id="userZodiac" style="display:none;"></span>
+                    <span class="user-name-text">{{ current_user.name or current_user.phone or current_user.email }}</span>
+                </span>
+            {% endif %}
+            <button class="menu-toggle-btn" onclick="openMenuModal()">
+                <span class="menu-icon-bar"></span>
+                <span class="menu-icon-bar"></span>
+                <span class="menu-icon-bar"></span>
+            </button>
+        </div>
+    </div>
+</header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                        <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <main>{% block content %}{% endblock %}</main>
+
+    <nav class="tab-bar" id="tabBar">
+        <a href="/" class="tab-item active" data-tab="home">
+            <span class="tab-icon-svg">
+                <svg width="40" height="40" viewBox="0 0 237 231" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M207.722 130.721V222.047C207.721 226.992 203.713 231 198.769 231H146.838V170.116C146.838 165.172 142.829 161.162 137.885 161.162H98.4893C93.5445 161.162 89.5354 165.172 89.5352 170.116V231H37.6046C32.66 231 28.6517 226.991 28.6514 222.047V130.721L118.187 39.3946L207.722 130.721ZM118.091 6.62803e-05C118.554 -0.00390054 119.019 0.170186 119.372 0.523504L235.659 116.81C236.359 117.509 236.359 118.644 235.659 119.343L228.576 126.425C227.877 127.124 226.743 127.124 226.044 126.425L118.092 18.4727L10.1397 126.425C9.44041 127.124 8.30583 127.124 7.60652 126.425L0.524486 119.343C-0.174829 118.644 -0.174829 117.509 0.524486 116.81L116.811 0.523504C117.164 0.170391 117.628 -0.00352569 118.091 6.62803e-05ZM189.815 30.4415C191.792 30.4415 193.396 32.0447 193.397 34.0225V65.3604L177.279 49.2442V34.0225C177.28 32.0447 178.884 30.4415 180.861 30.4415H189.815Z" fill="currentColor"/>
+                </svg>
+            </span>
+        </a>
+        <a href="/tarot/library" class="tab-item" data-tab="library">
+            <span class="tab-icon-svg">
+                <svg width="40" height="40" viewBox="0 0 269 231" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M113.452 0.464648C120.677 -1.47086 128.103 2.81711 130.039 10.0418L136.26 33.2596L138.853 23.5857C140.789 16.3608 148.215 12.0727 155.44 14.0086L258.852 41.7166C266.076 43.6528 270.363 51.0798 268.428 58.3045L224.844 220.959C222.907 228.183 215.482 232.47 208.258 230.535L109.173 203.985L60.6348 216.991C53.4101 218.927 45.984 214.639 44.0479 207.415L0.464864 44.7615C-1.47105 37.5366 2.81622 30.1097 10.041 28.1736L113.452 0.464648ZM153.883 19.823C149.869 18.7475 145.743 21.1295 144.667 25.1434L139.376 44.8875L157.505 112.548L158.848 112.753C160.754 107.774 164.1 103.68 168.269 100.826L163.106 89.0535L170.685 99.3611C175.26 96.9178 180.582 95.8531 185.983 96.5525L195.746 71.5467L191.711 97.9734C196.95 99.9305 201.223 103.476 204.122 107.901L215.296 103.004L205.477 110.221C207.907 114.94 208.883 120.423 207.994 125.956L232.805 135.64L206.41 131.612C204.33 136.717 200.721 140.853 196.273 143.628L201.346 155.192L193.834 144.974C189.244 147.189 183.976 148.049 178.665 147.187L171.622 165.232L173.622 172.696C175.557 179.921 171.27 187.346 164.046 189.282L120.802 200.869L209.815 224.721L210.19 224.81C213.957 225.618 217.736 223.437 218.92 219.771L219.029 219.4L262.613 56.7469C263.655 52.8582 261.451 48.8638 257.663 47.6404L257.293 47.5311L153.883 19.823ZM124.225 11.6004C123.183 7.71173 119.277 5.35361 115.385 6.18828L115.01 6.2791L11.5996 33.9881C7.58586 35.0636 5.2031 39.1892 6.27834 43.2029L49.8623 205.857L49.9717 206.228C51.1561 209.894 54.9344 212.075 58.7012 211.267L59.0772 211.177L162.488 183.468L162.858 183.359C166.524 182.175 168.706 178.396 167.898 174.63L167.808 174.254L124.225 11.6004ZM170.491 161.013L172.855 145.529C169.853 144.277 167.189 142.495 164.947 140.324L170.491 161.013ZM83.4365 82.7537C88.9519 81.8294 94.4249 82.7646 99.1485 85.1473L106.377 75.3182L101.481 86.4783C105.945 89.3495 109.533 93.61 111.529 98.8455L137.857 94.8279L112.985 104.536C113.736 109.997 112.679 115.384 110.215 120.011L120.39 127.49L108.775 122.396C105.907 126.609 101.775 129.987 96.7451 131.897L100.879 158.969L90.8828 133.367C85.6743 134.04 80.5393 133.073 76.0772 130.811L68.2197 141.502L73.5488 129.343C69.3942 126.604 66.0195 122.652 64.0166 117.826L36.7373 121.99L62.3653 111.985C61.5264 106.72 62.377 101.501 64.5606 96.9451L54.2041 89.3309L65.9199 94.4676C68.6607 90.0644 72.7376 86.4824 77.7647 84.3875L73.7158 57.8504L83.4365 82.7537ZM187.014 105.939C178.183 103.574 169.107 108.814 166.741 117.644C164.375 126.475 169.615 135.551 178.445 137.918C187.276 140.284 196.353 135.043 198.72 126.213C201.086 117.382 195.844 108.305 187.014 105.939ZM103.625 103.706C101.259 94.8756 92.1819 89.636 83.3516 92.0018C74.5211 94.3679 69.2805 103.444 71.6465 112.274C74.0128 121.105 83.0895 126.345 91.9199 123.979C100.75 121.613 105.991 112.536 103.625 103.706Z" fill="currentColor"/>
+                </svg>
+            </span>
+        </a>
+        <button class="tab-item tab-center" onclick="openDailyCardModal(true)" id="tabDailyCard">
+            <div class="tab-center-icon">
+                <span class="tab-icon-svg">
+                    <svg width="32" height="32" viewBox="0 0 174 231" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M158.4 0C166.602 0.000212339 173.25 6.64849 173.25 14.8496V216.15C173.25 224.351 166.602 231 158.4 231H14.8496C6.64849 231 0.000212803 224.352 0 216.15V14.8496C0.000213537 6.6485 6.64849 0.000210999 14.8496 0H158.4ZM14.8496 6.59961L14.4258 6.61133C10.0667 6.83214 6.59982 10.4357 6.59961 14.8496V216.15L6.61133 216.574C6.83214 220.933 10.4357 224.4 14.8496 224.4H158.4C162.814 224.4 166.418 220.933 166.639 216.574L166.65 216.15V14.8496C166.65 10.4357 163.183 6.83214 158.824 6.61133L158.4 6.59961H14.8496ZM92.7871 104.458L119.432 83.1309L98.1328 109.735L149.803 115.462L98.1416 121.186L119.471 147.829L92.8652 126.532L87.1406 178.2L81.416 126.541L54.7734 147.869L76.0693 121.264L24.4023 115.539L76.0596 109.813L54.7324 83.1709L81.3369 104.469L87.0635 52.7998L92.7871 104.458Z" fill="currentColor"/>
+                    </svg>
+                </span>
+            </div>
+        </button>
+        <button class="tab-item" onclick="openNumerDialog()" id="tabNumer">
+            <span class="tab-icon-svg">
+                <svg width="40" height="40" viewBox="0 0 174 231" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M158.4 0C166.602 0.000212339 173.25 6.64849 173.25 14.8496V216.15C173.25 224.351 166.602 231 158.4 231H14.8496C6.64849 231 0.000212803 224.352 0 216.15V14.8496C0.000213537 6.6485 6.64849 0.000210999 14.8496 0H158.4ZM14.8496 6.59961L14.4258 6.61133C10.0667 6.83214 6.59982 10.4357 6.59961 14.8496V216.15L6.61133 216.574C6.83214 220.933 10.4357 224.4 14.8496 224.4H158.4C162.814 224.4 166.418 220.933 166.639 216.574L166.65 216.15V14.8496C166.65 10.4357 163.183 6.83214 158.824 6.61133L158.4 6.59961H14.8496ZM92.7871 104.458L119.432 83.1309L98.1328 109.735L149.803 115.462L98.1416 121.186L119.471 147.829L92.8652 126.532L87.1406 178.2L81.416 126.541L54.7734 147.869L76.0693 121.264L24.4023 115.539L76.0596 109.813L54.7324 83.1709L81.3369 104.469L87.0635 52.7998L92.7871 104.458Z" fill="currentColor"/>
+                </svg>
+            </span>
+        </button>
+        <a href="/profile/settings" class="tab-item" data-tab="profile">
+            <span class="tab-icon-svg">
+                <svg width="40" height="40" viewBox="0 0 874 874" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M849.722 437C849.722 209.06 664.94 24.2778 437 24.2778C209.06 24.2778 24.2778 209.06 24.2778 437C24.2778 664.94 209.06 849.722 437 849.722C664.94 849.722 849.722 664.94 849.722 437ZM874 437C874 678.348 678.348 874 437 874C195.652 874 0 678.348 0 437C0 195.652 195.652 0 437 0C678.348 0 874 195.652 874 437Z" fill="currentColor"/>
+                    <path d="M564.458 333.819C564.458 263.426 507.393 206.361 437 206.361C366.607 206.361 309.542 263.426 309.542 333.819C309.542 404.213 366.607 461.278 437 461.278C507.393 461.278 564.458 404.213 564.458 333.819ZM588.736 333.819C588.736 417.621 520.802 485.556 437 485.556C353.198 485.556 285.264 417.621 285.264 333.819C285.264 250.018 353.198 182.083 437 182.083C520.802 182.083 588.736 250.018 588.736 333.819Z" fill="currentColor"/>
+                    <path d="M729.062 746.139L707.345 763.784C688.372 627.06 574.562 521.972 437 521.972C296.401 521.972 180.616 631.751 165.538 772.883L143.728 753.057C167.309 608.636 289.054 497.694 437 497.694C582.575 497.694 702.782 605.108 729.062 746.139Z" fill="currentColor"/>
+                </svg>
+            </span>
+        </a>
+    </nav>
+
+<!-- Модалка входа -->
+<div class="modal-overlay" id="authModal">
+    <div class="modal">
+        <button class="modal-close" onclick="closeAuthModal()">&times;</button>
+        <h2>Войти в Unanum</h2>
+        <div id="loginError" style="display:none;color:var(--color-error);font-size:13px;text-align:center;margin-bottom:12px;"></div>
+        <form id="loginForm" class="auth-form" onsubmit="submitLogin(event)">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <input type="tel" id="loginPhone" name="phone" placeholder="+7 (___) ___-__-__" required 
+                data-mask="+7 (___) ___-__-__" maxlength="18"
+                style="font-family:monospace;font-size:18px;text-align:left;width:100%;padding:10px 14px;border:2px solid var(--color-border);border-radius:var(--radius-md);background:rgba(15,31,15,0.8);color:var(--color-text);box-sizing:border-box;margin-bottom:10px;">
+            <div style="position:relative;margin-bottom:10px;">
+                <input type="password" id="loginPassword" name="password" placeholder="Пароль" required minlength="8"
+                    style="width:100%;padding:10px 40px 10px 14px;border:2px solid var(--color-border);border-radius:var(--radius-md);font-family:var(--font-main);font-size:14px;outline:none;background:rgba(15,31,15,0.8);color:var(--color-text);box-sizing:border-box;">
+                <button type="button" onclick="togglePassword('loginPassword', this)" 
+                    style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--color-text-lighter);cursor:pointer;font-size:16px;padding:0;">👁</button>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;">
+                <input type="checkbox" id="loginConsent" style="width:16px;height:16px;margin-top:2px;flex-shrink:0;accent-color:var(--color-gold);cursor:pointer;">
+                <label for="loginConsent" style="font-size:11px;color:var(--color-text-lighter);line-height:1.4;cursor:pointer;">Я согласен на обработку <a href="/privacy" target="_blank" rel="noopener noreferrer" style="color:var(--color-gold);text-decoration:underline;">персональных данных</a></label>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;">Войти</button>
+            <p style="font-size:10px;color:var(--color-text-lighter);text-align:center;margin-top:8px;">Нажимая «Войти», вы принимаете <a href="/terms" target="_blank" rel="noopener noreferrer" style="color:var(--color-gold);">Пользовательское соглашение</a></p>
+        </form>
+        <div class="auth-divider">или</div>
+        <button class="btn btn-outline" onclick="closeAuthModal(); openRegisterModal();" style="width:100%;">Создать аккаунт</button>
+    </div>
+</div>
+
+    <!-- Модалка регистрации -->
+    <div class="modal-overlay" id="registerModal" style="z-index: 510;">
+        <div class="modal">
+            <button class="modal-close" onclick="closeRegisterModal()">&times;</button>
+            <h2>Регистрация</h2>
+            <div id="registerError" style="display:none;color:var(--color-error);font-size:13px;text-align:center;margin-bottom:12px;"></div>
+            <div id="registerSuccess" style="display:none;color:var(--color-success);font-size:13px;text-align:center;margin-bottom:12px;"></div>
+            <form id="registerForm" class="auth-form" onsubmit="submitRegister(event)">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                
+                <!-- Шаг 1: телефон -->
+                <div id="regStep1">
+                    <input type="tel" id="regPhone" name="phone" placeholder="+7 (___) ___-__-__" required
+                        data-mask="+7 (___) ___-__-__" maxlength="18"
+                        style="font-family:monospace;font-size:18px;text-align:left;width:100%;padding:10px 14px;border:2px solid var(--color-border);border-radius:var(--radius-md);background:rgba(15,31,15,0.8);color:var(--color-text);box-sizing:border-box;margin-bottom:10px;">
+                    <button type="button" id="requestCallBtn" class="btn btn-outline" onclick="requestCall()" style="width:100%;">
+                        <span id="requestCallText">Получить код</span>
+                        <span id="requestCallLoader" style="display:none;margin-left:8px;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top:2px solid var(--color-gold);border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;"></span>
+                    </button>
+                </div>
+                
+                <!-- Шаг 2: код + имя + дата + пароль -->
+                <div id="regStep2" style="display:none;">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="goBackToStep1()" style="margin-bottom:12px;font-size:12px;">← Назад</button>
+                    <p style="font-size:13px;color:var(--color-text-light);text-align:center;margin-bottom:12px;">
+                        Вам позвонит робот. Введите <strong>последние 4 цифры</strong> номера, с которого поступил звонок.
+                    </p>
+                    <input type="text" id="regCode" name="code" placeholder="Последние 4 цифры" required maxlength="4" pattern="\d{4}" inputmode="numeric"
+                        style="font-family:monospace;font-size:20px;text-align:left;letter-spacing:6px;background:rgba(15,31,15,0.8);color:var(--color-text);padding:10px 14px;border:2px solid var(--color-border);border-radius:var(--radius-md);outline:none;width:100%;box-sizing:border-box;margin-bottom:4px;">
+                    <p style="font-size:11px;color:var(--color-text-lighter);text-align:center;margin-bottom:12px;">Введите последние 4 цифры номера, который вам позвонил</p>
+                    
+                    <input type="text" id="regName" name="name" placeholder="Имя" required
+                        style="width:100%;padding:10px 14px;border:2px solid var(--color-border);border-radius:var(--radius-md);font-family:var(--font-main);font-size:14px;outline:none;background:rgba(15,31,15,0.8);color:var(--color-text);box-sizing:border-box;margin-bottom:10px;">
+                    <input type="date" id="regBirthDate" name="birth_date" placeholder="Дата рождения"
+                        style="width:100%;padding:10px 14px;border:2px solid var(--color-border);border-radius:var(--radius-md);font-family:var(--font-main);font-size:14px;outline:none;background:rgba(15,31,15,0.8);color:var(--color-text);box-sizing:border-box;margin-bottom:10px;">
+                    
+                    <div style="position:relative;margin-bottom:4px;">
+                        <input type="password" id="regPassword" name="password" placeholder="Пароль" required minlength="8" 
+                            pattern="^(?=.*[A-ZА-ЯЁ]).*(?=.*\d).*$"
+                            title="Минимум 8 символов, первая буква заглавная, последние символы — цифры"
+                            oninput="checkPasswordMatch()"
+                            style="width:100%;padding:10px 40px 10px 14px;border:2px solid var(--color-border);border-radius:var(--radius-md);font-family:var(--font-main);font-size:14px;outline:none;background:rgba(15,31,15,0.8);color:var(--color-text);box-sizing:border-box;">
+                        <button type="button" onclick="togglePassword('regPassword', this)" 
+                            style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--color-text-lighter);cursor:pointer;font-size:16px;padding:0;">👁</button>
+                    </div>
+                    <p style="font-size:10px;color:var(--color-text-lighter);margin-bottom:12px;">Минимум 8 символов, первая — заглавная, последние — цифры</p>
+                    
+                    <div style="position:relative;margin-bottom:4px;">
+                        <input type="password" id="regPasswordConfirm" placeholder="Подтверждение пароля" required minlength="8"
+                            oninput="checkPasswordMatch()"
+                            style="width:100%;padding:10px 40px 10px 14px;border:2px solid var(--color-border);border-radius:var(--radius-md);font-family:var(--font-main);font-size:14px;outline:none;background:rgba(15,31,15,0.8);color:var(--color-text);box-sizing:border-box;">
+                        <button type="button" onclick="togglePassword('regPasswordConfirm', this)" 
+                            style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--color-text-lighter);cursor:pointer;font-size:16px;padding:0;">👁</button>
+                    </div>
+                    <p id="regPasswordError" style="display:none;font-size:11px;color:var(--color-error);margin-bottom:8px;">Пароли не совпадают</p>
+
+                    <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;">
+                        <input type="checkbox" id="regConsent" style="width:16px;height:16px;margin-top:2px;flex-shrink:0;accent-color:var(--color-gold);cursor:pointer;">
+                        <label for="regConsent" style="font-size:11px;color:var(--color-text-lighter);line-height:1.4;cursor:pointer;">Я согласен на обработку <a href="/privacy" target="_blank" rel="noopener noreferrer" style="color:var(--color-gold);text-decoration:underline;">персональных данных</a></label>
+                    </div>
+                    <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;">
+                        <input type="checkbox" id="regTransferConsent" style="width:16px;height:16px;margin-top:2px;flex-shrink:0;accent-color:var(--color-gold);cursor:pointer;">
+                        <label for="regTransferConsent" style="font-size:11px;color:var(--color-text-lighter);line-height:1.4;cursor:pointer;">Я согласен на трансграничную передачу данных (<a href="/privacy#section-7" target="_blank" rel="noopener noreferrer" style="color:var(--color-gold);text-decoration:underline;">подробнее</a>)</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%;">Зарегистрироваться</button>
+                    <p style="font-size:10px;color:var(--color-text-lighter);text-align:center;margin-top:8px;">Нажимая «Зарегистрироваться», вы принимаете <a href="/terms" target="_blank" rel="noopener noreferrer" style="color:var(--color-gold);">Пользовательское соглашение</a></p>
+                </div>
+            </form>
+            <div class="auth-divider">Уже есть аккаунт?</div>
+            <button class="btn btn-outline" onclick="closeRegisterModal(); openAuthModal();" style="width:100%;">Войти</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="dailyCardModal">
+        <div class="modal modal-card" style="max-width: 380px; width: 95%; padding: 24px 20px; background: #1e3a1e; border: 1px solid var(--color-gold); box-shadow: 0 0 40px rgba(255,213,79,0.3);">
+            <button class="modal-close" onclick="closeDailyCardModal()">&times;</button>
+            <div id="dailyCardContent"></div>
+        </div>
+    </div>
+
+<div class="modal-overlay" id="numerModal" style="z-index: 350;">
+    <div class="modal" style="max-width: 520px; width: 95%; padding: 20px; max-height: 85vh; display: flex; flex-direction: column;">
+        <button class="modal-close" onclick="closeNumerDialog()" style="flex-shrink: 0; align-self: flex-end;">&times;</button>
+        <div id="numerContent" style="flex-shrink: 0; text-align: center; padding-bottom: 8px;"></div>
+        <div id="numerAnswers" style="flex: 1; overflow-y: auto; min-height: 80px; padding: 4px 0;"></div>
+        <div id="numerMarquee" style="flex-shrink: 0; overflow: hidden; height: 105px; position: relative; margin: 4px 0 8px 0;">
+            <div id="numerMarqueeRow1" style="display: flex; gap: 10px; white-space: nowrap; animation: marqueeScroll1 20s linear infinite; margin-bottom: 6px;"></div>
+            <div id="numerMarqueeRow2" style="display: flex; gap: 10px; white-space: nowrap; animation: marqueeScroll2 23s linear infinite; margin-bottom: 6px;"></div>
+            <div id="numerMarqueeRow3" style="display: flex; gap: 10px; white-space: nowrap; animation: marqueeScroll3 17s linear infinite;"></div>
+        </div>
+        <div style="display: flex; gap: 8px; flex-shrink: 0;">
+            <input type="text" id="numerInput" placeholder="Спроси что скрывает твой код..." 
+                style="flex: 1; padding: 10px 14px; border: 2px solid var(--color-border); border-radius: 12px; font-family: var(--font-main); font-size: 14px; outline: none; background: rgba(15,31,15,0.8); color: var(--color-text);"
+                onkeydown="if(event.key==='Enter')sendNumerMessage()"
+                oninput="updateNumerButton()">
+            <button id="numerSendBtn" onclick="sendNumerMessage()" disabled
+                style="width: 44px; height: 44px; min-width: 44px; border-radius: 50%; border: none; background: var(--color-border); color: white; font-size: 22px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; flex-shrink: 0;">
+                ↑
+            </button>
+        </div>
+    </div>
+</div>
+
+    <div class="modal-overlay" id="initModal" style="z-index: 600;">
+        <div class="modal" style="max-width: 400px; padding: 24px 20px;">
+            <button class="modal-close" onclick="skipInit()">&times;</button>
+            <div id="initContent">
+                <div id="initStep1">
+                    <h2 style="text-align: center; color: var(--color-text); margin-bottom: 4px;">Давай познакомимся</h2>
+                    <p style="text-align: center; font-size: 13px; color: var(--color-text-lighter); margin-bottom: 20px;">Я Unanum. Расскажи немного о себе, чтобы я могла говорить с тобой лично. Это займёт минуту.</p>
+                    <div class="input-group" style="margin-bottom: 12px;">
+                        <label>Как тебя зовут?</label>
+                        <input type="text" id="initName" placeholder="Твоё имя" style="width:100%;min-width:0;box-sizing:border-box;border:2px solid var(--color-border);text-align:left;padding:12px 14px;font-size:16px;border-radius:50px;background:rgba(15,31,15,0.8);color:var(--color-text);font-family:var(--font-main);">
+                    </div>
+                    <div class="input-group" style="margin-bottom: 12px;">
+                        <label>Дата рождения</label>
+                        <input type="date" id="initBirthDate" style="width:100%;min-width:0;box-sizing:border-box;border:2px solid var(--color-gold);text-align:center;padding:12px 14px;font-size:16px;border-radius:50px;background:rgba(15,31,15,0.8);color:var(--color-text);font-family:var(--font-main);">
+                    </div>
+                    <div class="input-group" style="margin-bottom: 12px;">
+                        <label>Время рождения (примерно)</label>
+                        <input type="time" id="initBirthTime" value="12:00" style="width:100%;min-width:0;box-sizing:border-box;border:2px solid var(--color-border);text-align:center;padding:12px 14px;font-size:16px;border-radius:50px;background:rgba(15,31,15,0.8);color:var(--color-text);font-family:var(--font-main);">
+                    </div>
+                    <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="initUnknownTime" onchange="toggleBirthTime()" style="width:16px;height:16px;accent-color:var(--color-gold);cursor:pointer;flex-shrink:0;">
+                        <label for="initUnknownTime" style="font-size:12px;color:var(--color-text-lighter);cursor:pointer;">Я не знаю время рождения</label>
+                    </div>
+                    <div class="input-group" style="margin-bottom: 16px;">
+                        <label>Место рождения</label>
+                        <input type="text" id="initBirthPlace" placeholder="Начните вводить город..." autocomplete="off" style="width:100%;min-width:0;box-sizing:border-box;border:2px solid var(--color-border);text-align:left;padding:12px 14px;font-size:16px;border-radius:50px;background:rgba(15,31,15,0.8);color:var(--color-text);font-family:var(--font-main);">
+                        <div id="initCitySuggestions" style="display:none;max-height:150px;overflow-y:auto;background:rgba(15,31,15,0.95);border:1px solid var(--color-border);border-radius:8px;margin-top:4px;"></div>
+                    </div>
+                    <button class="btn btn-primary" onclick="goInitStep2()" style="width: 100%;">Далее</button>
+                    <button class="btn btn-outline btn-sm" onclick="skipInit()" style="width: 100%; margin-top: 8px;">Пропустить</button>
+                </div>
+                <div id="initStep2" style="display: none;">
+                    <h2 style="text-align: center; color: var(--color-text); margin-bottom: 12px;">Что тебя сейчас волнует?</h2>
+                    <p style="text-align: center; font-size: 12px; color: var(--color-text-lighter); margin-bottom: 16px;">Выбери, что тебе ближе. Можно несколько.</p>
+                    <div id="initThemes" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 16px;">
+                        <span class="init-theme" onclick="toggleInitTheme(this)" data-theme="самопознание">Хочу лучше понять себя</span>
+                        <span class="init-theme" onclick="toggleInitTheme(this)" data-theme="любовь">Ищу любовь или гармонию</span>
+                        <span class="init-theme" onclick="toggleInitTheme(this)" data-theme="карьера">Меня волнует карьера и деньги</span>
+                        <span class="init-theme" onclick="toggleInitTheme(this)" data-theme="тревога">Чувствую тревогу или потерянность</span>
+                        <span class="init-theme" onclick="toggleInitTheme(this)" data-theme="духовность">Интересуюсь духовным</span>
+                        <span class="init-theme" onclick="toggleInitTheme(this)" data-theme="любопытство">Просто любопытно</span>
+                    </div>
+                    <button class="btn btn-primary" onclick="goInitStep3()" style="width: 100%;">Далее</button>
+                </div>
+                <div id="initStep3" style="display: none;">
+                    <h2 style="text-align: center; color: var(--color-text); margin-bottom: 12px;">Как с тобой говорить?</h2>
+                    <p style="text-align: center; font-size: 12px; color: var(--color-text-lighter); margin-bottom: 16px;">Выбери тон, который тебе ближе.</p>
+                    <div id="initTones" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+                        <span class="init-theme" onclick="selectInitOption(this, 'initTones')" data-value="мягко">Мягко и бережно</span>
+                        <span class="init-theme" onclick="selectInitOption(this, 'initTones')" data-value="прямо">Прямо и по делу</span>
+                        <span class="init-theme" onclick="selectInitOption(this, 'initTones')" data-value="легко">С юмором и легкостью</span>
+                        <span class="init-theme" onclick="selectInitOption(this, 'initTones')" data-value="как подруга">Как подруга</span>
+                    </div>
+                    <h2 style="text-align: center; color: var(--color-text); margin-bottom: 8px;">Что тебя успокаивает?</h2>
+                    <div id="initCoping" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+                        <span class="init-theme" onclick="selectInitOption(this, 'initCoping')" data-value="тишина">Побыть одной в тишине</span>
+                        <span class="init-theme" onclick="selectInitOption(this, 'initCoping')" data-value="разговор">Выговориться близкому</span>
+                        <span class="init-theme" onclick="selectInitOption(this, 'initCoping')" data-value="движение">Двигаться, гулять</span>
+                        <span class="init-theme" onclick="selectInitOption(this, 'initCoping')" data-value="свечи">Зажечь свечу, принять ванну</span>
+                        <span class="init-theme" onclick="selectInitOption(this, 'initCoping')" data-value="отвлечься">Отвлечься: кино, книга</span>
+                        <span class="init-theme" onclick="selectInitOption(this, 'initCoping')" data-value="не знаю">Помоги мне понять</span>
+                    </div>
+                    <button class="btn btn-primary" onclick="finishInit()" style="width: 100%;">Завершить ✨</button>
+                </div>
+                <div id="initStep4" style="display: none; text-align: center;">
+                    <div style="margin-bottom: 6px;">
+                        <img src="{{ url_for('static', filename='icon/unanum_logo.svg') }}" alt="Unanum" style="height: 48px; width: auto;">
+                    </div>
+                    <h2 id="initGreeting" style="color: var(--color-text); margin-bottom: 8px;"></h2>
+                    <p style="font-size: 13px; color: var(--color-text-light); margin-bottom: 16px;">Теперь можно вытянуть карту дня или просто рассказать, что волнует.</p>
+                    <button class="btn btn-primary" onclick="closeInit()" style="width: 100%; color: var(--color-text);">Открыть Unanum</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="insightModal" style="z-index:500;">
+        <div class="modal" style="max-width:380px;text-align:center;">
+            <button class="modal-close" onclick="closeInsightModal(true)">&times;</button>
+            <div id="insightContent">
+                <h3 style="color:var(--color-text);">✨ Ваш ежедневный компас</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="crystal-loader">
+            <div class="crystal"></div>
+            <p>Магия в процессе...</p>
+        </div>
+    </div>
+
+    <script>
+        window.isAuthenticated = {{ 'true' if current_user.is_authenticated else 'false' }};
+        {% set _tariff = (current_user.subscription if current_user.is_authenticated and current_user.subscription in ('Искра', 'Пламя') else 'Искра') %}
+        window.userTariff = '{{ _tariff }}';
+        window.paywallPrice = {{ PAYWALL_PRICE_RUB }};
+        window.userTags = [];
+        
+        {% if session.pop('close_auth_modal', False) %}
+        setTimeout(function() {
+            var modal = document.getElementById('authModal');
+            if (modal) modal.classList.remove('active');
+        }, 100);
+        {% endif %}
+        
+        {% if session.pop('show_onboarding', False) %}
+        sessionStorage.setItem('show_onboarding', 'true');
+        {% endif %}
+
+        // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ ФОРМ ==========
+
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+            } else {
+                input.type = 'password';
+                btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+            }
+        }
+
+        function checkPasswordMatch() {
+            const pass = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('regPasswordConfirm').value;
+            const error = document.getElementById('regPasswordError');
+            if (confirm && pass !== confirm) {
+                error.style.display = 'block';
+            } else {
+                error.style.display = 'none';
+            }
+        }
+
+        function goBackToStep1() {
+            document.getElementById('regStep2').style.display = 'none';
+            document.getElementById('regStep1').style.display = 'block';
+            document.getElementById('registerError').style.display = 'none';
+            document.getElementById('registerSuccess').style.display = 'none';
+            var btn = document.getElementById('requestCallBtn');
+            if (btn) btn.disabled = false;
+            var text = document.getElementById('requestCallText');
+            if (text) text.textContent = 'Получить код';
+            var loader = document.getElementById('requestCallLoader');
+            if (loader) loader.style.display = 'none';
+        }
+
+// (блок initModal и DOMContentLoaded-вызов удалены)
+// Функция initModal теперь только в static/js/main.js — там она полнее
+// (включает paywallModal, insightModal) и вызывается из своего DOMContentLoaded.
+// В base.html оставлены только togglePassword, checkPasswordMatch,
+// goBackToStep1 и маска телефона — они уникальны для этой страницы.
+    </script>
+
+    <script src="/static/js/main.js" defer></script>
+    <script src="/static/js/stream-client.js" defer></script>
+    <script src="/static/js/share-manager.js" defer></script>
+    <!-- tracker.js загружается динамически после согласия на cookie -->
+    {% if current_user.is_authenticated %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (sessionStorage.getItem('openDailyAfterLogin') === 'true') {
+                sessionStorage.removeItem('openDailyAfterLogin');
+                setTimeout(function() {
+                    openDailyCardModal(true);
+                }, 400);
+            }
+        });
+    </script>
+    {% endif %}
+
+    <!-- МАСКА ТЕЛЕФОНА -->
+    <script>
+
+// Галочка "не знаю время"
+function toggleBirthTime() {
+    var timeInput = document.getElementById('initBirthTime');
+    var checkbox = document.getElementById('initUnknownTime');
+    if (checkbox.checked) {
+        timeInput.value = '12:00';
+        timeInput.disabled = true;
+        timeInput.style.opacity = '0.5';
+    } else {
+        timeInput.disabled = false;
+        timeInput.style.opacity = '1';
+    }
+}
+
+    // Автокомплит городов для онбординга
+    var citySearchTimeout;
+    var initCityData = [];
+    
+    function searchInitCities(query) {
+        fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&accept-language=ru&q=' + encodeURIComponent(query), {
+            headers: { 'User-Agent': 'UnanumApp/1.0' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var container = document.getElementById('initCitySuggestions');
+            if (data.length === 0) {
+                container.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--color-text-lighter);text-align:center;">Ничего не найдено</div>';
+                container.style.display = 'block';
+                return;
+            }
+            initCityData = data.map(function(place) {
+                return { name: place.display_name || '', lat: parseFloat(place.lat).toFixed(4), lng: parseFloat(place.lon).toFixed(4) };
+            });
+            var html = '';
+            data.forEach(function(place, index) {
+                var name = place.display_name || '';
+                html += '<div style="padding:10px 14px;cursor:pointer;font-size:12px;color:var(--color-text-light);border-bottom:1px solid rgba(210,161,125,0.1);" onmouseover="this.style.background=\'rgba(255,213,79,0.08)\'" onmouseout="this.style.background=\'transparent\'" onclick="selectInitCityByIndex(' + index + ')"><span style="font-size:13px;color:var(--color-text);">' + escapeHTML(name.split(',')[0]) + '</span><br><span style="font-size:10px;color:var(--color-text-lighter);">' + escapeHTML(name) + '</span></div>';
+            });
+            container.innerHTML = html;
+            container.style.display = 'block';
+        })
+        .catch(function() {
+            document.getElementById('initCitySuggestions').style.display = 'none';
+        });
+    }
+    
+    function selectInitCityByIndex(index) {
+        var data = initCityData[index];
+        if (data) {
+            document.getElementById('initBirthPlace').value = data.name;
+            document.getElementById('initCitySuggestions').style.display = 'none';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Обработчик ввода города в онбординге
+        var initBirthPlace = document.getElementById('initBirthPlace');
+        if (initBirthPlace) {
+            initBirthPlace.addEventListener('input', function() {
+                clearTimeout(citySearchTimeout);
+                var query = this.value.trim();
+                if (query.length < 2) {
+                    document.getElementById('initCitySuggestions').style.display = 'none';
+                    return;
+                }
+                citySearchTimeout = setTimeout(function() { searchInitCities(query); }, 400);
+            });
+        }
+
+        function applyPhoneMask(input) {
+            if (!input) return;
+            
+            input.addEventListener('input', function(e) {
+                var val = this.value.replace(/\D/g, '');
+                if (val.length > 11) val = val.substring(0, 11);
+                if (val.length === 0) { this.value = ''; return; }
+                var formatted = '+7';
+                if (val.length > 1) formatted += ' (' + val.substring(1, 4);
+                if (val.length >= 4) formatted += ') ' + val.substring(4, 7);
+                if (val.length >= 7) formatted += '-' + val.substring(7, 9);
+                if (val.length >= 9) formatted += '-' + val.substring(9, 11);
+                this.value = formatted;
+                this.setSelectionRange(formatted.length, formatted.length);
+            });
+
+            input.addEventListener('paste', function(e) {
+                e.preventDefault();
+                var pasted = (e.clipboardData || window.clipboardData).getData('text');
+                var val = pasted.replace(/\D/g, '');
+                if (val.length > 11) val = val.substring(0, 11);
+                this.value = val;
+                this.dispatchEvent(new Event('input'));
+            });
+
+            input.addEventListener('change', function() {
+                this.dispatchEvent(new Event('input'));
+            });
+            
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' || e.key === 'Delete') {
+                    e.preventDefault();
+                    var val = this.value.replace(/\D/g, '');
+                    if (val.length > 1) {
+                        val = val.substring(0, val.length - 1);
+                    } else {
+                        val = '7';
+                    }
+                    var formatted = '+7';
+                    if (val.length > 1) formatted += ' (' + val.substring(1, 4);
+                    if (val.length >= 4) formatted += ') ' + val.substring(4, 7);
+                    if (val.length >= 7) formatted += '-' + val.substring(7, 9);
+                    if (val.length >= 9) formatted += '-' + val.substring(9, 11);
+                    this.value = formatted;
+                    this.setSelectionRange(formatted.length, formatted.length);
+                    return;
+                }
+                if (e.key.startsWith('Arrow')) return;
+                if (e.key === 'Tab') return;
+                if (!/\d/.test(e.key)) e.preventDefault();
+            });
+            
+            input.addEventListener('blur', function() {
+                if (this.value.replace(/\D/g, '').length <= 1) this.value = '';
+            });
+        }
+        
+        applyPhoneMask(document.getElementById('loginPhone'));
+        applyPhoneMask(document.getElementById('regPhone'));
+
+        // Закрытие подсказок городов в онбординге при клике вне
+        document.addEventListener('click', function(e) {
+            var container = document.getElementById('initCitySuggestions');
+            var input = document.getElementById('initBirthPlace');
+            if (container && input && !e.target.closest('#initBirthPlace') && !e.target.closest('#initCitySuggestions')) {
+                container.style.display = 'none';
+            }
+        });
+    });
+    </script>
+
+<!-- Выезжающее меню -->
+<div class="side-menu" id="sideMenu">
+    <button class="menu-close-btn" onclick="closeMenuModal()">&times;</button>
+    <h2 style="color:var(--color-gold);margin-bottom:16px;font-size:18px;">Меню</h2>
+    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:20px;">
+        <a href="/financial-code" class="menu-link">Денежный код</a>
+        <a href="/horoscope" class="menu-link">Гороскоп</a>
+        <a href="/moon-calendar" class="menu-link">Лунный календарь</a>
+        <a href="/numerology" class="menu-link">Нумерология</a>
+        <a href="/natal-chart" class="menu-link">Натальная карта</a>
+        <a href="/compatibility" class="menu-link">Совместимость</a>
+        <a href="/tariffs" class="menu-link">Тарифы</a>
+    </div>
+    
+    <div style="border-top:1px solid var(--color-border);padding-top:12px;">
+        {% if current_user.is_authenticated %}
+            <button type="button" class="btn btn-outline" onclick="logoutUser()" style="width:100%;">Выйти</button>
+        {% else %}
+            <button class="btn btn-primary" onclick="closeMenuModal();openAuthModal();" style="width:100%;">Войти</button>
+        {% endif %}
+    </div>
+    
+    <div style="margin-top:16px;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:13px;color:var(--color-text-lighter);">Светлая тема</span>
+        <span style="font-size:11px;color:var(--color-gold);opacity:0.7;">Скоро</span>
+    </div>
+</div>
+<div class="menu-overlay" id="menuOverlay" onclick="closeMenuModal()"></div>
+
+<!-- Футер -->
+<footer class="site-footer">
+    <div class="footer-container">
+        <div class="footer-links">
+            <a href="/privacy">Политика конфиденциальности</a>
+            <span class="footer-divider">|</span>
+            <a href="/cookies">Политика cookies</a>
+            <span class="footer-divider">|</span>
+            <a href="/terms">Пользовательское соглашение</a>
+            <span class="footer-divider">|</span>
+            <a href="/offer">Публичная оферта</a>
+            <span class="footer-divider">|</span>
+            <a href="/contacts">Контакты</a>
+        </div>
+        <div class="footer-copy">© 2026 Unanum. Все права защищены.</div>
+    </div>
+</footer>
+
+<!-- Модалка Paywall -->
+<div class="modal-overlay" id="paywallModal" style="z-index: 700;">
+    <div class="modal" style="max-width: 380px; text-align: center;">
+        <button class="modal-close" onclick="closePaywall()">&times;</button>
+        <h2 style="font-size: 18px; color: var(--color-gold); margin-bottom: 12px;">Полный разбор</h2>
+        <p style="font-size: 13px; color: var(--color-text-light); margin-bottom: 16px; line-height: 1.6;">
+            Откройте все возможности персональных разборов с глубоким анализом и конкретными рекомендациями.
+        </p>
+        <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+            <button class="btn btn-primary btn-sm" onclick="closePaywall(); window.location.href='/tariffs';" style="width:100%;">Пламя<br><span style="font-size:10px;font-weight:400;">{{ PAYWALL_PRICE_RUB }} ₽/мес</span></button>
+        </div>
+        <p style="font-size: 11px; color: var(--color-text-lighter);">
+            <span style="cursor: pointer; text-decoration: underline;" onclick="closePaywall(); openAuthModal();">Уже есть тариф? Войти</span>
+        </p>
+    </div>
+</div>
+
+<!-- Cookie-баннер -->
+<div id="cookieBanner" style="display:none; position:fixed; bottom:0; left:0; right:0; background:rgba(5,16,5,0.98); border-top:1.5px solid var(--color-gold); z-index:999; padding:16px 20px; box-shadow:0 -4px 20px rgba(0,0,0,0.5);">
+    <button onclick="dismissCookies()" style="position:absolute;top:8px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--color-text-lighter);">&times;</button>
+    <div style="max-width:800px; margin:0 auto; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
+        <div style="flex:1; min-width:200px;">
+            <p style="font-size:13px; color:var(--color-text-light); margin:0; line-height:1.5;">
+                Мы используем файлы cookie для улучшения работы сайта. 
+                <a href="/cookies" target="_blank" style="color:var(--color-gold);text-decoration:underline;">Подробнее</a>
+            </p>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <button onclick="acceptAllCookies()" class="btn btn-primary btn-sm" style="white-space:nowrap;">Принять все</button>
+            <button onclick="acceptNecessaryCookies()" class="btn btn-outline btn-sm" style="white-space:nowrap;">Только необходимые</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+}
+
+function setCookie(name, value, days) {
+    const d = new Date();
+    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+    document.cookie = `${name}=${value};expires=${d.toUTCString()};path=/;SameSite=Lax`;
+}
+
+function acceptAllCookies() {
+    setCookie('cookie_consent', 'all', 180);
+    document.getElementById('cookieBanner').style.display = 'none';
+    loadAnalytics();
+}
+
+function acceptNecessaryCookies() {
+    setCookie('cookie_consent', 'necessary', 180);
+    document.getElementById('cookieBanner').style.display = 'none';
+}
+
+function dismissCookies() {
+    setCookie('cookie_consent', 'necessary', 180);
+    document.getElementById('cookieBanner').style.display = 'none';
+}
+
+function loadAnalytics() {
+    const script = document.createElement('script');
+    script.src = '/static/js/tracker.js';
+    script.async = true;
+    document.body.appendChild(script);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const consent = getCookie('cookie_consent');
+    if (!consent) {
+        document.getElementById('cookieBanner').style.display = 'block';
+    } else if (consent === 'all') {
+        loadAnalytics();
+    }
+});
+
+// Светлая тема — скоро в обновлении
+</script>
+
+</body>
+</html>

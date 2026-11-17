@@ -1,0 +1,625 @@
+{% extends "base.html" %}
+
+{% block title %}Карты Таро — unanum{% endblock %}
+
+{% block content %}
+<section class="page-section" style="padding-top: 80px;" data-numer-section="tarot_library">
+    <div class="container" style="padding: 0 16px;">
+        <h1 class="page-title" style="font-size: clamp(2rem, 5vw, 2.5rem); font-weight: 700; background: linear-gradient(135deg, #d4a843, #d4879a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 4px;">Карты Таро</h1>
+        <p class="page-subtitle" style="color: var(--color-text);">Твоя история, расклады и полная библиотека</p>
+
+        <!-- Вкладки -->
+        <div id="tarotTabs" style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 400px; margin: 0 auto 16px; padding: 0 12px;">
+            <button class="tarot-tab active" onclick="switchTarotTab('spread')">Расклад</button>
+            <button class="tarot-tab" onclick="switchTarotTab('library')">Библиотека</button>
+            <button class="tarot-tab" onclick="switchTarotTab('favorites')">Избранное</button>
+            <button class="tarot-tab" onclick="switchTarotTab('stats')">Статистика</button>
+        </div>
+
+        <!-- Контент вкладок -->
+        <div style="max-width: 400px; margin: 0 auto 24px; padding: 0 12px; box-sizing: border-box;">
+            
+            <!-- Вкладка 1: Расклад -->
+            <div id="tab-spread" class="tarot-tab-content active">
+                <!-- Вопрос -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 14px; font-weight: 600; color: var(--color-gold); margin-bottom: 8px; text-align: center;">
+                        О чём спросить карты?
+                    </label>
+                    <textarea id="spreadQuestion" placeholder="Напишите свой вопрос... Например: Что меня ждёт в любви?" maxlength="500" rows="3"
+                        style="width: 100%; padding: 14px; border: 2px solid var(--color-border); border-radius: 16px; background: rgba(15,31,15,0.8); color: var(--color-text); font-family: var(--font-main); font-size: 14px; outline: none; resize: none; box-sizing: border-box; line-height: 1.5; transition: border-color 0.3s;"
+                        onfocus="this.style.borderColor='var(--color-gold)'"
+                        onblur="this.style.borderColor='var(--color-border)'"></textarea>
+                </div>
+
+                <!-- Выбор расклада -->
+                <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+                    <div class="spread-type-card active" data-type="one_card" onclick="selectSpreadType('one_card')" style="flex: 1;">
+                        <img src="/static/icon/1card.svg" alt="1 карта" style="width: 36px; height: 36px; filter: brightness(0) saturate(100%) invert(84%) sepia(36%) saturate(768%) hue-rotate(346deg) brightness(105%) contrast(103%);">
+                        <span style="font-size: 13px; font-weight: 600; color: var(--color-text);">1 карта</span>
+                        <span style="font-size: 11px; color: var(--color-text-lighter);">Быстрый совет</span>
+                    </div>
+                    <div class="spread-type-card" data-type="three_card" onclick="selectSpreadType('three_card')" style="flex: 1;">
+                        <img src="/static/icon/3card.svg" alt="3 карты" style="width: 36px; height: 36px; filter: brightness(0) saturate(100%) invert(84%) sepia(36%) saturate(768%) hue-rotate(346deg) brightness(105%) contrast(103%);">
+                        <span style="font-size: 13px; font-weight: 600; color: var(--color-text);">3 карты</span>
+                        <span style="font-size: 11px; color: var(--color-text-lighter);">Прошлое, настоящее, будущее</span>
+                    </div>
+                </div>
+
+                <!-- Кнопка -->
+                <button class="btn btn-share" onclick="doFullSpread()" style="width: 100%; padding: 16px; font-size: 16px; font-weight: 600; border-radius: 16px; margin-bottom: 4px;">
+                    Разложить карты
+                </button>
+                <p style="font-size: 10px; color: var(--color-text-lighter); text-align: center; margin-bottom: 20px;">
+                    Лимит: 1 бесплатный расклад. Зарегистрируйтесь для новых.
+                </p>
+
+                <!-- Результат -->
+                <div id="spreadResult" style="margin-top: 16px;"></div>
+            </div>
+
+            <!-- Вкладка 2: Библиотека -->
+            <div id="tab-library" class="tarot-tab-content">
+                <div class="search-box" style="margin-bottom: 8px;">
+                    <i class="ph ph-magnifying-glass"></i>
+                    <input type="text" id="cardSearch" placeholder="Поиск по названию или ключевым словам..." oninput="searchCards()">
+                </div>
+                <div class="filter-row" style="margin-bottom: 8px;">
+                    <select id="filterArcana" onchange="searchCards()">
+                        <option value="all">Все арканы</option>
+                        <option value="major">Старшие арканы</option>
+                        <option value="minor">Младшие арканы</option>
+                    </select>
+                    <select id="filterSuit" onchange="searchCards()">
+                        <option value="all">Все масти</option>
+                        <option value="wands">Жезлы</option>
+                        <option value="cups">Кубки</option>
+                        <option value="swords">Мечи</option>
+                        <option value="pentacles">Пентакли</option>
+                    </select>
+                </div>
+                <div class="filter-row" style="margin-bottom: 12px;">
+                    <select id="filterSort" onchange="searchCards()">
+                        <option value="number">По порядку</option>
+                        <option value="name">По алфавиту</option>
+                        <option value="suit">По масти</option>
+                    </select>
+                    <button class="btn btn-outline btn-sm" onclick="randomCard()">Случайная карта</button>
+                </div>
+                <div class="cards-grid" id="cardsGrid">
+                    <div class="loading-placeholder">Загрузка...</div>
+                </div>
+            </div>
+
+            <!-- Вкладка 3: Избранное -->
+            <div id="tab-favorites" class="tarot-tab-content">
+                <h3 style="font-size: 16px; font-weight: 600; color: var(--color-gold); margin-bottom: 12px;">Избранные карты</h3>
+                <div id="favoritesList" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:12px;">
+                    <p style="color:var(--color-text-lighter);">Нет избранных карт</p>
+                </div>
+            </div>
+
+            <!-- Вкладка 4: Статистика -->
+            <div id="tab-stats" class="tarot-tab-content">
+                <h3 style="font-size: 16px; font-weight: 600; color: var(--color-gold); margin-bottom: 12px;">Моя статистика Таро</h3>
+                <div id="tarotStats" style="font-size: 14px; color: var(--color-text-light); line-height: 1.6; margin-bottom: 24px;">
+                    <p style="color:var(--color-text-lighter);">Загрузка...</p>
+                </div>
+
+                <h3 style="font-size: 16px; font-weight: 600; color: var(--color-gold); margin-bottom: 12px;">История карт дня</h3>
+                <div id="dailyHistory" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:12px;">
+                    <p style="color:var(--color-text-lighter);">Загрузка...</p>
+                </div>
+
+                <h3 style="font-size: 16px; font-weight: 600; color: var(--color-gold); margin: 24px 0 12px;">Карты Таро и знаки зодиака</h3>
+                <div style="font-size: 14px; color: var(--color-text-light); line-height: 1.8;">
+                    <p>Овен — Император</p>
+                    <p>Телец — Иерофант</p>
+                    <p>Близнецы — Влюблённые</p>
+                    <p>Рак — Колесница</p>
+                    <p>Лев — Сила</p>
+                    <p>Дева — Отшельник</p>
+                    <p>Весы — Справедливость</p>
+                    <p>Скорпион — Смерть</p>
+                    <p>Стрелец — Умеренность</p>
+                    <p>Козерог — Дьявол</p>
+                    <p>Водолей — Звезда</p>
+                    <p>Рыбы — Луна</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.tarot-tab {
+    padding: 6px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--color-text-lighter);
+    font-family: var(--font-main);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.tarot-tab.active {
+    border-color: var(--color-gold);
+    color: var(--color-gold);
+    font-weight: 600;
+}
+.tarot-tab:hover {
+    border-color: var(--color-gold);
+    color: var(--color-gold);
+}
+.tarot-tab-content {
+    display: none;
+}
+.tarot-tab-content.active {
+    display: block;
+}
+.spread-type-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 12px 8px;
+    border: 2px solid var(--color-border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+.spread-type-card.active {
+    border-color: var(--color-gold);
+    background: rgba(255,213,79,0.05);
+}
+.spread-type-card:hover {
+    border-color: var(--color-gold);
+}
+</style>
+
+<script>
+// ========== СОСТОЯНИЕ ==========
+let selectedSpreadType = 'one_card';
+
+function switchTarotTab(tabName) {
+    document.querySelectorAll('.tarot-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tarot-tab-content').forEach(c => c.classList.remove('active'));
+    
+    const tabBtn = document.querySelector(`.tarot-tab[onclick*="${tabName}"]`);
+    if (tabBtn) tabBtn.classList.add('active');
+    
+    const tabContent = document.getElementById('tab-' + tabName);
+    if (tabContent) tabContent.classList.add('active');
+    
+    if (tabName === 'library' && document.getElementById('cardsGrid')?.children[0]?.classList.contains('loading-placeholder')) {
+        loadLibraryCards();
+    }
+    if (tabName === 'stats') loadTarotStats();
+    if (tabName === 'favorites') renderFavorites();
+}
+
+function selectSpreadType(type) {
+    selectedSpreadType = type;
+    document.querySelectorAll('.spread-type-card').forEach(c => c.classList.remove('active'));
+    document.querySelector(`.spread-type-card[data-type="${type}"]`).classList.add('active');
+}
+
+async function doFullSpread() {
+    const question = document.getElementById('spreadQuestion').value.trim();
+    const type = selectedSpreadType;
+    await streamSpread(type, question || 'Общий расклад');
+}
+
+// ============================================
+// РАСКЛАД — SSE-стрим (B2)
+// ============================================
+
+/**
+ * Оболочка расклада: вопрос, карты, базовое толкование каждой карты.
+ * AI-толкование оставлено пустым контейнером #spreadAiText — наполнится
+ * по чанкам. Рендерится сразу после meta.
+ */
+function renderSpreadShell(data, container) {
+    let html = '';
+
+    if (data.question && data.question !== 'Общий расклад') {
+        html += `<div style="text-align:center;margin-bottom:16px;">
+            <p style="font-size:12px;color:var(--color-text-lighter);">Ваш вопрос:</p>
+            <p style="font-size:14px;color:var(--color-gold);font-style:italic;">«${sanitizeHTML(data.question)}»</p>
+        </div>`;
+    }
+
+    html += '<div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;justify-content:center;">';
+    data.cards.forEach(card => {
+        const imgFile = `${String(card.id + 2).padStart(2, '0')}.jpg`;
+        html += `
+            <div style="min-width:120px;text-align:center;background:rgba(30,58,30,0.6);border:1px solid var(--color-border);border-radius:16px;padding:14px;cursor:pointer;" onclick="openCardDetail(${card.id})">
+                <img src="/static/images/tarot/${imgFile}" alt="${sanitizeHTML(card.name)}" loading="lazy" style="width:80px;height:120px;object-fit:cover;border-radius:8px;${card.is_reversed ? 'transform:rotate(180deg);' : ''}">
+                <p style="font-size:12px;font-weight:600;color:var(--color-gold);margin-top:8px;">${sanitizeHTML(card.name)}</p>
+                <p style="font-size:10px;color:var(--color-text-lighter);">${sanitizeHTML(card.position)}</p>
+            </div>`;
+    });
+    html += '</div>';
+
+    // Базовое толкование каждой карты — из справочника (без AI).
+    data.cards.forEach(card => {
+        html += `
+            <div style="margin-top:16px;padding:14px;background:rgba(30,58,30,0.4);border:1px solid var(--color-border);border-radius:12px;">
+                <p style="font-size:13px;font-weight:600;color:var(--color-gold);margin-bottom:4px;">${sanitizeHTML(card.position)}: ${sanitizeHTML(card.name)}</p>
+                <p style="font-size:13px;color:var(--color-text-light);line-height:1.6;">${sanitizeHTML(card.meaning)}</p>
+                ${card.advice ? `<p style="font-size:12px;color:var(--color-gold);margin-top:6px;font-style:italic;">💡 ${sanitizeHTML(card.advice)}</p>` : ''}
+            </div>`;
+    });
+
+    // Пустой слот под AI-толкование. Наполняется чанками.
+    html += '<div id="spreadAiBlock"></div>';
+
+    // Пустой слот под плашку paywall (для не-Пламени) и чат.
+    html += '<div id="spreadPostBlock"></div>';
+
+    container.innerHTML = html;
+}
+
+async function streamSpread(type, question) {
+    const container = document.getElementById('spreadResult');
+    container.innerHTML = '<div style="text-align:center;padding:20px;"><p style="color:var(--color-text-lighter);">Тасую карты...</p></div>';
+
+    const isPaid = window.userTariff === 'Пламя';
+    let shellRendered = false;
+
+    await streamPost(
+        '/api/tarot/spread/stream',
+        { type: type, question: question },
+        {
+            onMeta: function(meta) {
+                shellRendered = true;
+                // Сохраняем для loadTarotSuggestions и чата.
+                window.__lastSpread = meta;
+                renderSpreadShell(meta, container);
+            },
+            onChunk: function(data) {
+                const block = document.getElementById('spreadAiBlock');
+                if (!block) return;
+                // Первый чанк — создаём обёртку AI-толкования.
+                let textEl = document.getElementById('spreadAiText');
+                if (!textEl) {
+                    block.innerHTML = `
+                        <div style="margin-top:16px;padding:14px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:12px;">
+                            <p style="font-size:13px;font-weight:600;color:var(--color-gold);margin-bottom:8px;">Толкование расклада</p>
+                            <p id="spreadAiText" style="font-size:13px;color:var(--color-text-light);line-height:1.7;"></p>
+                        </div>`;
+                    textEl = document.getElementById('spreadAiText');
+                }
+                textEl.textContent += (data.chunk || '');
+            },
+            onError: function(err) {
+                // 402 trial_limit приходит сюда.
+                container.innerHTML = `<div style="text-align:center;padding:20px;"><p style="color:var(--color-error);">${sanitizeHTML(err.message || 'Не удалось сделать расклад')}</p></div>`;
+            },
+            onDone: function(doneData) {
+                // Дописываем AI-толкование в объект расклада — для чат-подсказок
+                // и других мест, где ожидается полный ответ как из /api/tarot/spread.
+                if (window.__lastSpread) {
+                    window.__lastSpread.ai_interpretation = (doneData && doneData.ai_interpretation) || '';
+                }
+
+                // Если AI-текст не пришёл вообще (use_ai=False — гость/Искра),
+                // рисуем плашку paywall в блоке #spreadAiBlock.
+                const block = document.getElementById('spreadAiBlock');
+                if (block && !document.getElementById('spreadAiText') && !isPaid) {
+                    block.innerHTML = `
+                        <div style="margin-top:16px;padding:16px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:16px;text-align:center;">
+                            <div style="font-size:32px;margin-bottom:8px;">🔮</div>
+                            <p style="font-size:14px;color:var(--color-gold);font-weight:600;margin-bottom:8px;">Полное толкование расклада</p>
+                            <p style="font-size:12px;color:var(--color-text-lighter);margin-bottom:12px;line-height:1.6;">
+                                На тарифе Пламя ИИ анализирует все карты вместе и даёт глубокое толкование расклада с конкретными советами.
+                            </p>
+                            <button class="btn btn-share btn-sm" onclick="showPaywall()" style="width:100%;">Открыть полный разбор — ${window.paywallPrice || 599} ₽</button>
+                        </div>`;
+                }
+
+                // Чат-подсказки + дисклеймер — в #spreadPostBlock.
+                const postBlock = document.getElementById('spreadPostBlock');
+                if (!postBlock) return;
+
+                postBlock.innerHTML = `
+                    <div id="tarotChatBlock" style="margin-top:20px;max-width:100%;box-sizing:border-box;">
+                        <p style="font-weight:600;color:var(--color-gold);margin-bottom:4px;">Карты рассказали — это только начало</p>
+                        <p style="font-size:11px;color:var(--color-text-lighter);margin-bottom:12px;">Задайте вопрос о вашем раскладе</p>
+                        <div id="suggestedTarotQuestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+                            <span style="font-size:12px;color:var(--color-text-light);">Загрузка подсказок...</span>
+                        </div>
+                        <div class="input-group" style="display:flex;gap:8px;">
+                            <textarea id="tarotQuestion" placeholder="Напишите свой вопрос..." maxlength="500"
+                                style="resize:none;overflow:hidden;font-family:var(--font-main);font-size:14px;padding:10px 14px;border:2px solid var(--color-border);border-radius:12px;outline:none;color:var(--color-text);background:rgba(15,31,15,0.8);line-height:1.4;min-height:42px;transition:border-color 0.3s;width:100%;box-sizing:border-box;"></textarea>
+                            <button class="btn btn-primary btn-sm" onclick="askTarotQuestion()" style="flex-shrink:0;white-space:nowrap;">Спросить</button>
+                        </div>
+                        <div id="tarotAnswer" style="margin-top:12px;max-width:100%;box-sizing:border-box;word-wrap:break-word;overflow-wrap:break-word;"></div>
+                    </div>`;
+
+                setTimeout(function() { loadTarotSuggestions(window.__lastSpread); }, 200);
+            },
+        }
+    );
+}
+
+function renderSpreadResult(data, container) {
+    // Fallback: сохраняем для loadTarotSuggestions, как в стрим-пути.
+    window.__lastSpread = data;
+
+    let html = '';
+    
+    if (data.question && data.question !== 'Общий расклад') {
+        html += `<div style="text-align:center;margin-bottom:16px;">
+            <p style="font-size:12px;color:var(--color-text-lighter);">Ваш вопрос:</p>
+            <p style="font-size:14px;color:var(--color-gold);font-style:italic;">«${sanitizeHTML(data.question)}»</p>
+        </div>`;
+    }
+    
+    html += '<div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;justify-content:center;">';
+    
+    data.cards.forEach(card => {
+        const imgFile = `${String(card.id + 2).padStart(2, '0')}.jpg`;
+        html += `
+            <div style="min-width:120px;text-align:center;background:rgba(30,58,30,0.6);border:1px solid var(--color-border);border-radius:16px;padding:14px;cursor:pointer;" onclick="openCardDetail(${card.id})">
+                <img src="/static/images/tarot/${imgFile}" alt="${sanitizeHTML(card.name)}" loading="lazy" style="width:80px;height:120px;object-fit:cover;border-radius:8px;${card.is_reversed ? 'transform:rotate(180deg);' : ''}">
+                <p style="font-size:12px;font-weight:600;color:var(--color-gold);margin-top:8px;">${sanitizeHTML(card.name)}</p>
+                <p style="font-size:10px;color:var(--color-text-lighter);">${sanitizeHTML(card.position)}</p>
+            </div>`;
+    });
+    
+    html += '</div>';
+    
+    // Толкование
+    data.cards.forEach(card => {
+        html += `
+            <div style="margin-top:16px;padding:14px;background:rgba(30,58,30,0.4);border:1px solid var(--color-border);border-radius:12px;">
+                <p style="font-size:13px;font-weight:600;color:var(--color-gold);margin-bottom:4px;">${sanitizeHTML(card.position)}: ${sanitizeHTML(card.name)}</p>
+                <p style="font-size:13px;color:var(--color-text-light);line-height:1.6;">${sanitizeHTML(card.meaning)}</p>
+                ${card.advice ? `<p style="font-size:12px;color:var(--color-gold);margin-top:6px;font-style:italic;">💡 ${sanitizeHTML(card.advice)}</p>` : ''}
+            </div>`;
+    });
+    
+    // AI-интерпретация
+    if (data.ai_interpretation) {
+        html += `
+            <div style="margin-top:16px;padding:14px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:12px;">
+                <p style="font-size:13px;font-weight:600;color:var(--color-gold);margin-bottom:8px;">  Толкование расклада</p>
+                <p style="font-size:13px;color:var(--color-text-light);line-height:1.7;">${sanitizeHTML(data.ai_interpretation)}</p>
+            </div>`;
+    }
+    else {
+        html += `
+            <div style="margin-top:16px;padding:16px;background:rgba(255,213,79,0.05);border:1px solid var(--color-gold);border-radius:16px;text-align:center;">
+                <div style="font-size:32px;margin-bottom:8px;">🔮</div>
+                <p style="font-size:14px;color:var(--color-gold);font-weight:600;margin-bottom:8px;">Полное толкование расклада</p>
+                <p style="font-size:12px;color:var(--color-text-lighter);margin-bottom:12px;line-height:1.6;">
+                    На тарифе Пламя ИИ анализирует все карты вместе и даёт глубокое толкование расклада с конкретными советами.
+                </p>
+                <button class="btn btn-share btn-sm" onclick="showPaywall()" style="width:100%;">Открыть полный разбор — {{ PAYWALL_PRICE_RUB }} ₽</button>
+            </div>`;
+    }
+    // Чат с подсказками
+    html += `
+        <div id="tarotChatBlock" style="margin-top:20px;max-width:100%;box-sizing:border-box;">
+            <p style="font-weight:600;color:var(--color-gold);margin-bottom:4px;">Карты рассказали — это только начало</p>
+            <p style="font-size:11px;color:var(--color-text-lighter);margin-bottom:12px;">Задайте вопрос о вашем раскладе</p>
+            <div id="suggestedTarotQuestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+                <span style="font-size:12px;color:var(--color-text-light);">Загрузка подсказок...</span>
+            </div>
+            <div class="input-group" style="display:flex;gap:8px;">
+                <textarea id="tarotQuestion" placeholder="Напишите свой вопрос..." maxlength="500"
+                    style="resize:none;overflow:hidden;font-family:var(--font-main);font-size:14px;padding:10px 14px;border:2px solid var(--color-border);border-radius:12px;outline:none;color:var(--color-text);background:rgba(15,31,15,0.8);line-height:1.4;min-height:42px;transition:border-color 0.3s;width:100%;box-sizing:border-box;"></textarea>
+                <button class="btn btn-primary btn-sm" onclick="askTarotQuestion()" style="flex-shrink:0;white-space:nowrap;">Спросить</button>
+            </div>
+            <div id="tarotAnswer" style="margin-top:12px;max-width:100%;box-sizing:border-box;word-wrap:break-word;overflow-wrap:break-word;"></div>
+        </div>
+    `;
+
+    container.innerHTML = html;
+
+    // Загружаем подсказки
+    setTimeout(function() {
+        loadTarotSuggestions(data);
+    }, 200);
+}
+
+// ========== БИБЛИОТЕКА ==========
+async function searchCards() {
+    const query = document.getElementById('cardSearch')?.value || '';
+    const arcana = document.getElementById('filterArcana')?.value || 'all';
+    const suit = document.getElementById('filterSuit')?.value || 'all';
+    const sort = document.getElementById('filterSort')?.value || 'number';
+    loadLibraryCards(query, arcana, suit, sort);
+}
+
+function randomCard() {
+    const randomId = Math.floor(Math.random() * 78);
+    openCardDetail(randomId);
+}
+
+// ========== ИЗБРАННОЕ ==========
+function getFavorites() {
+    try { return JSON.parse(localStorage.getItem('tarotFavorites') || '[]'); }
+    catch(e) { return []; }
+}
+
+function saveFavorites(favs) {
+    localStorage.setItem('tarotFavorites', JSON.stringify(favs));
+}
+
+function toggleFavorite(cardId) {
+    let favs = getFavorites();
+    if (favs.includes(cardId)) {
+        favs = favs.filter(id => id !== cardId);
+    } else {
+        favs.push(cardId);
+    }
+    saveFavorites(favs);
+    renderFavorites();
+}
+
+function renderFavorites() {
+    const favs = getFavorites();
+    const list = document.getElementById('favoritesList');
+    if (!list) return;
+    if (favs.length === 0) {
+        list.innerHTML = '<p style="color:var(--color-text-lighter);">Нет избранных карт</p>';
+        return;
+    }
+    let html = '';
+    favs.forEach(cid => {
+        html += `<div style="min-width:80px;text-align:center;cursor:pointer;padding:8px;" onclick="openCardDetail(${cid})">
+            <div style="width:60px;height:90px;margin:0 auto;background:rgba(255,213,79,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--color-gold);">${cid+2}</div>
+            <button class="btn btn-outline btn-sm" style="margin-top:4px;font-size:10px;" onclick="event.stopPropagation();toggleFavorite(${cid})">Убрать</button>
+        </div>`;
+    });
+    list.innerHTML = html;
+}
+
+// ========== СТАТИСТИКА ==========
+async function loadTarotStats() {
+    const container = document.getElementById('tarotStats');
+    if (!container) return;
+    try {
+        const res = await fetch('/api/tarot/daily/history');
+        const history = await res.json();
+        const res2 = await fetch('/api/profile/spreads');
+        const spreads = await res2.json();
+        
+        let html = '';
+        html += `<p>Всего карт дня: <strong style="color:var(--color-gold);">${history.length}</strong></p>`;
+        html += `<p>Всего раскладов: <strong style="color:var(--color-gold);">${spreads.length}</strong></p>`;
+        
+        if (history.length > 0) {
+            const lastCard = history[0];
+            html += `<p>Последняя карта дня: <strong style="color:var(--color-gold);">${sanitizeHTML(lastCard.name_ru)}</strong> (${lastCard.date})</p>`;
+            
+            const counts = {};
+            history.forEach(h => counts[h.name_ru] = (counts[h.name_ru] || 0) + 1);
+            const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0,3);
+            if (sorted.length > 0) {
+                html += '<p>Часто выпадающие карты:</p><ul style="list-style:none;padding:0;">';
+                sorted.forEach(([name, count]) => html += `<li> ${sanitizeHTML(name)} — ${count} раз(а)</li>`);
+                html += '</ul>';
+            }
+        }
+        container.innerHTML = html || '<p style="color:var(--color-text-lighter);">Пока нет статистики</p>';
+    } catch(e) {
+        container.innerHTML = '<p style="color:var(--color-text-lighter);">Пока нет статистики</p>';
+    }
+}
+
+// ========== ЗАГРУЗКА ==========
+window.addEventListener('DOMContentLoaded', function() {
+    loadLibraryCards();
+});
+
+if (typeof showContextOnboarding === 'function') {
+    showContextOnboarding('#tarotTabs',
+        'Выберите расклад и задайте вопрос картам — получите толкование. Библиотека поможет изучить значение каждой карты.',
+        'tarot_library');
+}
+
+async function loadTarotSuggestions(spreadData) {
+    var container = document.getElementById('suggestedTarotQuestions');
+    if (!container) return;
+    
+    var fullText = '';
+    if (spreadData.ai_interpretation) {
+        fullText = spreadData.ai_interpretation;
+    } else {
+        fullText = spreadData.cards.map(function(c) { return c.position + ': ' + c.name + ' — ' + c.meaning; }).join(' ');
+    }
+    
+    if (!fullText) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    try {
+        var res = await fetch('/api/numer/dialogue', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                message: 'Сгенерируй 3 вопроса-подсказки СТРОГО на основе этого текста. Не используй карты, знаки зодиака или темы, которых нет в тексте. Каждый вопрос должен отталкиваться от конкретной фразы из текста. СТРОГО 6-14 слов, каждый заканчивается на «?», безлично, без эмодзи.',
+                section: 'tarot',
+                context: { full_text: fullText.substring(0, 1500) }
+            })
+        });
+        var data = await res.json();
+        
+        if (data.answer) {
+            var questions = data.answer.split('\n').filter(function(line) { 
+                return line.trim().length > 0 && line.trim().endsWith('?'); 
+            }).slice(0, 3);
+            
+            if (questions.length > 0) {
+                container.innerHTML = questions.map(function(q) {
+                    var attrQ = String(q).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                    return '<span class="tarot-suggested-q" data-question="' + attrQ + '" style="display:inline-block;padding:8px 14px;font-size:12px;color:var(--color-text-light);cursor:pointer;background:rgba(30,58,30,0.8);border:1px solid var(--color-border);border-radius:18px;transition:all 0.2s ease;" onmouseover="this.style.borderColor=\'var(--color-gold)\';this.style.color=\'var(--color-gold)\';" onmouseout="this.style.borderColor=\'var(--color-border)\';this.style.color=\'var(--color-text-light)\';">' + sanitizeHTML(q) + '</span>';
+                }).join('');
+
+                if (!container.dataset.clickBound) {
+                    container.dataset.clickBound = '1';
+                    container.addEventListener('click', function(e) {
+                        var item = e.target.closest('.tarot-suggested-q');
+                        if (item && item.dataset.question) {
+                            askSuggestedTarotQuestion(item.dataset.question);
+                        }
+                    });
+                }
+                return;
+            }
+        }
+    } catch(e) {}
+    
+    container.innerHTML = '';
+}
+
+function askSuggestedTarotQuestion(question) {
+    var input = document.getElementById('tarotQuestion');
+    if (input) {
+        input.value = question;
+        input.style.height = 'auto';
+        input.style.height = input.scrollHeight + 'px';
+    }
+}
+
+async function askTarotQuestion() {
+    var question = document.getElementById('tarotQuestion')?.value.trim();
+    if (!question) return;
+    
+    var answerBlock = document.getElementById('tarotAnswer');
+    
+    answerBlock.innerHTML += '<div style="display:flex;justify-content:flex-end;margin-top:8px;"><div style="background:rgba(76,175,80,0.35);border-radius:18px 18px 4px 18px;padding:10px 16px;max-width:90%;font-size:14px;color:var(--color-text);line-height:1.5;word-wrap:break-word;">' + sanitizeHTML(question) + '</div></div>';
+    
+    document.getElementById('tarotQuestion').value = '';
+    
+    var typingDiv = document.createElement('div');
+    typingDiv.style.cssText = 'display:flex;justify-content:flex-start;margin-top:4px;';
+    typingDiv.innerHTML = '<div style="background:rgba(30,58,30,0.6);border-radius:18px 18px 18px 4px;padding:10px 16px;max-width:90%;font-size:14px;color:var(--color-text-lighter);">Печатает...</div>';
+    answerBlock.appendChild(typingDiv);
+    
+    try {
+        var res = await fetch('/api/numer/dialogue', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: question, section: 'tarot' })
+        });
+        var data = await res.json();
+        typingDiv.remove();
+        if (data.answer) {
+            answerBlock.innerHTML += '<div style="display:flex;justify-content:flex-start;margin-top:4px;"><div style="background:rgba(30,58,30,0.6);border-radius:18px 18px 18px 4px;padding:10px 16px;max-width:90%;font-size:14px;color:var(--color-text-light);line-height:1.5;word-wrap:break-word;">' + sanitizeHTML(data.answer) + '</div></div>';
+        }
+    } catch(e) {
+        typingDiv.remove();
+    }
+    
+    answerBlock.scrollTop = answerBlock.scrollHeight;
+}
+</script>
+{% endblock %}

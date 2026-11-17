@@ -1,0 +1,606 @@
+{% extends "base.html" %}
+{% block title %}Денежный код по дате рождения — рассчитать онлайн бесплатно | Unanum{% endblock %}
+{% block meta_description %}Узнайте свой денежный код из 4 цифр по дате рождения. Персональный разбор каждой цифры: как привлечь деньги и раскрыть финансовый потенциал.{% endblock %}
+{% block content %}
+<section class="page-section" style="padding-top: 80px;" data-numer-section="financial_code">
+    <div class="container" style="padding: 0 16px;">
+        <h1 class="page-title" style="font-size:clamp(2rem, 5vw, 2.5rem);font-weight:700;background:linear-gradient(135deg, #d4a843, #d4879a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;">Денежный код</h1>
+        <p class="page-subtitle" style="color: var(--color-text);">Узнай свой уникальный денежный код по дате рождения</p>
+        
+        <div class="panel-form" style="max-width: 400px; width: 100%; margin: 0 auto 24px; padding: 0 12px; box-sizing: border-box;">
+            <form id="financialCodeForm" autocomplete="off" style="width:100%;">
+                <div class="input-group" style="margin-bottom: 12px; width: 100%;">
+                    <label>Дата рождения</label>
+                    <input type="date" name="birth_date" required id="finBirthDate">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; border-radius: 50px; box-sizing: border-box;">Рассчитать</button>
+            </form>
+            <div class="panel-result" id="result-financial-code" style="margin-top: 20px; max-width: 100%; box-sizing: border-box; word-wrap: break-word; overflow-wrap: break-word;"></div>
+        </div>
+
+        <div id="finCodeInfo" style="max-width: 400px; width: 100%; margin: 0 auto; padding: 0 12px; box-sizing: border-box;">
+            <h3 style="font-size: 16px; font-weight: 600; color: var(--color-text); margin-bottom: 12px;">Что такое денежный код?</h3>
+            <p style="font-size: 13px; color: var(--color-text-light); line-height: 1.7; margin-bottom: 12px;">
+                Денежный код — это <strong>4 цифры</strong>, рассчитанные по дате рождения. Считается, что они отражают денежный потенциал человека: как именно ему легче всего зарабатывать и приумножать деньги.
+            </p>
+            <p style="font-size: 13px; color: var(--color-text-light); line-height: 1.7; margin-bottom: 12px;">
+                Каждая цифра кода отвечает за свой аспект:
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
+                <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: rgba(30, 58, 30, 0.6); border-radius: 10px; border: 1px solid var(--color-border);">
+                    <span style="font-size: 18px; font-weight: 700; color: var(--color-gold); min-width: 24px;">1</span>
+                    <div>
+                        <span style="font-size: 12px; font-weight: 600; color: var(--color-text);">Первая цифра (день рождения)</span>
+                        <p style="font-size: 11px; color: var(--color-text-lighter); margin-top: 2px;">Показывает, какую энергию денег вы несёте с рождения</p>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: rgba(30, 58, 30, 0.6); border-radius: 10px; border: 1px solid var(--color-border);">
+                    <span style="font-size: 18px; font-weight: 700; color: var(--color-gold); min-width: 24px;">2</span>
+                    <div>
+                        <span style="font-size: 12px; font-weight: 600; color: var(--color-text);">Вторая цифра (месяц рождения)</span>
+                        <p style="font-size: 11px; color: var(--color-text-lighter); margin-top: 2px;">Отражает, через какую сферу деньги приходят легче всего</p>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: rgba(30, 58, 30, 0.6); border-radius: 10px; border: 1px solid var(--color-border);">
+                    <span style="font-size: 18px; font-weight: 700; color: var(--color-gold); min-width: 24px;">3</span>
+                    <div>
+                        <span style="font-size: 12px; font-weight: 600; color: var(--color-text);">Третья цифра (год рождения)</span>
+                        <p style="font-size: 11px; color: var(--color-text-lighter); margin-top: 2px;">Указывает на масштаб и главное направление финансового пути</p>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: rgba(30, 58, 30, 0.6); border-radius: 10px; border: 1px solid var(--color-border);">
+                    <span style="font-size: 18px; font-weight: 700; color: var(--color-gold); min-width: 24px;">4</span>
+                    <div>
+                        <span style="font-size: 12px; font-weight: 600; color: var(--color-text);">Четвёртая цифра (сумма всех цифр)</span>
+                        <p style="font-size: 11px; color: var(--color-text-lighter); margin-top: 2px;">Итоговая энергия — как все три цифры взаимодействуют вместе</p>
+                    </div>
+                </div>
+            </div>
+            <p style="font-size: 13px; color: var(--color-text-light); line-height: 1.7; margin-bottom: 12px;">
+                <strong>Пример:</strong> Для даты рождения <strong>15.03.1990</strong> денежный код будет <strong>6311</strong>:
+            </p>
+            <div style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px;">
+                <div style="background: rgba(30, 58, 30, 0.6); border: 1px solid var(--color-border); border-radius: 12px; padding: 10px 14px; text-align: center; min-width: 55px;">
+                    <div style="font-size: 20px; font-weight: 600; color: var(--color-gold);">6</div>
+                    <div style="font-size: 9px; color: var(--color-text-lighter);">День 15 → 1+5=6</div>
+                </div>
+                <div style="background: rgba(30, 58, 30, 0.6); border: 1px solid var(--color-border); border-radius: 12px; padding: 10px 14px; text-align: center; min-width: 55px;">
+                    <div style="font-size: 20px; font-weight: 600; color: var(--color-gold);">3</div>
+                    <div style="font-size: 9px; color: var(--color-text-lighter);">Месяц 03 → 3</div>
+                </div>
+                <div style="background: rgba(30, 58, 30, 0.6); border: 1px solid var(--color-border); border-radius: 12px; padding: 10px 14px; text-align: center; min-width: 55px;">
+                    <div style="font-size: 20px; font-weight: 600; color: var(--color-gold);">1</div>
+                    <div style="font-size: 9px; color: var(--color-text-lighter);">Год 1990 → 1+9+9+0=19 → 1</div>
+                </div>
+                <div style="background: rgba(30, 58, 30, 0.6); border: 1px solid var(--color-border); border-radius: 12px; padding: 10px 14px; text-align: center; min-width: 55px;">
+                    <div style="font-size: 20px; font-weight: 600; color: var(--color-gold);">1</div>
+                    <div style="font-size: 9px; color: var(--color-text-lighter);">Сумма всех → 28 → 1</div>
+                </div>
+            </div>
+            <p style="font-size: 11px; color: var(--color-text-lighter); line-height: 1.5; font-style: italic;">
+                Это игровая методика, а не строгая наука. Она не гарантирует богатство, но может быть полезным инструментом для самоанализа.
+            </p>
+        </div>
+    </div>
+</section>
+
+<script>
+
+function updateFinLimitText() {
+    updateQuestionLimitText('finQuestionLimit');
+}
+
+// ========== ОТПРАВКА ФОРМЫ ==========
+document.getElementById('financialCodeForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    document.getElementById('finCodeInfo').style.display = 'none';
+    
+    const birthDate = (data.birth_date || '').trim();
+    if (!birthDate) return;
+    
+    await streamFinCode(birthDate);
+});
+
+// ========== СТРИМ ФИНАНСОВОГО КОДА ==========
+
+async function streamFinCode(birthDate) {
+    const resultDiv = document.getElementById('result-financial-code');
+    resultDiv.classList.add('panel-result');
+    resultDiv.style.overflow = 'visible';
+    resultDiv.style.maxHeight = 'none';
+
+    // Объект-накопитель: собирается из блоков. После onDone по структуре
+    // совпадает с ответом старого /api/financial-code — благодаря этому
+    // loadFinSuggestions и askFinQuestion работают без изменений.
+    const result = {};
+
+    // Флаги для контроля рендера: начался ли полный текст цифры.
+    // teaser-chunk игнорируется, если полный текст уже начал печататься.
+    const digitFullStarted = [false, false, false, false];
+
+    const isPaid = window.userTariff === 'Пламя';
+
+    // Сразу — инлайн-скелет. Заменится на шапку кода в onMeta.
+    resultDiv.innerHTML = `
+        <div style="text-align:center;padding:20px;">
+            <div style="display:inline-block;width:36px;height:36px;border:3px solid var(--color-border);border-top-color:var(--color-gold);border-radius:50%;animation:spin 1s linear infinite;"></div>
+            <p style="font-size:13px;color:var(--color-text-lighter);margin-top:12px;">Считаем твой код...</p>
+        </div>`;
+
+    await streamPost(
+        '/api/financial-code/stream',
+        { birth_date: birthDate },
+        {
+            onMeta: function(meta) {
+                result.code = meta.code;
+                result.digits_breakdown = meta.digits_breakdown;
+                result.upgrade_hint = meta.upgrade_hint || false;
+                result.is_plamya = meta.is_plamya || false;
+
+                // Гостю: только код + интрига (без 4 цифр и AI).
+                if (meta.upgrade_hint) {
+                    resultDiv.innerHTML = renderFinCodeGuest(meta);
+                    return;
+                }
+
+                // Шапка: код + 4 колонки-скелеты.
+                resultDiv.innerHTML = renderFinCodeHeader(meta);
+            },
+
+            onChunk: function(data) {
+                const name = data.name;
+                const phase = data.phase;
+                const chunk = data.chunk || '';
+                if (!name || !chunk) return;
+
+                const m = /^digit_(\d)$/.exec(name);
+                if (!m) return;
+                const idx = parseInt(m[1], 10);
+
+                const textEl = document.getElementById('finDigitText_' + idx);
+                if (!textEl) return;
+
+                if (phase === 'teaser') {
+                    // Полный текст уже пишется — teaser больше не нужен.
+                    if (digitFullStarted[idx]) return;
+                    if (!textEl.dataset.teaserStarted) {
+                        textEl.textContent = '';
+                        textEl.dataset.teaserStarted = '1';
+                    }
+                    textEl.textContent += chunk;
+                } else if (phase === 'full') {
+                    if (!digitFullStarted[idx]) {
+                        textEl.textContent = '';
+                        digitFullStarted[idx] = true;
+                    }
+                    textEl.textContent += chunk;
+                }
+            },
+
+            onBlock: function(block) {
+                const name = block.name;
+                const value = block.value;
+                if (!name) return;
+
+                // Сохраняем в result для чата и подсказок.
+                // Ключи совпадают с полями старого /api/financial-code.
+                if (name.startsWith('digit_')) {
+                    const idx = parseInt(name.split('_')[1], 10);
+                    if (result.digits_breakdown && result.digits_breakdown[idx]) {
+                        result.digits_breakdown[idx].meaning = value || '';
+                    }
+                    // Финальный текст цифры — заменяем содержимое.
+                    const textEl = document.getElementById('finDigitText_' + idx);
+                    if (textEl && value) {
+                        textEl.textContent = value;
+                    }
+                    return;
+                }
+
+                if (name.startsWith('teaser_')) {
+                    // teaser_N используется как подсказка для рендера, но
+                    // финальное поле — digit_N. В result.teaser не пишем
+                    // (в старом формате teaser лежал на digits_breakdown[idx].teaser).
+                    const idx = parseInt(name.split('_')[1], 10);
+                    if (result.digits_breakdown && result.digits_breakdown[idx]) {
+                        result.digits_breakdown[idx].teaser = value || '';
+                    }
+                    return;
+                }
+
+                if (name === 'summary')          result.ai_summary = value;
+                else if (name === 'life_path_link') result.life_path_link = value;
+                else if (name === 'detailed')    result.detailed_analysis = value;
+                else if (name === 'personal_recs') {
+                    // Разбиваем на 3 рекомендации — как старая функция
+                    // personal_recommendations (в main.js).
+                    if (value) {
+                        const recs = value.split(/\n+/).map(s => s.trim()).filter(Boolean);
+                        result.personal_recommendations = recs.slice(0, 3);
+                    }
+                }
+                else if (name === 'oracle_full') result.oracle_full_analysis = value;
+                else if (name === 'forecast_0' || name === 'forecast_1' || name === 'forecast_2') {
+                    // Собираем в oracle_forecast как в старом формате.
+                    if (!result.oracle_forecast) result.oracle_forecast = [];
+                    const idx = parseInt(name.split('_')[1], 10);
+                    // Год/личное число года в блок не передаются — берём из
+                    // прогнозного списка, если он был посчитан (обычно при
+                    // премиум-тарифе есть partner/forecast_years). Иначе
+                    // используем текущий + offset.
+                    const yearNow = new Date().getFullYear();
+                    const year = yearNow + idx;
+                    result.oracle_forecast.push({ year: year, pn: null, text: value || '' });
+                }
+                else if (name === 'ritual')      result.oracle_rituals = value;
+                else if (name === 'partner')     result.oracle_partner_analysis = value;
+
+                // Рендер премиум-блоков по мере прихода (только Пламя).
+                // Эти секции идут после цифр — там уже есть место.
+                if (result.is_plamya) {
+                    renderFinCodePremiumBlock(name, value);
+                }
+            },
+
+            onError: function(err) {
+                resultDiv.innerHTML = '<p style="color:var(--color-error);text-align:center;padding:20px;">' +
+                    sanitizeHTML(err.message || 'Не удалось получить ответ. Попробуйте ещё раз.') + '</p>';
+            },
+
+            onDone: function() {
+                window.__lastFinCode = result.code;
+                window.__lastFinDigits = result.digits_breakdown;
+                window.__lastFinLifePath = result.life_path || null;
+
+                // Для бесплатных — плашка «Открыть всё».
+                if (!result.is_plamya) {
+                    renderFinCodeTeaserBlocks(result);
+                }
+
+                // Дорисовываем премиум-блоки, которые не пришли (упали или None).
+                if (result.is_plamya) {
+                    renderFinCodePremiumFinal(result);
+                }
+
+                // Чат-подсказки и дисклеймер — как в старой версии.
+                const postDiv = document.getElementById('finPost');
+                if (!postDiv) return;
+
+                const chatHtml = `
+                    <div style="margin-top:20px;max-width:100%;box-sizing:border-box;" id="finChatBlock">
+                        <p style="font-weight:600;color:var(--color-gold);margin-bottom:4px;">Ваш денежный код — это только начало</p>
+                        <p style="font-size:11px;color:var(--color-text-lighter);margin-bottom:12px;">Задайте вопрос о своих деньгах или карьере</p>
+                        <div id="suggestedFinQuestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+                            <span style="font-size:12px;color:var(--color-text-light);">Загрузка подсказок...</span>
+                        </div>
+                        <div class="input-group" style="display:flex;gap:8px;">
+                            <textarea id="finQuestion" placeholder="Напишите свой вопрос..." maxlength="500"
+                                rows="1"
+                                oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';"
+                                style="resize:none;overflow:hidden;
+                                font-family:var(--font-main);font-size:14px;
+                                padding:10px 14px;border:2px solid var(--color-border);border-radius:12px;
+                                outline:none;color:var(--color-text);background:rgba(15,31,15,0.8);line-height:1.4;
+                                min-height:42px;transition:border-color 0.3s;width:100%;box-sizing:border-box;"></textarea>
+                            <button class="btn btn-primary btn-sm" onclick="askFinQuestion()" style="flex-shrink:0;white-space:nowrap;">Спросить</button>
+                        </div>
+                        <p id="finQuestionLimit" style="font-size:11px;color:var(--color-text-lighter);margin-top:8px;text-align:center;"></p>
+                        <div id="finAnswer" style="margin-top:12px;max-width:100%;box-sizing:border-box;word-wrap:break-word;overflow-wrap:break-word;"></div>
+                    </div>`;
+                postDiv.insertAdjacentHTML('beforeend', chatHtml);
+                updateFinLimitText();
+                setTimeout(function() { loadFinSuggestions(result); }, 200);
+
+                postDiv.insertAdjacentHTML('beforeend', '<p style="font-size:10px;color:var(--color-text-lighter);margin-top:16px;text-align:center;font-style:italic;line-height:1.4;max-width:100%;box-sizing:border-box;">Важное напоминание: Это игровая методика, а не строгая наука. Она не гарантирует богатство и не заменяет финансовую грамотность, образование и труд. Но как инструмент для самоанализа и поиска своего пути - может быть полезной.</p>');
+            },
+        }
+    );
+}
+
+// ========== РЕНДЕР ШАПКИ ==========
+
+function renderFinCodeHeader(meta) {
+    let html = '';
+    html += `<div class="result-code" style="font-size:50px;">${sanitizeHTML(meta.code)}</div>`;
+    html += `<div class="result-label">Твой денежный код</div>`;
+
+    html += '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:12px 0;">';
+    for (let i = 0; i < meta.digits_breakdown.length; i++) {
+        const d = meta.digits_breakdown[i];
+        html += `
+            <div style="text-align:center;min-width:65px;">
+                <div style="font-size:24px;font-weight:600;color:var(--color-gold);">${d.digit}</div>
+                <div style="font-size:10px;color:var(--color-text-lighter);">${sanitizeHTML(d.position)}</div>
+                <div id="finDigitText_${i}" style="font-size:11px;color:var(--color-text-light);line-height:1.4;margin-top:4px;">
+                    <span style="color:var(--color-text-lighter);">Загружается...</span>
+                </div>
+            </div>`;
+    }
+    html += '</div>';
+
+    // Дальше — слоты под summary и премиум. Наполняются по мере прихода блоков.
+    html += '<div id="finSummarySlot"></div>';
+    html += '<div id="finLifePathSlot"></div>';
+    html += '<div id="finPremiumSlot"></div>';
+    html += '<div id="finPost"></div>';
+
+    return html;
+}
+
+// ========== ГОСТЮ: только код + интрига ==========
+
+function renderFinCodeGuest(meta) {
+    return `
+        <div class="result-code" style="font-size:50px;">${sanitizeHTML(meta.code)}</div>
+        <div class="result-label">Твой денежный код</div>
+        <p style="font-size:13px;color:var(--color-text-light);text-align:center;margin-top:12px;">
+            Хочешь увидеть разбор каждой цифры? Войди и узнай, откуда идут деньги.
+        </p>
+        <div style="margin-top:16px;text-align:center;">
+            <button class="btn btn-share" onclick="openAuthModal()" style="width:100%;">Войти и открыть разбор</button>
+        </div>`;
+}
+
+fetch('/api/numer/portrait')
+    .then(r => r.json())
+    .then(portrait => {
+        if (portrait.birth_date && !document.querySelector('[name="birth_date"]').value) {
+            document.querySelector('[name="birth_date"]').value = portrait.birth_date;
+        }
+    });
+
+async function loadFinSuggestions(apiResult) {
+    const container = document.getElementById('suggestedFinQuestions');
+    if (!container) return;
+    const isPaid = window.userTariff === 'Пламя';
+    let visibleText = '';
+    if (!isPaid && apiResult.digits_breakdown) {
+        visibleText = apiResult.digits_breakdown.map(d => d.teaser || '').join(' ');
+    }
+    if (!visibleText) {
+        visibleText = document.getElementById('result-financial-code').textContent.trim();
+    }
+    if (!visibleText) return;
+    try {
+        const res = await fetch('/api/financial-code/suggestions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ full_text: visibleText })
+        });
+        const data = await res.json();
+        if (data.suggestions && data.suggestions.length > 0) {
+            container.innerHTML = data.suggestions.map(q => {
+                const attrQ = String(q).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                return `<span class="suggested-question fin-suggested-q" data-question="${attrQ}"
+                    style="display:inline-block;padding:8px 14px;
+                    font-size:12px;color:var(--color-text-light);cursor:pointer;
+                    background:rgba(30,58,30,0.8);border:1px solid var(--color-border);border-radius:18px;
+                    transition:all 0.2s ease;"
+                    onmouseover="this.style.borderColor='var(--color-gold)';this.style.color='var(--color-gold)';"
+                    onmouseout="this.style.borderColor='var(--color-border)';this.style.color='var(--color-text-light)';"
+                >${sanitizeHTML(q)}</span>`;
+            }).join('');
+
+            if (!container.dataset.clickBound) {
+                container.dataset.clickBound = '1';
+                container.addEventListener('click', function(e) {
+                    const item = e.target.closest('.fin-suggested-q');
+                    if (item && item.dataset.question) {
+                        askSuggestedFinQuestion(item.dataset.question);
+                    }
+                });
+            }
+        }
+    } catch (e) {
+        container.innerHTML = '';
+    }
+}
+
+function askSuggestedFinQuestion(question) {
+    const input = document.getElementById('finQuestion');
+    if (input) {
+        input.value = question;
+        input.style.height = 'auto';
+        input.style.height = input.scrollHeight + 'px';
+    }
+}
+
+// ========== ПОСТРОЕНИЕ ПРЕМИУМ-БЛОКОВ (только Пламя) ==========
+
+function renderFinCodePremiumBlock(name, value) {
+    if (!value) return;
+    const premiumSlot = document.getElementById('finPremiumSlot');
+    if (!premiumSlot) return;
+
+    // Мапинг name → метка. Формат блока совпадает с formatFinancialCode
+    // в main.js (используем ту же вёрстку).
+    const labels = {
+        'detailed': 'Подробный анализ',
+        'oracle_full': 'Полный нумерологический разбор',
+        'ritual': 'Персональный денежный ритуал',
+        'partner': 'Совместимость финкодов',
+    };
+
+    if (name === 'summary') {
+        const slot = document.getElementById('finSummarySlot');
+        if (slot) {
+            slot.innerHTML = `<blockquote style="border-left:3px solid var(--color-gold);margin:16px 0;padding:8px 16px;font-size:14px;color:var(--color-text-light);line-height:1.6;">${sanitizeHTML(value)}</blockquote>`;
+        }
+        return;
+    }
+
+    if (name === 'life_path_link') {
+        const slot = document.getElementById('finLifePathSlot');
+        if (slot) {
+            slot.innerHTML = `<div style="margin-top:16px;"><span style="color:var(--color-gold);font-weight:600;">Связь с Числом Жизненного Пути</span><p style="font-size:14px;color:var(--color-text-light);line-height:1.6;">${sanitizeHTML(value)}</p></div>`;
+        }
+        return;
+    }
+
+    if (name === 'personal_recs') {
+        const recs = value.split(/\n+/).map(s => s.trim()).filter(Boolean).slice(0, 3);
+        let html = '<div style="margin-top:16px;"><span style="color:var(--color-gold);font-weight:600;">Персональные рекомендации</span>';
+        recs.forEach(r => {
+            html += `<p style="font-size:14px;color:var(--color-text-light);line-height:1.6;">— ${sanitizeHTML(r)}</p>`;
+        });
+        html += '</div>';
+        premiumSlot.insertAdjacentHTML('beforeend', html);
+        return;
+    }
+
+    if (name.startsWith('forecast_')) {
+        // Прогнозы собираем в один блок при финале — по одному собирать
+        // сложнее, они приходят не по порядку.
+        return;
+    }
+
+    const label = labels[name];
+    if (!label) return;
+
+    premiumSlot.insertAdjacentHTML('beforeend',
+        `<div style="margin-top:16px;"><span style="color:var(--color-gold);font-weight:600;">${label}</span><p style="font-size:14px;color:var(--color-text-light);line-height:1.6;">${sanitizeHTML(value)}</p></div>`);
+}
+
+function renderFinCodePremiumFinal(result) {
+    const premiumSlot = document.getElementById('finPremiumSlot');
+    if (!premiumSlot) return;
+
+    // Прогноз на 3 года — рисуем единым блоком, если пришёл хотя бы один.
+    if (result.oracle_forecast && result.oracle_forecast.length > 0) {
+        let html = '<div style="margin-top:16px;"><span style="color:var(--color-gold);font-weight:600;">Финансовый прогноз по годам</span>';
+        result.oracle_forecast.forEach(f => {
+            html += `<p style="font-size:14px;color:var(--color-text-light);line-height:1.6;"><strong>${f.year} год:</strong> ${sanitizeHTML(f.text)}</p>`;
+        });
+        html += '</div>';
+        premiumSlot.insertAdjacentHTML('beforeend', html);
+    }
+}
+
+// ========== ПЛАШКА «ОТКРЫТЬ ВСЁ» ДЛЯ БЕСПЛАТНЫХ ==========
+
+function renderFinCodeTeaserBlocks(result) {
+    // Для бесплатных: после summary — интрига «Открыть всё».
+    // Показываем те же разделы, что и в старом формате.
+    const slot = document.getElementById('finPremiumSlot');
+    if (!slot) return;
+
+    const premiumBlocks = [
+        { title: 'Подробный анализ кода', teaser: 'Как цифры взаимодействуют между собой и какая из них главная — ответ меняет стратегию заработка.' },
+        { title: 'Связь с Числом Жизненного Пути', teaser: 'Два ключевых числа могут усиливать друг друга или создавать скрытый конфликт.' },
+        { title: 'Персональные рекомендации', teaser: 'Три конкретных шага, основанных на ваших числах. Один из них способен удвоить доход.' },
+        { title: 'Финансовый прогноз на 3 года', teaser: 'Что ждать в ближайшие годы — каждый год несёт свою энергию.' },
+        { title: 'Персональный денежный ритуал', teaser: 'Ритуал, построенный на цифрах вашего кода и текущем лунном дне.' },
+        { title: 'Полный нумерологический разбор', teaser: 'Как все числа работают вместе.' },
+    ];
+
+    let html = '<div style="margin-top:20px;">';
+    premiumBlocks.forEach(block => {
+        html += `<div style="margin-bottom:14px;">
+            <span style="font-size:14px;color:var(--color-gold);font-weight:600;">🔒 ${block.title}</span>
+            <p style="font-size:12px;color:var(--color-text-lighter);margin:4px 0 0 0;line-height:1.5;">${block.teaser}</p>
+        </div>`;
+    });
+    html += `<button class="btn btn-share" onclick="showPaywall()" style="width:100%;margin-top:8px;">Открыть всё — ${window.paywallPrice || 599} ₽</button>`;
+    html += '</div>';
+
+    slot.innerHTML = html;
+}
+
+async function askFinQuestion() {
+    if (!canAskQuestion()) {
+        updateFinLimitText();
+        return;
+    }
+    const question = document.getElementById('finQuestion')?.value.trim();
+    if (!question) return;
+    
+    const answerBlock = document.getElementById('finAnswer');
+    
+    answerBlock.innerHTML += `
+        <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+            <div style="background:rgba(76,175,80,0.35);border-radius:18px 18px 4px 18px;padding:10px 16px;max-width:90%;font-size:14px;color:var(--color-text);line-height:1.5;word-wrap:break-word;overflow-wrap:break-word;">
+                ${sanitizeHTML(question)}
+            </div>
+        </div>`;
+    
+    document.getElementById('finQuestion').value = '';
+    
+    const askBtn = document.querySelector('#finQuestion + .btn');
+    if (askBtn) {
+        askBtn.disabled = true;
+        askBtn.textContent = 'Думаю...';
+    }
+    
+    const typingDiv = document.createElement('div');
+    typingDiv.style.cssText = 'display:flex;justify-content:flex-start;margin-top:4px;';
+    typingDiv.innerHTML = '<div style="background:rgba(30,58,30,0.6);border-radius:18px 18px 18px 4px;padding:10px 16px;max-width:90%;font-size:14px;color:var(--color-text-lighter);">Печатает...</div>';
+    answerBlock.appendChild(typingDiv);
+    
+    try {
+        const res = await fetch('/api/numer/dialogue', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                message: question, 
+                section: 'financial_code',
+                context: {
+                    code: window.__lastFinCode || '',
+                    digits: window.__lastFinDigits || [],
+                    life_path: window.__lastFinLifePath || null
+                }
+            })
+        });
+        const data = await res.json();
+        
+        typingDiv.remove();
+        
+        if (data.answer) {
+            answerBlock.innerHTML += `
+                <div style="display:flex;justify-content:flex-start;margin-top:4px;">
+                    <div style="background:rgba(30,58,30,0.6);border-radius:18px 18px 18px 4px;padding:10px 16px;max-width:90%;font-size:14px;color:var(--color-text-light);line-height:1.5;word-wrap:break-word;overflow-wrap:break-word;">
+                        ${sanitizeHTML(data.answer)}
+                    </div>
+                </div>`;
+        }
+        
+        markQuestionAsked();
+        updateFinLimitText();
+    } catch(e) {
+        typingDiv.remove();
+    }
+    
+    if (askBtn) {
+        askBtn.disabled = false;
+        askBtn.textContent = 'Спросить';
+    }
+    
+    answerBlock.scrollTop = answerBlock.scrollHeight;
+}
+
+
+
+const dateInput = document.getElementById('finBirthDate');
+dateInput.addEventListener('focus', function() {
+    this.style.color = 'var(--color-text)';
+});
+dateInput.addEventListener('blur', function() {
+    if (!this.value) {
+        this.style.color = 'rgba(143, 188, 143, 0.4)';
+    }
+});
+if (!dateInput.value) {
+    dateInput.style.color = 'rgba(143, 188, 143, 0.4)';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof showContextOnboarding === 'function') {
+        showContextOnboarding('#financialCodeForm', 
+            'Введи дату рождения — и узнаешь свой денежный код из 4 цифр. Каждая цифра отвечает за свой аспект финансов.',
+            'financial_code');
+    }
+});
+</script>
+{% endblock %}
