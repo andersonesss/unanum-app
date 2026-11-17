@@ -1,0 +1,128 @@
+name: unanum
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-unanum}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-unanum}
+    command:
+      - postgres
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - effective_cache_size=512MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - max_connections=50
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-unanum} -d ${POSTGRES_DB:-unanum}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - unanum
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru", "--save", ""]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - unanum
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: ${POSTGRES_USER:-unanum}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      DB_NAME: ${POSTGRES_DB:-unanum}
+      LISTEN_PORT: "6432"
+      POOL_MODE: transaction
+      DEFAULT_POOL_SIZE: "10"
+      MAX_CLIENT_CONN: "100"
+      AUTH_TYPE: md5
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - unanum
+
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_HOST: pgbouncer
+      POSTGRES_PORT: "6432"
+      LIMITER_STORAGE: redis://redis:6379/0
+      WEB_CONCURRENCY: "2"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_started
+    volumes:
+      - app_static:/app/static
+      - app_logs:/app/logs
+    networks:
+      - unanum
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - certbot_conf:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
+      - app_static:/var/www/unanum/static:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - unanum
+
+  certbot:
+    image: certbot/certbot:latest
+    restart: unless-stopped
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    depends_on:
+      nginx:
+        condition: service_started
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done"
+    networks:
+      - unanum
+
+volumes:
+  pg_data:
+  app_static:
+  app_logs:
+  certbot_conf:
+  certbot_www:
+
+networks:
+  unanum:
+    driver: bridge

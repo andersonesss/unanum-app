@@ -8,6 +8,7 @@ limits==5.8.0
 psycopg2-binary==2.9.12
 pytz==2026.2
 requests==2.34.2
+redis==5.2.1
 Werkzeug==3.1.8
 Pillow==10.4.0
 python-dotenv==1.0.1

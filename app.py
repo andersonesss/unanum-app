@@ -200,6 +200,7 @@ from utils.helpers import get_identifier, today_msk
 
 # ---------- Объекты аутентификации перенесены в utils/auth_core.py ----------
 from utils.auth_core import login_manager, generate_csrf_token, csrf_required
+from utils.image_pool import run_image_job
 
 # ---------- Flask ----------
 app = Flask(__name__)
@@ -883,16 +884,13 @@ def api_numer_dialogue_stream():
     )
 
 # ========== Share Card Generator ==========
-@app.route('/api/generate-card', methods=['POST'])
-@limiter.limit("5 per minute")
-@csrf_required
-def api_generate_card():
+def generate_card_png(data):
+    """Чистый рендер PNG-карточки (без Flask) — выполняется в ProcessPool."""
     from utils.share_card import load_font
     from PIL import Image, ImageDraw, ImageFont
     import io
     import textwrap
 
-    data = request.json or {}
     card_type = data.get('type', 'financial-code')
     title = data.get('title', 'unanum')
     subtitle = data.get('subtitle', '')
@@ -988,13 +986,20 @@ def api_generate_card():
     img.save(img_io, 'PNG', quality=95)
     img_io.seek(0)
 
-    response = app.response_class(
-        response=img_io.getvalue(),
-        status=200,
-        mimetype='image/png',
-        headers={'Content-Disposition': f'attachment;filename={card_type}-card.png'}
+    return (img_io.getvalue(), 'image/png', f'{card_type}-card.png')
+
+@app.route('/api/generate-card', methods=['POST'])
+@limiter.limit("5 per minute")
+@csrf_required
+def api_generate_card():
+    data = request.json or {}
+    body, mimetype, filename = run_image_job(generate_card_png, data)
+    return Response(
+        body,
+        mimetype=mimetype,
+        headers={'Content-Disposition': f'attachment;filename={filename}'}
     )
-    return response
+
 
 # ========== Share Citations ==========
 @app.route('/api/share/citations', methods=['POST'])
@@ -1200,24 +1205,16 @@ def api_delete_share_background(bg_id):
 
 
 # ========== Share Card Generator (с поддержкой GIF для Пламени) ==========
-@app.route('/api/generate-share-card', methods=['POST'])
-@limiter.limit("5 per minute")
-@csrf_required
-def api_generate_share_card():
+def generate_share_card(data):
+    """Чистый рендер share-карточки (PNG/GIF) — выполняется в ProcessPool."""
     from utils.share_card import load_font, render_text_layer, apply_text_shape
     from PIL import Image, ImageDraw, ImageFont
     import io
     import textwrap
 
-    data = request.json or {}
     text = data.get('text', '')
     template_id = data.get('template_id', None)
     tariff = data.get('tariff', 'Искра')
-
-    if not text:
-        return jsonify({"error": "Текст не передан"}), 400
-    if len(text) > 3000:
-        return jsonify({"error": "Текст слишком длинный (макс. 3000 символов)"}), 400
 
     width, height = 1080, 1920
     margin = 80
@@ -1490,13 +1487,7 @@ def api_generate_share_card():
         )
         gif_io.seek(0)
         
-        response = app.response_class(
-            response=gif_io.getvalue(),
-            status=200,
-            mimetype='image/gif',
-            headers={'Content-Disposition': 'attachment;filename=numer-share-card.gif'}
-        )
-        return response
+        return (gif_io.getvalue(), 'image/gif', 'numer-share-card.gif')
 
     # Статичный PNG (Путница, Провидец)
     if bg_image:
@@ -1615,13 +1606,26 @@ def api_generate_share_card():
     img.save(img_io, 'PNG', quality=95)
     img_io.seek(0)
 
-    response = app.response_class(
-        response=img_io.getvalue(),
-        status=200,
-        mimetype='image/png',
-        headers={'Content-Disposition': 'attachment;filename=numer-share-card.png'}
+    return (img_io.getvalue(), 'image/png', 'numer-share-card.png')
+
+@app.route('/api/generate-share-card', methods=['POST'])
+@limiter.limit("5 per minute")
+@csrf_required
+def api_generate_share_card():
+    data = request.json or {}
+    text = data.get('text', '')
+    if not text:
+        return jsonify({"error": "Текст не передан"}), 400
+    if len(text) > 3000:
+        return jsonify({"error": "Текст слишком длинный (макс. 3000 символов)"}), 400
+
+    body, mimetype, filename = run_image_job(generate_share_card, data)
+    return Response(
+        body,
+        mimetype=mimetype,
+        headers={'Content-Disposition': f'attachment;filename={filename}'}
     )
-    return response
+
 
 # ========== Share Text Styles API ==========
 @app.route('/api/admin/share/text-styles', methods=['GET'])

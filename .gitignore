@@ -16,4 +16,5 @@ response.json
 .kilo/
 .venv/
 deploy/certbot/
+deploy/nginx.conf
 *.log

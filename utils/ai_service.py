@@ -163,6 +163,9 @@ def ask_deepseek(system_prompt, user_prompt, temperature=0.85, user_id=None, por
     не будет делать отдельный SELECT к user_portrait (полезно при параллельных
     вызовах из ThreadPoolExecutor).
     """
+    if os.getenv("DEEPSEEK_MOCK") == "1":
+        return "MOCK: тестовый ответ"
+
     if not DEEPSEEK_API_KEY:
         print("WARN: DEEPSEEK_API_KEY не задан")
         return None
@@ -218,6 +221,12 @@ def ask_deepseek_stream(system_prompt, user_prompt, temperature=0.85, user_id=No
     Длина ответа ограничивается ТОЛЬКО промптом (SYSTEM_TONE + system_prompt).
     max_tokens в API не передаётся.
     """
+    if os.getenv("DEEPSEEK_MOCK") == "1":
+        yield "MOCK: "
+        yield "тестовый "
+        yield "ответ"
+        return
+
     if not DEEPSEEK_API_KEY:
         print("WARN: DEEPSEEK_API_KEY не задан")
         yield None
