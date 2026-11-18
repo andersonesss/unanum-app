@@ -924,8 +924,9 @@ def seed_default_prompts():
                 """, (prompt['name'], prompt['content']))
             conn.commit()
 
-    # Создание тестового пользователя — только в dev-окружении
-    if os.getenv('FLASK_ENV') == 'development':
+    # Создание тестового пользователя — только при явном SEED_TEST_USER=1
+    # (по умолчанию выключено: тестовый пользователь в проде не нужен).
+    if os.getenv('FLASK_ENV') == 'development' and os.getenv('SEED_TEST_USER') == '1':
         with get_db() as conn:
             from werkzeug.security import generate_password_hash
             test_phone = '9991234567'
