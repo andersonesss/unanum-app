@@ -17,4 +17,5 @@ response.json
 .venv/
 deploy/certbot/
 deploy/nginx.conf
+deploy/pgbouncer/
 *.log
