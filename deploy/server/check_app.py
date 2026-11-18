@@ -6,7 +6,7 @@ import time
 import psycopg2
 import requests
 
-base = "http://127.0.0.1:8000"
+base = os.environ.get("BASE_URL", "http://127.0.0.1:8000")
 
 # 1. PostgreSQL через pgbouncer
 try:
