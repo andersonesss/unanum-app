@@ -704,5 +704,135 @@ document.addEventListener('DOMContentLoaded', function() {
 // Светлая тема — скоро в обновлении
 </script>
 
+<!-- ===== ТЕСТОВЫЙ РЕЖИМ: уведомление (показывать раз в 24 часа) ===== -->
+<style>
+    .test-notice-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+    }
+    .test-notice-overlay[hidden] {
+        display: none;
+    }
+    .test-notice-card {
+        background: #1f1f1f;
+        color: #ffffff;
+        border: 2px solid #e0a800;
+        border-radius: 12px;
+        padding: 32px;
+        max-width: 520px;
+        width: 100%;
+        box-sizing: border-box;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        font-family: inherit;
+        text-align: center;
+    }
+    .test-notice-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #e0a800;
+        letter-spacing: 0.5px;
+        margin: 0 0 16px 0;
+        text-transform: uppercase;
+    }
+    .test-notice-text {
+        font-size: 16px;
+        line-height: 1.5;
+        margin: 0 0 12px 0;
+        color: #e0e0e0;
+    }
+    .test-notice-text:last-of-type {
+        margin-bottom: 0;
+    }
+    .test-notice-btn {
+        background: #e0a800;
+        color: #1f1f1f;
+        border: none;
+        padding: 12px 32px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-top: 12px;
+        font-family: inherit;
+    }
+    .test-notice-btn:hover {
+        background: #f0b800;
+    }
+    .test-notice-btn:active {
+        transform: scale(0.98);
+    }
+    @media (max-width: 479px) {
+        .test-notice-card {
+            padding: 24px;
+        }
+        .test-notice-title {
+            font-size: 20px;
+        }
+        .test-notice-text {
+            font-size: 14px;
+        }
+        .test-notice-btn {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="test-notice-overlay" id="testNotice" hidden>
+    <div class="test-notice-card" role="dialog" aria-modal="true" aria-labelledby="testNoticeTitle">
+        <h2 class="test-notice-title" id="testNoticeTitle">ТЕСТОВЫЙ РЕЖИМ</h2>
+        <p class="test-notice-text">Сайт работает не в полную силу. Часть функций пока недоступна.</p>
+        <p class="test-notice-text">Это не окончательный вариант — мы продолжаем доработку.</p>
+        <button type="button" class="test-notice-btn" id="testNoticeHide">Скрыть</button>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var STORAGE_KEY = 'unanum_test_notice_hidden_until';
+        var overlay = document.getElementById('testNotice');
+        var hideBtn = document.getElementById('testNoticeHide');
+        if (!overlay || !hideBtn) return;
+
+        var hiddenUntil = 0;
+        try {
+            hiddenUntil = parseInt(localStorage.getItem(STORAGE_KEY), 10) || 0;
+        } catch (e) {
+            hiddenUntil = 0;
+        }
+
+        var prevOverflow = '';
+
+        function openNotice() {
+            overlay.hidden = false;
+            prevOverflow = document.body.style.overflow;
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideNotice() {
+            overlay.hidden = true;
+            document.body.style.overflow = prevOverflow;
+        }
+
+        if (Date.now() > hiddenUntil) {
+            openNotice();
+        }
+
+        hideBtn.addEventListener('click', function () {
+            hideNotice();
+            try {
+                localStorage.setItem(STORAGE_KEY, String(Date.now() + 24 * 60 * 60 * 1000));
+            } catch (e) {
+                // localStorage недоступен (приватный режим) — просто закрываем окно.
+            }
+        });
+    })();
+</script>
+
 </body>
 </html>
